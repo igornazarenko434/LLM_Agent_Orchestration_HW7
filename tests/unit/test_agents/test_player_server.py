@@ -172,6 +172,45 @@ def test_parity_timeout_returns_e001(monkeypatch):
     assert body["error"]["data"]["error_code"] == "E001"
 
 
+def test_game_invitation_timeout_returns_e001():
+    from agents.player_P01.server import PlayerAgent
+    import asyncio
+
+    agent = PlayerAgent(agent_id="P99")
+    agent.config.timeouts.game_join_ack_sec = 0.05
+
+    async def slow_invite(params):
+        await asyncio.sleep(0.2)
+        return {}
+
+    agent._method_map["GAME_INVITATION"] = lambda params: slow_invite(params)
+    client = TestClient(agent.app)
+
+    payload = {
+        "jsonrpc": "2.0",
+        "method": "GAME_INVITATION",
+        "params": {
+            "protocol": "league.v2",
+            "message_type": "GAME_INVITATION",
+            "sender": "referee:REF01",
+            "timestamp": "2025-01-01T00:00:00Z",
+            "conversation_id": "conv-timeout-invite",
+            "league_id": "league_2025_even_odd",
+            "round_id": 1,
+            "match_id": "R1M1",
+            "game_type": "even_odd",
+            "role_in_match": "PLAYER_A",
+            "opponent_id": "P02",
+            "auth_token": "tok-ref",
+        },
+        "id": 10,
+    }
+    resp = client.post("/mcp", json=payload)
+    assert resp.status_code == 504
+    body = resp.json()
+    assert body["error"]["data"]["error_code"] == "E001"
+
+
 def test_registration_flow(monkeypatch):
     agent = PlayerAgent(agent_id="P99")
 
