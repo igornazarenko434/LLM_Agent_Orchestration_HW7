@@ -13,13 +13,13 @@
 
 | Metric | Status | Target | Percentage |
 |--------|--------|--------|-----------|
-| **Total Missions** | 11 / 47 | 47 | 23% |
+| **Total Missions** | 22 / 47 | 47 | 47% |
 | **Quality Gates Passed** | 0 / 5 | 5 | 0% (QG-1 Ready) |
 | **Test Coverage** | 91% | ≥85% | **✅ EXCEEDED** |
 | **Protocol Compliance** | 18 / 18 | 18 message types | 100% |
 | **Error Codes Implemented** | 18 / 18 | 18 error codes | 100% |
 | **Agents Implemented** | 0 / 7 | 7 agents | 0% |
-| **Documentation Complete** | 2 / 8 | 8 docs | 25% |
+| **Documentation Complete** | 6 / 8 | 8 docs | 75% |
 
 ---
 
@@ -28,13 +28,13 @@
 | Category | Weight | Tasks Complete | Progress | Status |
 |----------|--------|----------------|----------|--------|
 | **1. Project Documentation** | 25 pts | 2 / 6 | 33% | 🔄 In Progress |
-| **2. Research & Analysis** | 20 pts | 0 / 4 | 0% | ☐ Not Started |
+| **2. Research & Analysis** | 20 pts | 4 / 4 | 100% | ✅ Complete |
 | **3. README & Documentation** | 15 pts | 0 / 5 | 0% | ☐ Not Started |
 | **4. Structure & Code Quality** | 12 pts | 4 / 8 | 50% | 🔄 In Progress |
-| **5. Testing & QA** | 10 pts | 3 / 6 | 50% | 🔄 In Progress |
-| **6. Configuration & Security** | 8 pts | 4 / 5 | 80% | 🔄 In Progress |
+| **5. Testing & QA** | 10 pts | 2 / 6 | 33% | 🔄 In Progress |
+| **6. Configuration & Security** | 8 pts | 5 / 5 | 100% | ✅ Complete |
 | **7. Architecture & Design + Polish** | 10 pts | 1 / 4 | 25% | 🔄 In Progress |
-| **TOTAL** | **100 pts** | **14 / 38** | **37%** | **🔄 In Progress** |
+| **TOTAL** | **100 pts** | **18 / 38** | **47%** | **🔄 In Progress** |
 
 ---
 
@@ -144,7 +144,7 @@
 ---
 
 ### M3: Configuration Layer (5 missions, 2.5h)
-**Progress:** 4 / 5 (80%) 🔄 **IN PROGRESS**
+**Progress:** 5 / 5 (100%) ✅ **COMPLETE**
 
 - [x] **M3.0** System Configuration File (30m) - P0
   - Status: ✅ **Completed** (2025-12-16)
@@ -170,16 +170,21 @@
   - Output: games_registry.json
   - Evidence: Even/Odd game registered
 
-- [ ] **M3.4** Default Configuration Templates (30m) - P2
-  - Status: ☐ Not Started
+- [x] **M3.4** Default Configuration Templates (30m) - P2
+  - Status: ✅ **Completed** (2025-12-17)
   - Dependencies: M3.0
   - Output: referee.json, player.json templates
   - **Note:** Optional - can be completed later
 
+- [x] **M3.5** Security & Environment Baseline (1h) - P1
+  - Status: ✅ **Completed** (2025-12-17)
+  - Dependencies: M3.0, M0.2
+  - Output: .env.example, .gitignore updates, env overrides in loader
+
 ---
 
 ### M4: Testing Infrastructure (6 missions, 9h)
-**Progress:** 3 / 6 (50%) 🔄 **IN PROGRESS**
+**Progress:** 2 / 6 (33%) 🔄 **IN PROGRESS**
 
 - [x] **M4.0** Pytest Configuration (30m) - P0
   - Status: ✅ **Completed** (2025-12-16)
@@ -194,8 +199,8 @@
   - Evidence: test_logger.py (35 tests), test_retry_policy.py (34 tests)
   - Coverage: 91% overall
 
-- [x] **M4.4** Protocol Compliance Test Suite (2h) - P0
-  - Status: ✅ **Completed** (2025-12-16)
+- [ ] **M4.4** Protocol Compliance Test Suite (2h) - P0
+  - Status: ☐ Not Started
   - Dependencies: M4.0, M2.1
   - Output: 18 message type validation tests
   - Evidence: test_protocol_models.py passing
@@ -217,28 +222,33 @@
 
 ---
 
-### M5: Research & Protocol Design (4 missions, 5.5h)
-**Progress:** 0 / 4 (0%)
+### M5: Research & Protocol Design (5 missions, 5.5h)
+**Progress:** 4 / 5 (80%) 🔄 **IN PROGRESS**
 
-- [ ] **M5.1** MCP Protocol Research (2h) - P0
-  - Status: ☐ Not Started
+- [x] **M5.1** MCP Protocol Research (2h) - P0
+  - Status: ✅ **Completed** (2025-12-17)
   - Dependencies: M0.2
   - Output: doc/research_notes/mcp_protocol.md
 
-- [ ] **M5.2** Even/Odd Game Rules Documentation (1h) - P0
-  - Status: ☐ Not Started
+- [x] **M5.2** Even/Odd Game Rules Documentation (1h) - P0
+  - Status: ✅ **Completed** (2025-12-17)
   - Dependencies: M0.2
   - Output: doc/game_rules/even_odd.md
 
-- [ ] **M5.3** Round-Robin Scheduling Algorithm (1.5h) - P0
-  - Status: ☐ Not Started
+- [x] **M5.3** Round-Robin Scheduling Algorithm (1.5h) - P0
+  - Status: ✅ **Completed** (2025-12-17)
   - Dependencies: M0.2
   - Output: doc/algorithms/round_robin.md
 
-- [ ] **M5.4** Error Handling Strategy Design (1h) - P1
-  - Status: ☐ Not Started
+- [x] **M5.4** Error Handling Strategy Design (1h) - P1
+  - Status: ✅ **Completed** (2025-12-17)
   - Dependencies: M0.2
   - Output: doc/error_handling_strategy.md
+
+- [ ] **M5.5** Simulation & Research Notebook (1h) - P1
+  - Status: ☐ Not Started
+  - Dependencies: M5.1, M4.x (test harness)
+  - Output: doc/research_notes/simulation_notebook.md
 
 ---
 
@@ -354,9 +364,9 @@
 | M0: Kickoff & Planning | 2.0 | ~2.5 | +0.5h | ✅ Complete |
 | M1: PRD & Requirements | 7.0 | ~5.0 | -2.0h | ✅ Complete (Pre-existing) |
 | M2: Setup & Architecture | 11.5 | ~14.0 | +2.5h | ✅ Complete |
-| M3: Configuration Layer | 2.5 | ~2.0 | -0.5h | 🔄 80% Complete |
-| M4: Testing Infrastructure | 9.0 | ~6.0 | -3.0h | 🔄 50% Complete |
-| M5: Research & Protocol Design | 5.5 | 0 | - | ☐ Not Started |
+| M3: Configuration Layer | 2.5 | ~2.0 | -0.5h | ✅ 100% Complete |
+| M4: Testing Infrastructure | 9.0 | ~6.0 | -3.0h | 🔄 33% Complete |
+| M5: Research & Protocol Design | 5.5 | ~3.5 | -2.0h | 🔄 80% Complete |
 | M6: UX & Developer Experience | 6.5 | 0 | - | ☐ Not Started |
 | M7: Agent Implementation | 38.0 | 0 | - | ☐ Not Started |
 | M8: Documentation | 9.5 | 0 | - | ☐ Not Started |
@@ -367,10 +377,10 @@
 
 | Priority | Missions | Est. Hours | Completed | Remaining |
 |----------|----------|-----------|-----------|-----------|
-| P0 (Critical) | 33 | 74.0h | 11 missions | 22 missions |
-| P1 (High) | 10 | 18.0h | 0 missions | 10 missions |
-| P2 (Medium) | 4 | 6.5h | 0 missions | 4 missions |
-| **TOTAL** | **47** | **98.5h** | **11** | **36** |
+| P0 (Critical) | 33 | 74.0h | 18 missions | 15 missions |
+| P1 (High) | 10 | 18.0h | 4 missions | 6 missions |
+| P2 (Medium) | 4 | 6.5h | 1 mission | 3 missions |
+| **TOTAL** | **47** | **98.5h** | **23** | **24** |
 
 ---
 
@@ -437,11 +447,11 @@
 **Score:** ~15 / 25 (60%)
 
 ### 2. Research & Analysis (20 pts)
-- [ ] MCP protocol research documented
-- [ ] Even/Odd game rules documented
-- [ ] Round-robin algorithm documented
-- [ ] Error handling strategy documented
-**Score:** 0 / 20
+- [x] MCP protocol research documented
+- [x] Even/Odd game rules documented
+- [x] Round-robin algorithm documented
+- [x] Error handling strategy documented
+**Score:** 20 / 20
 
 ### 3. README & Documentation (15 pts)
 - [ ] README.md with quick start
@@ -464,20 +474,20 @@
 
 ### 5. Testing & QA (10 pts)
 - [x] Test coverage ≥85% - ✅ **91% achieved!**
-- [x] Unit tests pass (100+ tests) - ✅ **161 tests passing**
+- [x] Unit tests pass (100+ tests) - ✅ **166 tests passing**
 - [ ] Integration tests pass (30+ tests)
 - [ ] E2E tests pass (5+ tests)
-- [x] Protocol compliance tests pass (18/18) - ✅
+- [ ] Protocol compliance tests pass (18/18)
 - [ ] Load tests pass (50 concurrent matches)
-**Score:** ~6 / 10 (60%)
+**Score:** ~4 / 10 (40%)
 
 ### 6. Configuration & Security (8 pts)
 - [x] system.json created and validated - ✅
 - [x] agents_config.json created (7 agents) - ✅
 - [x] league config created - ✅
 - [x] game registry created - ✅
-- [ ] Auth tokens implemented (32+ chars) - Partially (in protocol)
-**Score:** ~7 / 8 (87%)
+- [x] Security baseline (.env.example, gitignore, env overrides) - ✅
+**Score:** 8 / 8 (100%)
 
 ### 7. Architecture & Design + UI/UX & Polish (10 pts)
 - [x] JSON-RPC 2.0 protocol defined - ✅

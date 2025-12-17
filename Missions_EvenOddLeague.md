@@ -534,12 +534,12 @@ pytest tests/unit/test_retry_policy.py -v
 Create SHARED/config/system.json with global system settings.
 
 **Definition of Done:**
-- [ ] schema_version: "1.0.0"
-- [ ] protocol_version: "league.v2"
-- [ ] Timeout settings: move_timeout_sec (30), generic_response_timeout_sec (10), game_join_ack_timeout_sec (5)
-- [ ] Retry policy: max_retries (3), backoff_strategy ("exponential")
-- [ ] Network settings: base_host, port ranges
-- [ ] File validates against config schema
+- [x] schema_version: "1.0.0"
+- [x] protocol_version: "league.v2"
+- [x] Timeout settings: move_timeout_sec (30), generic_response_timeout_sec (10), game_join_ack_timeout_sec (5)
+- [x] Retry policy: max_retries (3), backoff_strategy ("exponential")
+- [x] Network settings: base_host, port ranges
+- [x] File validates against config schema
 
 **Self-Verify Command:**
 ```bash
@@ -564,11 +564,11 @@ python -c "from league_sdk.config_loader import load_system_config; config = loa
 Create SHARED/config/agents/agents_config.json with league manager, referees, and players registry.
 
 **Definition of Done:**
-- [ ] League Manager entry with endpoint (http://localhost:8000/mcp)
-- [ ] 2 Referee entries (REF01, REF02) with endpoints, game_types, max_concurrent_matches
-- [ ] 4 Player entries (P01-P04) with endpoints, display_names, game_types
-- [ ] All agents marked as "active": true
-- [ ] File validates against schema
+- [x] League Manager entry with endpoint (http://localhost:8000/mcp)
+- [x] 2 Referee entries (REF01, REF02) with endpoints, game_types, max_concurrent_matches
+- [x] 4 Player entries (P01-P04) with endpoints, display_names, game_types
+- [x] All agents marked as "active": true
+- [x] File validates against schema
 
 **Self-Verify Command:**
 ```bash
@@ -593,11 +593,11 @@ python -c "from league_sdk.config_loader import load_agents_config; config = loa
 Create SHARED/config/leagues/league_2025_even_odd.json with league-specific settings.
 
 **Definition of Done:**
-- [ ] league_id: "league_2025_even_odd"
-- [ ] game_type: "even_odd"
-- [ ] Scoring: win_points (3), draw_points (1), loss_points (0), technical_loss_points (0)
-- [ ] Participants: min_players (2), max_players (10000)
-- [ ] Status: "ACTIVE"
+- [x] league_id: "league_2025_even_odd"
+- [x] game_type: "even_odd"
+- [x] Scoring: win_points (3), draw_points (1), loss_points (0), technical_loss_points (0)
+- [x] Participants: min_players (2), max_players (10000)
+- [x] Status: "ACTIVE"
 
 **Self-Verify Command:**
 ```bash
@@ -621,11 +621,11 @@ python -c "from league_sdk.config_loader import load_league_config; config = loa
 Create SHARED/config/games/games_registry.json defining Even/Odd game type.
 
 **Definition of Done:**
-- [ ] game_type: "even_odd"
-- [ ] display_name: "Even/Odd Game"
-- [ ] rules_module: "games.even_odd"
-- [ ] max_round_time_sec: 60
-- [ ] supports_draw: true
+- [x] game_type: "even_odd"
+- [x] display_name: "Even/Odd Game"
+- [x] rules_module: "games.even_odd"
+- [x] max_round_time_sec: 60
+- [x] supports_draw: true
 
 **Self-Verify Command:**
 ```bash
@@ -649,10 +649,10 @@ cat SHARED/config/games/games_registry.json | jq '.games[] | select(.game_type =
 Create default configuration templates for referee and player agents.
 
 **Definition of Done:**
-- [ ] SHARED/config/defaults/referee.json with default referee settings
-- [ ] SHARED/config/defaults/player.json with default player settings
-- [ ] Templates include: log_level, max_concurrent_matches, strategy defaults
-- [ ] Documented inline comments explaining each setting
+- [x] SHARED/config/defaults/referee.json with default referee settings
+- [x] SHARED/config/defaults/player.json with default player settings
+- [x] Templates include: log_level, max_concurrent_matches, strategy defaults
+- [x] Documented inline comments explaining each setting
 
 **Self-Verify Command:**
 ```bash
@@ -678,10 +678,10 @@ echo "Templates valid"
 Add repo-level security/config hygiene artifacts.
 
 **Definition of Done:**
-- [ ] `.env.example` with commented variables (auth token length, ports, log level, retry overrides) and guidance on secrets
-- [ ] `.gitignore` updated with ≥15 patterns covering venv, pycache, logs, data backups, coverage, .env
-- [ ] Secret handling guidance added to configuration docs (no secrets in code/config)
-- [ ] Validate config loader supports env overrides where applicable
+- [x] `.env.example` with commented variables (auth token length, ports, log level, retry overrides) and guidance on secrets
+- [x] `.gitignore` updated with ≥15 patterns covering venv, pycache, logs, data backups, coverage, .env
+- [x] Secret handling guidance added to configuration docs (no secrets in code/config)
+- [x] Validate config loader supports env overrides where applicable
 
 **Self-Verify Command:**
 ```bash
@@ -920,11 +920,11 @@ cat .github/workflows/test.yml | grep "coverage"
 Research Model Context Protocol (MCP) specification and JSON-RPC 2.0 for implementation guidance.
 
 **Definition of Done:**
-- [ ] MCP protocol documentation reviewed (https://modelcontextprotocol.io/)
-- [ ] JSON-RPC 2.0 spec reviewed (https://www.jsonrpc.org/specification)
-- [ ] Notes on tool calling pattern (method, params, result/error)
-- [ ] Example MCP server code analyzed
-- [ ] FastAPI MCP integration pattern documented
+- [x] MCP protocol documentation reviewed (https://modelcontextprotocol.io/)
+- [x] JSON-RPC 2.0 spec reviewed (https://www.jsonrpc.org/specification)
+- [x] Notes on tool calling pattern (method, params, result/error)
+- [x] Example MCP server code analyzed
+- [x] FastAPI MCP integration pattern documented
 
 **Self-Verify Command:**
 ```bash
@@ -949,11 +949,11 @@ cat doc/research_notes/mcp_protocol.md | grep -E "JSON-RPC 2.0|tool calling|Fast
 Document Even/Odd game rules, winner determination logic, and all game scenarios.
 
 **Definition of Done:**
-- [ ] Game rules documented: players choose "even" or "odd", referee draws 1-10, matching parity wins
-- [ ] All 4 outcome scenarios documented (both even, both odd, player A match, player B match)
-- [ ] Draw condition: both players choose same parity
-- [ ] Scoring documented: Win=3pts, Draw=1pt, Loss=0pts
-- [ ] Decision matrix for winner determination
+- [x] Game rules documented: players choose "even" or "odd", referee draws 1-10, matching parity wins
+- [x] All 4 outcome scenarios documented (both even, both odd, player A match, player B match)
+- [x] Draw condition: both players choose same parity
+- [x] Scoring documented: Win=3pts, Draw=1pt, Loss=0pts
+- [x] Decision matrix for winner determination
 
 **Self-Verify Command:**
 ```bash
@@ -978,11 +978,11 @@ cat doc/game_rules/even_odd.md | grep -E "Draw|Win|Loss|parity" && echo "Rules d
 Research and document round-robin tournament scheduling algorithm for n*(n-1)/2 matches.
 
 **Definition of Done:**
-- [ ] Algorithm documented: for n players, generate all unique pairs
-- [ ] Match distribution across rounds for balance
-- [ ] Referee assignment strategy (even distribution)
-- [ ] Example schedules: 4 players (6 matches, 3 rounds), 6 players (15 matches, 5 rounds)
-- [ ] Python implementation pseudocode
+- [x] Algorithm documented: for n players, generate all unique pairs
+- [x] Match distribution across rounds for balance
+- [x] Referee assignment strategy (even distribution)
+- [x] Example schedules: 4 players (6 matches, 3 rounds), 6 players (15 matches, 5 rounds)
+- [x] Python implementation pseudocode
 
 **Self-Verify Command:**
 ```bash
@@ -1007,11 +1007,11 @@ cat doc/algorithms/round_robin.md | grep -E "n\*\(n-1\)/2|itertools.combinations
 Design comprehensive error handling strategy covering all 18 error codes and retry scenarios.
 
 **Definition of Done:**
-- [ ] All 18 error codes documented with: code, name, severity, retryable flag, description
-- [ ] Error response format defined (LEAGUE_ERROR, GAME_ERROR messages)
-- [ ] Retry policy documented: which errors retry, which fail fast
-- [ ] Error logging strategy: what to log, log level per error type
-- [ ] Recovery procedures for each error category
+- [x] All 18 error codes documented with: code, name, severity, retryable flag, description
+- [x] Error response format defined (LEAGUE_ERROR, GAME_ERROR messages)
+- [x] Retry policy documented: which errors retry, which fail fast
+- [x] Error logging strategy: what to log, log level per error type
+- [x] Recovery procedures for each error category
 
 **Self-Verify Command:**
 ```bash
@@ -2267,15 +2267,15 @@ M0 (2h) + M2 (9.5h) + M7 (31h) + M8 (9.5h) + M9 (7h) = **59 hours**
 | **M0: Kickoff** | 3 | 2h | 100% | ☑ Complete |
 | **M1: PRD** | 2 | 7h | 100% | ☑ Complete |
 | **M2: Setup** | 6 | 11.5h | 100% | ☑ Complete |
-| **M3: Config** | 5 | 2.5h | 80% | ⏳ In Progress |
-| **M4: Testing** | 6 | 9h | 50% | ⏳ In Progress |
-| **M5: Research** | 4 | 5.5h | 0% | ☐ Not Started |
+| **M3: Config** | 5 | 2.5h | 100% | ☑ Complete |
+| **M4: Testing** | 6 | 9h | 33% | ⏳ In Progress |
+| **M5: Research** | 5 | 5.5h | 80% | ⏳ In Progress |
 | **M6: UX** | 4 | 6.5h | 0% | ☐ Not Started |
 | **M7: Agents** | 14 | 38h | 0% | ☐ Not Started |
 | **M8: Docs** | 5 | 9.5h | 0% | ☐ Not Started |
 | **M9: Submission** | 3 | 7h | 0% | ☐ Not Started |
-| **Quality Gates** | 5 | - | 20% | ⏳ In Progress (QG-1 ☑) |
-| **TOTAL** | **47 + 5 QGs** | **98.5h** | **23%** | **⏳ In Progress** |
+| **Quality Gates** | 5 | - | 0% | ⏳ In Progress |
+| **TOTAL** | **47 + 5 QGs** | **98.5h** | **47%** | **⏳ In Progress** |
 
 ---
 
