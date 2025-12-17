@@ -9,6 +9,7 @@ Exposes /mcp JSON-RPC 2.0 endpoint with dispatch to required tools:
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Callable, Dict, Optional
 
 from fastapi import Request
@@ -28,6 +29,8 @@ from league_sdk.protocol import (
     ErrorCode,
     GameOver,
 )
+from league_sdk.protocol import LeagueRegisterRequest, LeagueRegisterResponse
+from league_sdk.retry import call_with_retry
 
 AGENTS_CONFIG_PATH = "SHARED/config/agents/agents_config.json"
 GAMES_REGISTRY_PATH = "SHARED/config/games/games_registry.json"
@@ -61,12 +64,13 @@ class PlayerAgent(BaseAgent):
         self.allowed_senders = self._build_sender_index()
         self.supported_game_types = {g["game_type"] for g in self.game_registry.get("games", [])}
         self.match_history: list[Dict[str, Any]] = []
+        self.state: str = "INIT"
 
         self._method_map: Dict[str, Callable[[Dict[str, Any]], Dict[str, Any]]] = {
             "GAME_INVITATION": lambda params: handlers.handle_game_invitation(self.agent_id, params, self.auth_token),
             "CHOOSE_PARITY_CALL": lambda params: handlers.handle_choose_parity(self.agent_id, params, self.auth_token),
             "GAME_OVER": lambda params: handlers.handle_game_over(params, self.match_history, self.auth_token),
-            "MATCH_RESULT_REPORT": handlers.handle_match_result,
+            "MATCH_RESULT_REPORT": lambda params: handlers.handle_match_result(params, self.match_history, self.auth_token),
         }
         self._register_mcp_route()
 
@@ -114,7 +118,8 @@ class PlayerAgent(BaseAgent):
 
             try:
                 log_message_received(self.std_logger, rpc_request.model_dump())
-                result = handler(rpc_request.params)
+                timeout = self._timeout_for_method(rpc_request.method)
+                result = await asyncio.wait_for(self._execute_handler(handler, rpc_request.params), timeout=timeout)
                 rpc_response = JSONRPCResponse(id=rpc_request.id, result=result)
                 log_message_sent(self.std_logger, result)
                 return JSONResponse(status_code=200, content=rpc_response.model_dump())
@@ -255,6 +260,99 @@ class PlayerAgent(BaseAgent):
         # stash for responses
         self.auth_token = auth_token
         return None
+
+    def registration_endpoint(self) -> str:
+        host = self.config.network.host
+        port = self.config.network.league_manager_port
+        return f"http://{host}:{port}/mcp"
+
+    def send_registration_request(self) -> Dict[str, Any]:
+        """Send LEAGUE_REGISTER_REQUEST to League Manager with retry policy."""
+        self._transition("REGISTERING")
+        conversation_id = self._conversation_id()
+        player_meta = {
+            "display_name": self.agent_record.get("display_name", self.agent_id) if self.agent_record else self.agent_id,
+            "version": self.agent_record.get("version", "1.0.0") if self.agent_record else "1.0.0",
+            "game_types": self.agent_record.get("game_types", ["even_odd"]) if self.agent_record else ["even_odd"],
+            "contact_endpoint": f"http://{self.host}:{self.port}/mcp",
+        }
+        request = LeagueRegisterRequest(
+            sender=f"player:{self.agent_id}",
+            timestamp=self._utc_timestamp(),
+            conversation_id=conversation_id,
+            protocol="league.v2",
+            player_meta=player_meta,
+        )
+        payload = request.model_dump()
+        response = call_with_retry(
+            endpoint=self.registration_endpoint(),
+            method=payload["message_type"],
+            params=payload,
+            timeout=self.config.network.request_timeout_sec,
+            logger=self.std_logger,
+            circuit_breaker=self.circuit_breaker,
+        )
+        return self.handle_registration_response(response)
+
+    def handle_registration_response(self, response: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate and persist registration response."""
+        if "error" in response:
+            self._transition("INIT")
+            return response
+
+        try:
+            reg = LeagueRegisterResponse(**response)
+        except Exception as exc:
+            self._transition("INIT")
+            return {
+                "error": {
+                    "error_code": ErrorCode.INVALID_MESSAGE_FORMAT,
+                    "error_description": str(exc),
+                }
+            }
+
+        if reg.status != "ACCEPTED":
+            self._transition("INIT")
+            return response
+
+        # Store player_id and optional auth_token
+        self.agent_id = reg.player_id
+        self.sender = f"player:{self.agent_id}"
+        if hasattr(reg, "auth_token"):
+            self.auth_token = getattr(reg, "auth_token")
+
+        self._transition("REGISTERED", conversation_id=getattr(reg, "conversation_id", None))
+        self._transition("ACTIVE", conversation_id=getattr(reg, "conversation_id", None))
+        return response
+
+    def _transition(self, new_state: str, conversation_id: Optional[str] = None) -> None:
+        """Log and update state machine."""
+        prev = self.state
+        self.state = new_state
+        self.std_logger.info(
+            "State transition",
+            extra={
+                "event_type": "STATE_TRANSITION",
+                "from": prev,
+                "to": new_state,
+                "conversation_id": conversation_id,
+            },
+        )
+
+    async def _execute_handler(self, handler: Callable[[Dict[str, Any]], Dict[str, Any]], params: Dict[str, Any]) -> Dict[str, Any]:
+        result = handler(params)
+        if asyncio.iscoroutine(result):
+            result = await result
+        return result
+
+    def _timeout_for_method(self, method: str) -> float:
+        if method == "GAME_INVITATION":
+            return float(self.config.timeouts.game_join_ack_sec)
+        if method == "CHOOSE_PARITY_CALL":
+            return float(self.config.timeouts.parity_choice_sec)
+        if method in {"GAME_OVER", "MATCH_RESULT_REPORT"}:
+            return float(self.config.timeouts.game_over_sec)
+        return float(self.config.timeouts.generic_sec)
 
 
 def build_player_agent(agent_id: str = "P01") -> PlayerAgent:

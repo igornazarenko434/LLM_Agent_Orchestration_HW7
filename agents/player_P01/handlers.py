@@ -70,11 +70,25 @@ def handle_choose_parity(agent_id: str, params: Dict[str, Any], auth_token: Opti
     return payload
 
 
-def handle_match_result(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Handle MATCH_RESULT_REPORT notification by validating and returning ack."""
+def handle_match_result(
+    params: Dict[str, Any], history: Optional[list[Dict[str, Any]]] = None, auth_token: Optional[str] = None
+) -> Dict[str, Any]:
+    """Handle MATCH_RESULT_REPORT notification by validating, storing, and returning ack."""
+    if "game_result" in params and "result" not in params:
+        params = dict(params)
+        params["result"] = params.pop("game_result")
     report = MatchResultReport(**params)
-    # Business logic placeholder: could update local strategy/learning here.
-    return {"status": "ack", "match_id": report.match_id, "message_type": report.message_type}
+    record = report.model_dump()
+    if auth_token:
+        record["auth_token"] = auth_token
+    if history is not None:
+        history.append(record)
+    return {
+        "status": "ack",
+        "match_id": report.match_id,
+        "message_type": report.message_type,
+        "auth_token": auth_token,
+    }
 
 
 def handle_game_over(params: Dict[str, Any], history: list[Dict[str, Any]], auth_token: Optional[str] = None) -> Dict[str, Any]:

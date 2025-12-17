@@ -209,4 +209,3 @@ class BaseAgent:
     def load_config(cls, path: Path | str = DEFAULT_SYSTEM_CONFIG_PATH) -> SystemConfig:
         """Load and validate system configuration."""
         return load_system_config(path)
-

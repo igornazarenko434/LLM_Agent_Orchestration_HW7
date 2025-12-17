@@ -103,6 +103,98 @@ def test_handle_game_over(player_client: TestClient):
     assert body["id"] == 3
 
 
+def test_handle_match_result_report(player_client: TestClient):
+    payload = {
+        "jsonrpc": "2.0",
+        "method": "MATCH_RESULT_REPORT",
+        "params": {
+            "protocol": "league.v2",
+            "message_type": "MATCH_RESULT_REPORT",
+            "sender": "referee:REF01",
+            "timestamp": "2025-01-01T00:02:00Z",
+            "conversation_id": "conv-test-4",
+            "league_id": "league_2025_even_odd",
+            "round_id": 1,
+            "match_id": "R1M1",
+            "game_type": "even_odd",
+            "result": {
+                "winner": "P99",
+                "score": {"P99": 3, "P02": 0},
+                "details": {"drawn_number": 4, "choices": {"P99": "even", "P02": "odd"}},
+            },
+            "auth_token": "tok-ref",
+        },
+        "id": 8,
+    }
+    resp = player_client.post("/mcp", json=payload)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["result"]["status"] == "ack"
+    assert body["result"]["auth_token"] == "tok-ref"
+    assert body["id"] == 8
+
+
+def test_parity_timeout_returns_e001(monkeypatch):
+    from agents.player_P01.server import PlayerAgent
+    import asyncio
+
+    agent = PlayerAgent(agent_id="P99")
+    agent.config.timeouts.parity_choice_sec = 0.05
+
+    async def slow_handler(params):
+        await asyncio.sleep(0.2)
+        return {}
+
+    agent._method_map["CHOOSE_PARITY_CALL"] = lambda params: slow_handler(params)
+    client = TestClient(agent.app)
+
+    payload = {
+        "jsonrpc": "2.0",
+        "method": "CHOOSE_PARITY_CALL",
+        "params": {
+            "protocol": "league.v2",
+            "message_type": "CHOOSE_PARITY_CALL",
+            "sender": "referee:REF01",
+            "timestamp": "2025-01-01T00:00:00Z",
+            "conversation_id": "conv-timeout",
+            "match_id": "R1M1",
+            "player_id": "P99",
+            "game_type": "even_odd",
+            "context": {"opponent_id": "P02", "round_id": 1},
+            "deadline": "2025-01-01T00:00:30Z",
+            "auth_token": "tok-ref",
+        },
+        "id": 9,
+    }
+    resp = client.post("/mcp", json=payload)
+    assert resp.status_code == 504
+    body = resp.json()
+    assert body["error"]["data"]["error_code"] == "E001"
+
+
+def test_registration_flow(monkeypatch):
+    agent = PlayerAgent(agent_id="P99")
+
+    def fake_call_with_retry(endpoint, method, params, timeout, logger, circuit_breaker=None):
+        return {
+            "message_type": "LEAGUE_REGISTER_RESPONSE",
+            "sender": "league_manager:LM01",
+            "timestamp": "2025-01-01T00:00:00Z",
+            "conversation_id": params.get("conversation_id"),
+            "status": "ACCEPTED",
+            "player_id": params.get("sender").split(":")[1],
+            "reason": None,
+            "protocol": "league.v2",
+            "auth_token": "tok-issue",
+        }
+
+    monkeypatch.setattr("agents.player_P01.server.call_with_retry", fake_call_with_retry)
+    response = agent.send_registration_request()
+    assert agent.state == "ACTIVE"
+    assert agent.auth_token == "tok-issue"
+    assert response["status"] == "ACCEPTED"
+
+
 def test_unknown_method_returns_error(player_client: TestClient):
     payload = {
         "jsonrpc": "2.0",
