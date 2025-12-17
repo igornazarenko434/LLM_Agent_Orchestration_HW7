@@ -9,17 +9,18 @@ This module provides functions to load and validate configuration files:
 
 import json
 from pathlib import Path
-from typing import TypeVar, Type
+from typing import Type, TypeVar
+
 from pydantic import BaseModel, ValidationError
 
 try:
-    from .config_models import SystemConfig, LeagueConfig, AgentConfig
+    from .config_models import AgentConfig, LeagueConfig, SystemConfig
 except ImportError:
-    from config_models import SystemConfig, LeagueConfig, AgentConfig
+    from config_models import AgentConfig, LeagueConfig, SystemConfig
 
 __all__ = ["load_system_config", "load_league_config", "load_agents_config"]
 
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar("T", bound=BaseModel)
 
 
 def load_json_file(file_path: str | Path) -> dict:
@@ -40,7 +41,7 @@ def load_json_file(file_path: str | Path) -> dict:
     if not path.exists():
         raise FileNotFoundError(f"Configuration file not found: {file_path}")
 
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         return json.load(f)
 
 

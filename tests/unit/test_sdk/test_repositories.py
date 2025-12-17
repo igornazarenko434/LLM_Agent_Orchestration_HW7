@@ -9,16 +9,17 @@ Tests file-based data access:
 - Atomic file writes (temp file + rename)
 """
 
-import pytest
 import json
 from pathlib import Path
+
+import pytest
 from league_sdk.repositories import (
-    StandingsRepository,
-    RoundsRepository,
     MatchRepository,
     PlayerHistoryRepository,
+    RoundsRepository,
+    StandingsRepository,
     atomic_write,
-    generate_timestamp
+    generate_timestamp,
 )
 
 
@@ -34,7 +35,7 @@ class TestAtomicWrite:
         atomic_write(target_file, data)
 
         assert target_file.exists()
-        with open(target_file, 'r') as f:
+        with open(target_file, "r") as f:
             loaded = json.load(f)
         assert loaded == data
 
@@ -52,14 +53,14 @@ class TestAtomicWrite:
         atomic_write(target_file, {"version": 1})
 
         # Verify initial write
-        with open(target_file, 'r') as f:
+        with open(target_file, "r") as f:
             assert json.load(f)["version"] == 1
 
         # Overwrite
         atomic_write(target_file, {"version": 2})
 
         # Verify update
-        with open(target_file, 'r') as f:
+        with open(target_file, "r") as f:
             assert json.load(f)["version"] == 2
 
 
@@ -97,7 +98,7 @@ class TestStandingsRepository:
         standings_data = {
             "schema_version": "1.0.0",
             "league_id": "test_league",
-            "standings": [{"player_id": "P01", "points": 3}]
+            "standings": [{"player_id": "P01", "points": 3}],
         }
         repo.save(standings_data)
 
@@ -243,7 +244,7 @@ class TestMatchRepository:
             game_type="even_odd",
             player_a_id="P01",
             player_b_id="P02",
-            referee_id="REF01"
+            referee_id="REF01",
         )
 
         assert match_data["match_id"] == "M1"
@@ -346,12 +347,7 @@ class TestPlayerHistoryRepository:
         repo = PlayerHistoryRepository("P01", data_root=tmp_path)
 
         repo.add_match(
-            match_id="M1",
-            league_id="league_1",
-            round_id=1,
-            opponent_id="P02",
-            result="WIN",
-            points=3
+            match_id="M1", league_id="league_1", round_id=1, opponent_id="P02", result="WIN", points=3
         )
 
         history = repo.load()

@@ -8,11 +8,13 @@ Tests game registry configuration:
 - Checking protocol consistency
 """
 
-import pytest
 import json
 from pathlib import Path
+
+import pytest
 from league_sdk.config_loader import load_json_file, validate_config
 from league_sdk.config_models import GameConfig
+
 
 @pytest.mark.unit
 class TestGamesRegistry:
@@ -37,7 +39,7 @@ class TestGamesRegistry:
         """Test that the Even/Odd game is correctly defined."""
         games = registry_data["games"]
         even_odd = next((g for g in games if g["game_type"] == "even_odd"), None)
-        
+
         assert even_odd is not None, "Even/Odd game definition missing"
         assert even_odd["display_name"] == "Even/Odd"
         assert even_odd["rules_module"] == "agents.referee.games.even_odd"
@@ -49,7 +51,7 @@ class TestGamesRegistry:
         """Test game-specific configuration for Even/Odd."""
         games = registry_data["games"]
         even_odd = next((g for g in games if g["game_type"] == "even_odd"), None)
-        
+
         config = even_odd.get("game_specific_config", {{}})
         assert "random_range_min" in config
         assert "random_range_max" in config
@@ -63,7 +65,7 @@ class TestGamesRegistry:
         """Test that rules are defined in configuration."""
         games = registry_data["games"]
         even_odd = next((g for g in games if g["game_type"] == "even_odd"), None)
-        
+
         config = even_odd.get("game_specific_config", {{}})
         assert "rules" in config
         rules = config["rules"]
@@ -81,12 +83,16 @@ class TestGamesRegistry:
     def test_all_games_have_required_fields(self, registry_data):
         """Manually verify required fields for all games."""
         required_fields = [
-            "game_type", "display_name", "rules_module", 
-            "supports_draw", "max_round_time_sec"
+            "game_type",
+            "display_name",
+            "rules_module",
+            "supports_draw",
+            "max_round_time_sec",
         ]
         for game in registry_data["games"]:
             for field in required_fields:
                 assert field in game, f"Missing field {field} in game {game.get('game_type')}"
+
 
 @pytest.mark.unit
 class TestGamesRegistryProtocolConsistency:
@@ -97,7 +103,7 @@ class TestGamesRegistryProtocolConsistency:
         config_path = Path("SHARED/config/games/games_registry.json")
         if not config_path.exists():
             pytest.skip("games_registry.json not found")
-            
+
         data = load_json_file(config_path)
         for game in data["games"]:
             # Protocol has specific timeouts (e.g. 30s for move)
@@ -108,7 +114,7 @@ class TestGamesRegistryProtocolConsistency:
         """Verify defined games match what is used in league config."""
         games_path = Path("SHARED/config/games/games_registry.json")
         league_path = Path("SHARED/config/leagues/league_2025_even_odd.json")
-        
+
         if not games_path.exists() or not league_path.exists():
             pytest.skip("Config files missing")
 
@@ -118,8 +124,10 @@ class TestGamesRegistryProtocolConsistency:
         defined_games = {g["game_type"] for g in games_data["games"]}
         league_game = league_data["game_type"]
 
-        assert league_game in defined_games, \
-            f"League uses game type '{league_game}' which is not defined in registry"
+        assert (
+            league_game in defined_games
+        ), f"League uses game type '{league_game}' which is not defined in registry"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -20,16 +20,16 @@ Data Structure:
 import json
 import os
 import tempfile
-from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 __all__ = [
     "StandingsRepository",
     "RoundsRepository",
     "MatchRepository",
     "PlayerHistoryRepository",
-    "atomic_write"
+    "atomic_write",
 ]
 
 # Default data root directory
@@ -53,14 +53,10 @@ def atomic_write(file_path: str | Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
     # Write to temporary file in same directory
-    fd, temp_path = tempfile.mkstemp(
-        dir=path.parent,
-        prefix=f".{path.name}.",
-        suffix=".tmp"
-    )
+    fd, temp_path = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
 
     try:
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         # Atomic rename (replaces existing file)
         os.replace(temp_path, path)
@@ -79,6 +75,7 @@ def generate_timestamp() -> str:
 # ============================================================================
 # STANDINGS REPOSITORY
 # ============================================================================
+
 
 class StandingsRepository:
     """
@@ -112,7 +109,7 @@ class StandingsRepository:
                 "schema_version": "1.0.0",
                 "league_id": self.league_id,
                 "standings": [],
-                "last_updated": generate_timestamp()
+                "last_updated": generate_timestamp(),
             }
 
         return json.loads(self.path.read_text(encoding="utf-8"))
@@ -156,7 +153,7 @@ class StandingsRepository:
                 "wins": 0,
                 "draws": 0,
                 "losses": 0,
-                "matches_played": 0
+                "matches_played": 0,
             }
             standings_list.append(player_entry)
 
@@ -198,6 +195,7 @@ class StandingsRepository:
 # ROUNDS REPOSITORY
 # ============================================================================
 
+
 class RoundsRepository:
     """
     Repository for rounds history.
@@ -230,7 +228,7 @@ class RoundsRepository:
                 "schema_version": "1.0.0",
                 "league_id": self.league_id,
                 "rounds": [],
-                "last_updated": generate_timestamp()
+                "last_updated": generate_timestamp(),
             }
 
         return json.loads(self.path.read_text(encoding="utf-8"))
@@ -271,12 +269,14 @@ class RoundsRepository:
             existing_round["updated_at"] = generate_timestamp()
         else:
             # Add new round
-            rounds_list.append({
-                "round_id": round_id,
-                "matches": matches,
-                "status": "PENDING",
-                "created_at": generate_timestamp()
-            })
+            rounds_list.append(
+                {
+                    "round_id": round_id,
+                    "matches": matches,
+                    "status": "PENDING",
+                    "created_at": generate_timestamp(),
+                }
+            )
 
         rounds_data["rounds"] = rounds_list
         self.save(rounds_data)
@@ -321,6 +321,7 @@ class RoundsRepository:
 # ============================================================================
 # MATCH REPOSITORY
 # ============================================================================
+
 
 class MatchRepository:
     """
@@ -379,7 +380,7 @@ class MatchRepository:
         game_type: str,
         player_a_id: str,
         player_b_id: str,
-        referee_id: str
+        referee_id: str,
     ) -> Dict[str, Any]:
         """
         Create a new match record.
@@ -402,16 +403,13 @@ class MatchRepository:
             "league_id": league_id,
             "round_id": round_id,
             "game_type": game_type,
-            "players": {
-                "player_a": player_a_id,
-                "player_b": player_b_id
-            },
+            "players": {"player_a": player_a_id, "player_b": player_b_id},
             "referee_id": referee_id,
             "status": "PENDING",
             "result": None,
             "transcript": [],
             "created_at": generate_timestamp(),
-            "last_updated": generate_timestamp()
+            "last_updated": generate_timestamp(),
         }
 
         self.save(match_id, match_data)
@@ -459,7 +457,9 @@ class MatchRepository:
             match_data["status"] = "COMPLETED"
             self.save(match_id, match_data)
 
-    def list_matches(self, league_id: Optional[str] = None, round_id: Optional[int] = None) -> List[str]:
+    def list_matches(
+        self, league_id: Optional[str] = None, round_id: Optional[int] = None
+    ) -> List[str]:
         """
         List all match IDs, optionally filtered by league and round.
 
@@ -497,6 +497,7 @@ class MatchRepository:
 # PLAYER HISTORY REPOSITORY
 # ============================================================================
 
+
 class PlayerHistoryRepository:
     """
     Repository for player match history.
@@ -529,14 +530,8 @@ class PlayerHistoryRepository:
                 "schema_version": "1.0.0",
                 "player_id": self.player_id,
                 "matches": [],
-                "stats": {
-                    "total_matches": 0,
-                    "wins": 0,
-                    "draws": 0,
-                    "losses": 0,
-                    "total_points": 0
-                },
-                "last_updated": generate_timestamp()
+                "stats": {"total_matches": 0, "wins": 0, "draws": 0, "losses": 0, "total_points": 0},
+                "last_updated": generate_timestamp(),
             }
 
         return json.loads(self.path.read_text(encoding="utf-8"))
@@ -561,7 +556,7 @@ class PlayerHistoryRepository:
         opponent_id: str,
         result: str,
         points: int,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Add a match to player's history and update stats.
@@ -585,7 +580,7 @@ class PlayerHistoryRepository:
             "opponent_id": opponent_id,
             "result": result,
             "points": points,
-            "timestamp": generate_timestamp()
+            "timestamp": generate_timestamp(),
         }
 
         if details:
@@ -594,13 +589,9 @@ class PlayerHistoryRepository:
         history_data["matches"].append(match_record)
 
         # Update stats
-        stats = history_data.get("stats", {
-            "total_matches": 0,
-            "wins": 0,
-            "draws": 0,
-            "losses": 0,
-            "total_points": 0
-        })
+        stats = history_data.get(
+            "stats", {"total_matches": 0, "wins": 0, "draws": 0, "losses": 0, "total_points": 0}
+        )
 
         stats["total_matches"] = stats.get("total_matches", 0) + 1
         stats["total_points"] = stats.get("total_points", 0) + points

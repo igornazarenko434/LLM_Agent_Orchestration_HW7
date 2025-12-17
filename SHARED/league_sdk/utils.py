@@ -8,10 +8,10 @@ This module provides helper functions for:
 - Auth token generation
 """
 
+import re
 import secrets
 import string
 from datetime import datetime, timezone
-import re
 from typing import Tuple
 
 __all__ = [
@@ -20,7 +20,7 @@ __all__ = [
     "format_sender",
     "parse_sender",
     "generate_conversation_id",
-    "generate_auth_token"
+    "generate_auth_token",
 ]
 
 
@@ -131,7 +131,7 @@ def generate_conversation_id(prefix: str = "conv") -> str:
         'conv-b8d9c1'
     """
     # Generate 6-character random suffix
-    suffix = ''.join(secrets.choice(string.ascii_lowercase + string.digits) for _ in range(6))
+    suffix = "".join(secrets.choice(string.ascii_lowercase + string.digits) for _ in range(6))
     return f"{prefix}-{suffix}"
 
 
@@ -155,4 +155,4 @@ def generate_auth_token(length: int = 32) -> str:
 
     # Generate secure random token using alphanumeric characters
     alphabet = string.ascii_letters + string.digits
-    return ''.join(secrets.choice(alphabet) for _ in range(length))
+    return "".join(secrets.choice(alphabet) for _ in range(length))

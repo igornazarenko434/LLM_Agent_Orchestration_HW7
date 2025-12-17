@@ -16,65 +16,58 @@ Protocol: league.v2
 __version__ = "1.0.0"
 __protocol__ = "league.v2"
 
-# Import core protocol models
-from .protocol import (
-    MessageEnvelope,
-    ErrorCode,
-    # Registration Messages
-    RefereeRegisterRequest,
-    RefereeRegisterResponse,
-    LeagueRegisterRequest,
-    LeagueRegisterResponse,
-    # League Orchestration
-    RoundAnnouncement,
-    RoundCompleted,
-    LeagueCompleted,
-    LeagueStandingsUpdate,
-    # Match Flow
-    GameInvitation,
-    GameJoinAck,
-    ChooseParityCall,
-    ChooseParityResponse,
-    GameOver,
-    MatchResultReport,
-    # Query Messages
-    LeagueQuery,
-    LeagueQueryResponse,
-    # Error Messages
-    LeagueError,
-    GameError,
-    # JSON-RPC 2.0 Wrapper
-    JSONRPCRequest,
-    JSONRPCResponse,
-    JSONRPCError,
-    wrap_message,
-    unwrap_message,
-    # Helper functions
-    validate_message_envelope,
-    get_message_class,
-)
-
 # Import logging infrastructure
 from .logger import (
-    JsonLogger,
-    setup_logger,
     JSONFormatter,
-    log_message_sent,
-    log_message_received,
+    JsonLogger,
     log_error,
+    log_message_received,
+    log_message_sent,
+    setup_logger,
+)
+
+# Import core protocol models
+from .protocol import (  # Registration Messages; League Orchestration; Match Flow; Query Messages; Error Messages; JSON-RPC 2.0 Wrapper; Helper functions
+    ChooseParityCall,
+    ChooseParityResponse,
+    ErrorCode,
+    GameError,
+    GameInvitation,
+    GameJoinAck,
+    GameOver,
+    JSONRPCError,
+    JSONRPCRequest,
+    JSONRPCResponse,
+    LeagueCompleted,
+    LeagueError,
+    LeagueQuery,
+    LeagueQueryResponse,
+    LeagueRegisterRequest,
+    LeagueRegisterResponse,
+    LeagueStandingsUpdate,
+    MatchResultReport,
+    MessageEnvelope,
+    RefereeRegisterRequest,
+    RefereeRegisterResponse,
+    RoundAnnouncement,
+    RoundCompleted,
+    get_message_class,
+    unwrap_message,
+    validate_message_envelope,
+    wrap_message,
 )
 
 # Import retry infrastructure
 from .retry import (
-    retry_with_backoff,
-    RetryableError,
-    NonRetryableError,
-    MaxRetriesExceededError,
     CircuitBreaker,
+    MaxRetriesExceededError,
+    NonRetryableError,
+    RetryableError,
     RetryConfig,
     call_with_retry,
     get_retry_config,
     is_error_retryable,
+    retry_with_backoff,
 )
 
 __all__ = [

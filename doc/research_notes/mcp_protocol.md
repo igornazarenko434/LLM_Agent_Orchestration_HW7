@@ -129,10 +129,10 @@ app = FastAPI()
 async def handle_mcp_request(request: Request):
     # 1. Parse JSON body
     body = await request.json()
-    
+
     # 2. Validate as JSON-RPC Request
     rpc_req = JSONRPCRequest(**body)
-    
+
     # 3. Dispatch to Tool Handler
     if rpc_req.method == "handle_game_invitation":
         result = player_agent.handle_invitation(rpc_req.params)
@@ -141,7 +141,7 @@ async def handle_mcp_request(request: Request):
     else:
         # Return Method Not Found error
         pass
-        
+
     # 4. Return JSON-RPC Response
     return JSONRPCResponse(result=result, id=rpc_req.id)
 ```

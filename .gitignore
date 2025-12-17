@@ -27,6 +27,7 @@ MANIFEST
 venv/
 ENV/
 env/
+.venv/
 
 # IDE
 .vscode/
@@ -34,9 +35,7 @@ env/
 *.swp
 *.swo
 *~
-
-# OS
-.DS_Store
+*.DS_Store
 Thumbs.db
 
 # Project specific
@@ -59,12 +58,23 @@ SHARED/logs/league/*
 SHARED/logs/system/*
 !SHARED/logs/system/.gitkeep
 
-# Testing
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+secrets.json
+
+# Testing & Coverage
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
 .hypothesis/
+coverage.xml
+*.cover
 
 # mypy
 .mypy_cache/

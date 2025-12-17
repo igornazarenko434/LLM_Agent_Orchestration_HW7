@@ -8,9 +8,10 @@ Protocol Version: league.v2
 CRITICAL: Do NOT modify field names - they must match assignment specification exactly!
 """
 
-from typing import Literal, Optional, Any
-from pydantic import BaseModel, Field, field_validator
 import re
+from typing import Any, Literal, Optional
+
+from pydantic import BaseModel, Field, field_validator
 
 __all__ = [
     "MessageEnvelope",
@@ -59,6 +60,7 @@ TIMESTAMP_PATTERN = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$"
 # ERROR CODES
 # ============================================================================
 
+
 class ErrorCode:
     """Error codes as defined in assignment specification."""
 
@@ -84,15 +86,21 @@ class ErrorCode:
     @classmethod
     def is_retryable(cls, error_code: str) -> bool:
         """Check if error code represents a retryable error."""
-        retryable_codes = {cls.INVALID_GAME_STATE, cls.PLAYER_NOT_AVAILABLE,
-                          cls.ROUND_NOT_ACTIVE, cls.RATE_LIMIT_EXCEEDED,
-                          cls.INTERNAL_SERVER_ERROR, cls.SERVICE_UNAVAILABLE}
+        retryable_codes = {
+            cls.INVALID_GAME_STATE,
+            cls.PLAYER_NOT_AVAILABLE,
+            cls.ROUND_NOT_ACTIVE,
+            cls.RATE_LIMIT_EXCEEDED,
+            cls.INTERNAL_SERVER_ERROR,
+            cls.SERVICE_UNAVAILABLE,
+        }
         return error_code in retryable_codes
 
 
 # ============================================================================
 # BASE MESSAGE ENVELOPE
 # ============================================================================
+
 
 class MessageEnvelope(BaseModel):
     """
@@ -113,52 +121,33 @@ class MessageEnvelope(BaseModel):
     """
 
     protocol: Literal["league.v2"] = Field(
-        default="league.v2",
-        description="Protocol version - must be 'league.v2'"
+        default="league.v2", description="Protocol version - must be 'league.v2'"
     )
 
-    message_type: str = Field(
-        ...,
-        description="One of 18 defined message types"
-    )
+    message_type: str = Field(..., description="One of 18 defined message types")
 
-    sender: str = Field(
-        ...,
-        description="Agent identifier: {agent_type}:{agent_id}"
-    )
+    sender: str = Field(..., description="Agent identifier: {agent_type}:{agent_id}")
 
-    timestamp: str = Field(
-        ...,
-        description="ISO 8601 UTC: YYYY-MM-DDTHH:MM:SSZ"
-    )
+    timestamp: str = Field(..., description="ISO 8601 UTC: YYYY-MM-DDTHH:MM:SSZ")
 
-    conversation_id: str = Field(
-        ...,
-        description="Conversation tracking ID"
-    )
+    conversation_id: str = Field(..., description="Conversation tracking ID")
 
     # Optional context fields that can appear in any message
     auth_token: str = Field(
-        default="",
-        description="Auth token (mandatory after registration, empty during registration)"
+        default="", description="Auth token (mandatory after registration, empty during registration)"
     )
 
     league_id: Optional[str] = Field(
-        default=None,
-        description="League identifier (optional context field)"
+        default=None, description="League identifier (optional context field)"
     )
 
-    round_id: Optional[int] = Field(
-        default=None,
-        description="Round number (optional context field)"
-    )
+    round_id: Optional[int] = Field(default=None, description="Round number (optional context field)")
 
     match_id: Optional[str] = Field(
-        default=None,
-        description="Match identifier (optional context field)"
+        default=None, description="Match identifier (optional context field)"
     )
 
-    @field_validator('sender')
+    @field_validator("sender")
     @classmethod
     def validate_sender_format(cls, v: str) -> str:
         """Validate sender format."""
@@ -166,7 +155,7 @@ class MessageEnvelope(BaseModel):
             raise ValueError(f"Invalid sender format: '{v}'")
         return v
 
-    @field_validator('timestamp')
+    @field_validator("timestamp")
     @classmethod
     def validate_timestamp_format(cls, v: str) -> str:
         """Validate timestamp is ISO 8601 UTC."""
@@ -181,6 +170,7 @@ class MessageEnvelope(BaseModel):
 # ============================================================================
 # REGISTRATION MESSAGES (EXACT ASSIGNMENT FORMAT)
 # ============================================================================
+
 
 class RefereeRegisterRequest(MessageEnvelope):
     """
@@ -198,13 +188,11 @@ class RefereeRegisterRequest(MessageEnvelope):
         }
     }
     """
+
     message_type: Literal["REFEREE_REGISTER_REQUEST"] = "REFEREE_REGISTER_REQUEST"
     auth_token: str = ""  # Empty for registration
 
-    referee_meta: dict[str, Any] = Field(
-        ...,
-        description="Referee metadata object"
-    )
+    referee_meta: dict[str, Any] = Field(..., description="Referee metadata object")
 
 
 class RefereeRegisterResponse(MessageEnvelope):
@@ -219,6 +207,7 @@ class RefereeRegisterResponse(MessageEnvelope):
         "reason": null
     }
     """
+
     message_type: Literal["REFEREE_REGISTER_RESPONSE"] = "REFEREE_REGISTER_RESPONSE"
 
     status: Literal["ACCEPTED", "REJECTED"] = Field(..., description="Registration status")
@@ -241,13 +230,11 @@ class LeagueRegisterRequest(MessageEnvelope):
         }
     }
     """
+
     message_type: Literal["LEAGUE_REGISTER_REQUEST"] = "LEAGUE_REGISTER_REQUEST"
     auth_token: str = ""  # Empty for registration
 
-    player_meta: dict[str, Any] = Field(
-        ...,
-        description="Player metadata object"
-    )
+    player_meta: dict[str, Any] = Field(..., description="Player metadata object")
 
 
 class LeagueRegisterResponse(MessageEnvelope):
@@ -262,6 +249,7 @@ class LeagueRegisterResponse(MessageEnvelope):
         "reason": null
     }
     """
+
     message_type: Literal["LEAGUE_REGISTER_RESPONSE"] = "LEAGUE_REGISTER_RESPONSE"
 
     status: Literal["ACCEPTED", "REJECTED"] = Field(..., description="Registration status")
@@ -272,6 +260,7 @@ class LeagueRegisterResponse(MessageEnvelope):
 # ============================================================================
 # LEAGUE ORCHESTRATION MESSAGES (EXACT ASSIGNMENT FORMAT)
 # ============================================================================
+
 
 class RoundAnnouncement(MessageEnvelope):
     """
@@ -293,6 +282,7 @@ class RoundAnnouncement(MessageEnvelope):
         ]
     }
     """
+
     message_type: Literal["ROUND_ANNOUNCEMENT"] = "ROUND_ANNOUNCEMENT"
 
     league_id: str = Field(..., description="League identifier")
@@ -323,6 +313,7 @@ class LeagueStandingsUpdate(MessageEnvelope):
         ]
     }
     """
+
     message_type: Literal["LEAGUE_STANDINGS_UPDATE"] = "LEAGUE_STANDINGS_UPDATE"
 
     league_id: str = Field(..., description="League identifier")
@@ -353,12 +344,15 @@ class RoundCompleted(MessageEnvelope):
         }
     }
     """
+
     message_type: Literal["ROUND_COMPLETED"] = "ROUND_COMPLETED"
 
     league_id: str = Field(..., description="League identifier")
     round_id: int = Field(..., ge=1, description="Completed round number")
     matches_completed: int = Field(..., ge=0, description="Number of matches completed")
-    next_round_id: Optional[int] = Field(default=None, description="Next round ID (null if league complete)")
+    next_round_id: Optional[int] = Field(
+        default=None, description="Next round ID (null if league complete)"
+    )
     summary: dict[str, Any] = Field(..., description="Round summary statistics")
 
 
@@ -386,6 +380,7 @@ class LeagueCompleted(MessageEnvelope):
         ]
     }
     """
+
     message_type: Literal["LEAGUE_COMPLETED"] = "LEAGUE_COMPLETED"
 
     league_id: str = Field(..., description="League identifier")
@@ -398,6 +393,7 @@ class LeagueCompleted(MessageEnvelope):
 # ============================================================================
 # MATCH FLOW MESSAGES (EXACT ASSIGNMENT FORMAT)
 # ============================================================================
+
 
 class GameInvitation(MessageEnvelope):
     """
@@ -415,6 +411,7 @@ class GameInvitation(MessageEnvelope):
         "conversation_id": "conv-r1m1-001"
     }
     """
+
     message_type: Literal["GAME_INVITATION"] = "GAME_INVITATION"
 
     league_id: str = Field(..., description="League identifier")
@@ -438,6 +435,7 @@ class GameJoinAck(MessageEnvelope):
         "accept": true
     }
     """
+
     message_type: Literal["GAME_JOIN_ACK"] = "GAME_JOIN_ACK"
 
     match_id: str = Field(..., description="Match identifier")
@@ -468,6 +466,7 @@ class ChooseParityCall(MessageEnvelope):
         "deadline": "2025-01-15T10:30:30Z"
     }
     """
+
     message_type: Literal["CHOOSE_PARITY_CALL"] = "CHOOSE_PARITY_CALL"
 
     match_id: str = Field(..., description="Match identifier")
@@ -491,11 +490,14 @@ class ChooseParityResponse(MessageEnvelope):
         "parity_choice": "even"
     }
     """
+
     message_type: Literal["CHOOSE_PARITY_RESPONSE"] = "CHOOSE_PARITY_RESPONSE"
 
     match_id: str = Field(..., description="Match identifier")
     player_id: str = Field(..., description="Player ID")
-    parity_choice: Literal["even", "odd"] = Field(..., description="Parity choice: 'even' or 'odd' ONLY")
+    parity_choice: Literal["even", "odd"] = Field(
+        ..., description="Parity choice: 'even' or 'odd' ONLY"
+    )
 
 
 class GameOver(MessageEnvelope):
@@ -522,6 +524,7 @@ class GameOver(MessageEnvelope):
         }
     }
     """
+
     message_type: Literal["GAME_OVER"] = "GAME_OVER"
 
     match_id: str = Field(..., description="Match identifier")
@@ -556,6 +559,7 @@ class MatchResultReport(MessageEnvelope):
         }
     }
     """
+
     message_type: Literal["MATCH_RESULT_REPORT"] = "MATCH_RESULT_REPORT"
 
     league_id: str = Field(..., description="League identifier")
@@ -568,6 +572,7 @@ class MatchResultReport(MessageEnvelope):
 # ============================================================================
 # QUERY MESSAGES (EXACT ASSIGNMENT FORMAT)
 # ============================================================================
+
 
 class LeagueQuery(MessageEnvelope):
     """
@@ -594,12 +599,12 @@ class LeagueQuery(MessageEnvelope):
         }
     }
     """
+
     message_type: Literal["LEAGUE_QUERY"] = "LEAGUE_QUERY"
 
     league_id: str = Field(..., description="League identifier")
     query_type: Literal["GET_STANDINGS", "GET_SCHEDULE", "GET_NEXT_MATCH", "GET_PLAYER_STATS"] = Field(
-        ...,
-        description="Query type"
+        ..., description="Query type"
     )
     query_params: dict[str, Any] = Field(default_factory=dict, description="Query parameters")
 
@@ -627,6 +632,7 @@ class LeagueQueryResponse(MessageEnvelope):
         }
     }
     """
+
     message_type: Literal["LEAGUE_QUERY_RESPONSE"] = "LEAGUE_QUERY_RESPONSE"
 
     query_type: str = Field(..., description="Query type that was answered")
@@ -637,6 +643,7 @@ class LeagueQueryResponse(MessageEnvelope):
 # ============================================================================
 # ERROR MESSAGES (EXACT ASSIGNMENT FORMAT)
 # ============================================================================
+
 
 class LeagueError(MessageEnvelope):
     """
@@ -658,6 +665,7 @@ class LeagueError(MessageEnvelope):
         }
     }
     """
+
     message_type: Literal["LEAGUE_ERROR"] = "LEAGUE_ERROR"
 
     error_code: str = Field(..., description="Error code (E001-E018)")
@@ -690,6 +698,7 @@ class GameError(MessageEnvelope):
         "consequence": "Technical loss if max retries exceeded"
     }
     """
+
     message_type: Literal["GAME_ERROR"] = "GAME_ERROR"
 
     match_id: str = Field(..., description="Match identifier")
@@ -704,6 +713,7 @@ class GameError(MessageEnvelope):
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
 
 def validate_message_envelope(message: dict) -> MessageEnvelope:
     """Validate message envelope."""
@@ -739,12 +749,14 @@ def get_message_class(message_type: str) -> type[MessageEnvelope] | None:
 # JSON-RPC 2.0 WRAPPER (for MCP communication)
 # ============================================================================
 
+
 class JSONRPCError(BaseModel):
     """
     JSON-RPC 2.0 Error object.
 
     Used when a request fails or encounters an error.
     """
+
     code: int = Field(..., description="Error code (standard JSON-RPC codes)")
     message: str = Field(..., description="Error message")
     data: Optional[Any] = Field(default=None, description="Additional error data")
@@ -764,6 +776,7 @@ class JSONRPCRequest(BaseModel):
 
     The MessageEnvelope (and all its subclasses) goes inside the `params` field.
     """
+
     jsonrpc: Literal["2.0"] = Field(default="2.0", description="JSON-RPC version")
     method: str = Field(..., description="Message type (e.g., 'GAME_INVITATION')")
     params: dict[str, Any] = Field(..., description="Message envelope parameters")
@@ -791,6 +804,7 @@ class JSONRPCResponse(BaseModel):
         "id": 1
     }
     """
+
     jsonrpc: Literal["2.0"] = Field(default="2.0", description="JSON-RPC version")
     result: Optional[dict[str, Any]] = Field(default=None, description="Success result")
     error: Optional[JSONRPCError] = Field(default=None, description="Error object")
@@ -821,6 +835,7 @@ class JSONRPCResponse(BaseModel):
 # HELPER FUNCTIONS FOR JSON-RPC 2.0 WRAPPING
 # ============================================================================
 
+
 def wrap_message(message: MessageEnvelope, request_id: int | str = 1) -> JSONRPCRequest:
     """
     Wrap a MessageEnvelope in JSON-RPC 2.0 request format.
@@ -839,10 +854,7 @@ def wrap_message(message: MessageEnvelope, request_id: int | str = 1) -> JSONRPC
         '{"jsonrpc": "2.0", "method": "GAME_INVITATION", "params": {...}, "id": 123}'
     """
     return JSONRPCRequest(
-        jsonrpc="2.0",
-        method=message.message_type,
-        params=message.model_dump(),
-        id=request_id
+        jsonrpc="2.0", method=message.message_type, params=message.model_dump(), id=request_id
     )
 
 

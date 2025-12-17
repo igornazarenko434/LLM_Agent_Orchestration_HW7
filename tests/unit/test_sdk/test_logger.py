@@ -9,17 +9,18 @@ Tests the JsonLogger implementation:
 - Legacy helper function compatibility
 """
 
-import pytest
 import json
 import logging
 from pathlib import Path
+
+import pytest
 from league_sdk.logger import (
-    JsonLogger,
-    setup_logger,
     JSONFormatter,
-    log_message_sent,
+    JsonLogger,
+    log_error,
     log_message_received,
-    log_error
+    log_message_sent,
+    setup_logger,
 )
 
 
@@ -38,13 +39,13 @@ class TestJsonLoggerInitialization:
     def test_league_logger_creates_league_directory(self, tmp_path):
         """Test that league logger creates league/<id>/ directory."""
         logger = JsonLogger(
-            component="league_manager",
-            league_id="league_2025_even_odd",
-            log_root=tmp_path
+            component="league_manager", league_id="league_2025_even_odd", log_root=tmp_path
         )
 
         assert (tmp_path / "league" / "league_2025_even_odd").exists()
-        assert logger.log_file == tmp_path / "league" / "league_2025_even_odd" / "league_manager.log.jsonl"
+        assert (
+            logger.log_file == tmp_path / "league" / "league_2025_even_odd" / "league_manager.log.jsonl"
+        )
 
     def test_system_logger_creates_system_directory(self, tmp_path):
         """Test that system logger creates system/ directory."""
@@ -203,7 +204,7 @@ class TestJsonLoggerFormat:
             "Test message",
             event_type="TEST_EVENT",
             message_type="GAME_INVITATION",
-            conversation_id="R1M1"
+            conversation_id="R1M1",
         )
 
         with logger.log_file.open("r") as f:
@@ -217,12 +218,7 @@ class TestJsonLoggerFormat:
         """Test that extra kwargs are included in log."""
         logger = JsonLogger(component="test", log_root=tmp_path)
 
-        logger.info(
-            "Test message",
-            custom_field="custom_value",
-            match_id="R1M1",
-            player_count=4
-        )
+        logger.info("Test message", custom_field="custom_value", match_id="R1M1", player_count=4)
 
         with logger.log_file.open("r") as f:
             data = json.loads(f.readline())
@@ -292,7 +288,9 @@ class TestJsonLoggerMessageLogging:
 
     def test_log_message_sent(self, tmp_path):
         """Test log_message_sent() method."""
-        logger = JsonLogger(component="player:P01", agent_id="P01", min_level="DEBUG", log_root=tmp_path)
+        logger = JsonLogger(
+            component="player:P01", agent_id="P01", min_level="DEBUG", log_root=tmp_path
+        )
 
         logger.log_message_sent("GAME_INVITATION", "P02", conversation_id="R1M1")
 
@@ -306,7 +304,9 @@ class TestJsonLoggerMessageLogging:
 
     def test_log_message_received(self, tmp_path):
         """Test log_message_received() method."""
-        logger = JsonLogger(component="player:P01", agent_id="P01", min_level="DEBUG", log_root=tmp_path)
+        logger = JsonLogger(
+            component="player:P01", agent_id="P01", min_level="DEBUG", log_root=tmp_path
+        )
 
         logger.log_message_received("CHOOSE_PARITY_CALL", "REF01", conversation_id="R1M1")
 
@@ -353,11 +353,7 @@ class TestLegacyLoggerAPI:
         log_file = tmp_path / "test.log.jsonl"
         logger = setup_logger("test", log_file)
 
-        message = {
-            "message_type": "GAME_INVITATION",
-            "sender": "REF01",
-            "conversation_id": "R1M1"
-        }
+        message = {"message_type": "GAME_INVITATION", "sender": "REF01", "conversation_id": "R1M1"}
 
         log_message_sent(logger, message)
 
@@ -372,11 +368,7 @@ class TestLegacyLoggerAPI:
         log_file = tmp_path / "test.log.jsonl"
         logger = setup_logger("test", log_file)
 
-        message = {
-            "message_type": "CHOOSE_PARITY_CALL",
-            "sender": "REF01",
-            "conversation_id": "R1M1"
-        }
+        message = {"message_type": "CHOOSE_PARITY_CALL", "sender": "REF01", "conversation_id": "R1M1"}
 
         log_message_received(logger, message)
 

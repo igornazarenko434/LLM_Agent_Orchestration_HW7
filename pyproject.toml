@@ -1,0 +1,97 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 104
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+^/venv/
+^/.venv/
+^/env/
+^/dist/
+^/build/
+^/__pycache__/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 104
+skip = ["venv", ".venv", "env", "dist", "build", "__pycache__"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+disallow_untyped_decorators = false
+no_implicit_optional = false
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = false
+warn_unreachable = true
+strict = false
+ignore_missing_imports = true
+exclude = ["venv", ".venv", "env", "dist", "build", "__pycache__", "tests"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+# Ignore errors in specific modules where fixes would require code changes
+[[tool.mypy.overrides]]
+module = [
+    "SHARED.league_sdk.logger",
+    "SHARED.league_sdk.protocol",
+    "SHARED.league_sdk.retry",
+    "SHARED.league_sdk.config_loader"
+]
+ignore_errors = true
+
+
+[tool.pylint.messages_control]
+disable = [
+    "C0111",  # Missing docstring (enforced via pydocstyle)
+    "R0903",  # Too few public methods (common for data classes)
+    "R0913",  # Too many arguments
+    "R0917",  # Too many positional arguments
+    "W1514",  # Using open without explicit encoding
+    "C0411",  # Wrong import order
+    "W0611",  # Unused import
+    "W0612",  # Unused variable
+    "W0201",  # Attribute defined outside __init__
+    "C0415",  # Import outside toplevel
+    "W0707",  # Raise missing from
+    "R1710",  # Inconsistent return statements
+    "C0325",  # Unnecessary parens
+    "R0801",  # Duplicate code
+    "E0401",  # Import error (e.g. setuptools in venv)
+    "C0103",  # Invalid-name for module (due to agent naming convention)
+]
+
+[tool.pylint.format]
+max-line-length = 104
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --cov=agents --cov=SHARED/league_sdk --cov-report=term-missing"
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+    "slow: Slow running tests",
+]

@@ -2,9 +2,11 @@
 Unit tests for default configuration templates (M3.4).
 """
 
-import pytest
 import json
 from pathlib import Path
+
+import pytest
+
 
 @pytest.mark.unit
 class TestDefaultConfigs:
@@ -49,6 +51,7 @@ class TestDefaultConfigs:
         assert "metadata" in data
         assert data["metadata"]["match_timeout_enforcement"] is True
         assert data["metadata"]["auto_register"] is True
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

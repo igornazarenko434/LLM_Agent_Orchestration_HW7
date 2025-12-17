@@ -11,8 +11,8 @@ JsonLogger is the recommended approach for all agents.
 import json
 import logging
 from datetime import datetime, timezone
-from pathlib import Path
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 __all__ = [
@@ -21,7 +21,7 @@ __all__ = [
     "JSONFormatter",
     "log_message_sent",
     "log_message_received",
-    "log_error"
+    "log_error",
 ]
 
 # Default log root directory
@@ -57,7 +57,7 @@ class JsonLogger:
         agent_id: Optional[str] = None,
         league_id: Optional[str] = None,
         min_level: str = "INFO",
-        log_root: Optional[Path] = None
+        log_root: Optional[Path] = None,
     ):
         """
         Initialize JsonLogger.
@@ -101,7 +101,7 @@ class JsonLogger:
         message_type: Optional[str] = None,
         conversation_id: Optional[str] = None,
         data: Optional[Dict[str, Any]] = None,
-        **extra_fields
+        **extra_fields,
     ) -> None:
         """
         Write a log entry.
@@ -125,7 +125,7 @@ class JsonLogger:
             "level": level,
             "agent_id": self.agent_id,
             "component": self.component,
-            "message": message
+            "message": message,
         }
 
         # Add optional fields
@@ -145,48 +145,24 @@ class JsonLogger:
         with self.log_file.open("a", encoding="utf-8") as f:
             f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
-    def debug(
-        self,
-        message: str,
-        event_type: Optional[str] = None,
-        **kwargs
-    ) -> None:
+    def debug(self, message: str, event_type: Optional[str] = None, **kwargs) -> None:
         """Log DEBUG level message."""
         self.log("DEBUG", message, event_type=event_type, **kwargs)
 
-    def info(
-        self,
-        message: str,
-        event_type: Optional[str] = None,
-        **kwargs
-    ) -> None:
+    def info(self, message: str, event_type: Optional[str] = None, **kwargs) -> None:
         """Log INFO level message."""
         self.log("INFO", message, event_type=event_type, **kwargs)
 
-    def warning(
-        self,
-        message: str,
-        event_type: Optional[str] = None,
-        **kwargs
-    ) -> None:
+    def warning(self, message: str, event_type: Optional[str] = None, **kwargs) -> None:
         """Log WARNING level message."""
         self.log("WARNING", message, event_type=event_type, **kwargs)
 
-    def error(
-        self,
-        message: str,
-        event_type: Optional[str] = None,
-        **kwargs
-    ) -> None:
+    def error(self, message: str, event_type: Optional[str] = None, **kwargs) -> None:
         """Log ERROR level message."""
         self.log("ERROR", message, event_type=event_type, **kwargs)
 
     def log_message_sent(
-        self,
-        message_type: str,
-        recipient: str,
-        conversation_id: Optional[str] = None,
-        **details
+        self, message_type: str, recipient: str, conversation_id: Optional[str] = None, **details
     ) -> None:
         """
         Log a sent message.
@@ -203,15 +179,11 @@ class JsonLogger:
             message_type=message_type,
             recipient=recipient,
             conversation_id=conversation_id,
-            **details
+            **details,
         )
 
     def log_message_received(
-        self,
-        message_type: str,
-        sender: str,
-        conversation_id: Optional[str] = None,
-        **details
+        self, message_type: str, sender: str, conversation_id: Optional[str] = None, **details
     ) -> None:
         """
         Log a received message.
@@ -228,15 +200,10 @@ class JsonLogger:
             message_type=message_type,
             sender=sender,
             conversation_id=conversation_id,
-            **details
+            **details,
         )
 
-    def log_error_event(
-        self,
-        error_code: str,
-        error_message: str,
-        **details
-    ) -> None:
+    def log_error_event(self, error_code: str, error_message: str, **details) -> None:
         """
         Log an error event with error code.
 
@@ -249,7 +216,7 @@ class JsonLogger:
             f"Error {error_code}: {error_message}",
             event_type="ERROR_OCCURRED",
             error_code=error_code,
-            **details
+            **details,
         )
 
 
@@ -257,15 +224,35 @@ class JsonLogger:
 # Legacy Logger API (for backward compatibility)
 # ============================================================================
 
+
 class JSONFormatter(logging.Formatter):
     """Custom formatter that outputs logs as JSON Lines."""
 
     # Standard LogRecord attributes to skip (not part of extra fields)
     STANDARD_ATTRIBUTES = {
-        'name', 'msg', 'args', 'created', 'msecs', 'levelname', 'levelno',
-        'pathname', 'filename', 'module', 'exc_info', 'exc_text', 'stack_info',
-        'lineno', 'funcName', 'process', 'processName', 'thread', 'threadName',
-        'taskName', 'relativeCreated', 'getMessage', 'message'
+        "name",
+        "msg",
+        "args",
+        "created",
+        "msecs",
+        "levelname",
+        "levelno",
+        "pathname",
+        "filename",
+        "module",
+        "exc_info",
+        "exc_text",
+        "stack_info",
+        "lineno",
+        "funcName",
+        "process",
+        "processName",
+        "thread",
+        "threadName",
+        "taskName",
+        "relativeCreated",
+        "getMessage",
+        "message",
     }
 
     def format(self, record: logging.LogRecord) -> str:
@@ -287,12 +274,12 @@ class JSONFormatter(logging.Formatter):
 
         # Add all extra fields (any attribute not in standard LogRecord)
         for key, value in record.__dict__.items():
-            if key not in self.STANDARD_ATTRIBUTES and not key.startswith('_'):
+            if key not in self.STANDARD_ATTRIBUTES and not key.startswith("_"):
                 log_data[key] = value
 
         # Include exception info if present
         if record.exc_info:
-            log_data['exception'] = self.formatException(record.exc_info)
+            log_data["exception"] = self.formatException(record.exc_info)
 
         return json.dumps(log_data, ensure_ascii=False)
 
@@ -302,7 +289,7 @@ def setup_logger(
     log_file: str | Path,
     level: int = logging.INFO,
     max_bytes: int = 100 * 1024 * 1024,  # 100MB
-    backup_count: int = 5
+    backup_count: int = 5,
 ) -> logging.Logger:
     """
     Set up structured JSON logger with rotation (legacy API).
@@ -327,10 +314,7 @@ def setup_logger(
 
     # Create rotating file handler
     handler = RotatingFileHandler(
-        log_file,
-        maxBytes=max_bytes,
-        backupCount=backup_count,
-        encoding='utf-8'
+        log_file, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
     )
     handler.setLevel(level)
 
@@ -355,11 +339,11 @@ def log_message_sent(logger: logging.Logger, message: dict) -> None:
     logger.info(
         f"Sent {message.get('message_type', 'UNKNOWN')}",
         extra={
-            'event_type': 'MESSAGE_SENT',
-            'message_type': message.get('message_type'),
-            'conversation_id': message.get('conversation_id'),
-            'sender': message.get('sender')
-        }
+            "event_type": "MESSAGE_SENT",
+            "message_type": message.get("message_type"),
+            "conversation_id": message.get("conversation_id"),
+            "sender": message.get("sender"),
+        },
     )
 
 
@@ -374,11 +358,11 @@ def log_message_received(logger: logging.Logger, message: dict) -> None:
     logger.info(
         f"Received {message.get('message_type', 'UNKNOWN')}",
         extra={
-            'event_type': 'MESSAGE_RECEIVED',
-            'message_type': message.get('message_type'),
-            'conversation_id': message.get('conversation_id'),
-            'sender': message.get('sender')
-        }
+            "event_type": "MESSAGE_RECEIVED",
+            "message_type": message.get("message_type"),
+            "conversation_id": message.get("conversation_id"),
+            "sender": message.get("sender"),
+        },
     )
 
 
@@ -392,14 +376,10 @@ def log_error(logger: logging.Logger, error_code: str, details: dict) -> None:
         details: Error details dictionary
     """
     # Extract message from details to avoid overwriting LogRecord.message
-    error_message = details.get('message', 'Unknown error')
-    extra_details = {k: v for k, v in details.items() if k != 'message'}
+    error_message = details.get("message", "Unknown error")
+    extra_details = {k: v for k, v in details.items() if k != "message"}
 
     logger.error(
         f"Error {error_code}: {error_message}",
-        extra={
-            'event_type': 'ERROR_OCCURRED',
-            'error_code': error_code,
-            **extra_details
-        }
+        extra={"event_type": "ERROR_OCCURRED", "error_code": error_code, **extra_details},
     )

@@ -9,36 +9,38 @@ Tests Pydantic models for the league.v2 protocol:
 - Error code handling
 """
 
-import pytest
 import json
-from pydantic import ValidationError
+
+import pytest
 from league_sdk.protocol import (
-    MessageEnvelope,
-    GameInvitation,
-    GameJoinAck,
     ChooseParityCall,
     ChooseParityResponse,
+    ErrorCode,
+    GameError,
+    GameInvitation,
+    GameJoinAck,
     GameOver,
-    MatchResultReport,
+    JSONRPCError,
+    JSONRPCRequest,
+    JSONRPCResponse,
+    LeagueCompleted,
+    LeagueError,
+    LeagueQuery,
+    LeagueQueryResponse,
     LeagueRegisterRequest,
     LeagueRegisterResponse,
+    LeagueStandingsUpdate,
+    MatchResultReport,
+    MessageEnvelope,
     RefereeRegisterRequest,
     RefereeRegisterResponse,
     RoundAnnouncement,
-    LeagueStandingsUpdate,
     RoundCompleted,
-    LeagueCompleted,
-    LeagueQuery,
-    LeagueQueryResponse,
-    LeagueError,
-    GameError,
-    JSONRPCRequest,
-    JSONRPCResponse,
-    JSONRPCError,
-    ErrorCode,
+    unwrap_message,
     wrap_message,
-    unwrap_message
 )
+from pydantic import ValidationError
+
 
 @pytest.mark.unit
 class TestJSONRPCStructure:
@@ -46,12 +48,7 @@ class TestJSONRPCStructure:
 
     def test_valid_jsonrpc_request(self):
         """Test creating a valid JSON-RPC request."""
-        req = JSONRPCRequest(
-            jsonrpc="2.0",
-            method="test_method",
-            params={"key": "value"},
-            id=1
-        )
+        req = JSONRPCRequest(jsonrpc="2.0", method="test_method", params={"key": "value"}, id=1)
         assert req.jsonrpc == "2.0"
         assert req.method == "test_method"
         assert req.id == 1
@@ -98,11 +95,7 @@ class TestJSONRPCStructure:
     def test_jsonrpc_response_cannot_have_both_result_and_error(self):
         """Test validation: cannot have both result and error."""
         with pytest.raises(ValueError, match="Response cannot have both"):
-            JSONRPCResponse(
-                result={"status": "ok"},
-                error=JSONRPCError(code=1, message="error"),
-                id=1
-            )
+            JSONRPCResponse(result={"status": "ok"}, error=JSONRPCError(code=1, message="error"), id=1)
 
     def test_jsonrpc_error_structure(self):
         """Test JSONRPCError structure."""
@@ -115,6 +108,7 @@ class TestJSONRPCStructure:
         """Test error object with optional data field."""
         err = JSONRPCError(code=1, message="error", data={"retry": True})
         assert err.data["retry"] is True
+
 
 @pytest.mark.unit
 class TestErrorCodes:
@@ -141,6 +135,7 @@ class TestErrorCodes:
         assert ErrorCode.is_retryable(ErrorCode.AUTHENTICATION_FAILED) is False
         assert ErrorCode.is_retryable(ErrorCode.PROTOCOL_VERSION_MISMATCH) is False
 
+
 @pytest.mark.unit
 class TestTwoLayerIDSystem:
     """Test the two-layer ID system (JSON-RPC ID vs Conversation ID)."""
@@ -151,41 +146,54 @@ class TestTwoLayerIDSystem:
         msg = GameInvitation(
             sender="referee:REF01",
             timestamp="2025-01-01T12:00:00Z",
-            conversation_id="conv-123", # Inner ID
+            conversation_id="conv-123",  # Inner ID
             league_id="league_1",
             round_id=1,
             match_id="M1",
             game_type="even_odd",
             role_in_match="PLAYER_A",
-            opponent_id="P02"
+            opponent_id="P02",
         )
-        
+
         # Wrap in JSON-RPC (outer layer)
-        req = wrap_message(msg, request_id=999) # Outer ID
-        
+        req = wrap_message(msg, request_id=999)  # Outer ID
+
         assert req.id == 999
         assert req.params["conversation_id"] == "conv-123"
 
     def test_multiple_messages_same_conversation_different_rpc_ids(self):
         """Verify conversation ID persists across different RPC calls."""
         conv_id = "conv-match-1"
-        
+
         # Message 1: Invitation
         msg1 = GameInvitation(
-            sender="referee:REF01", timestamp="2025-01-01T12:00:00Z", conversation_id=conv_id,
-            league_id="L1", round_id=1, match_id="M1", game_type="g", role_in_match="PLAYER_A", opponent_id="P2"
+            sender="referee:REF01",
+            timestamp="2025-01-01T12:00:00Z",
+            conversation_id=conv_id,
+            league_id="L1",
+            round_id=1,
+            match_id="M1",
+            game_type="g",
+            role_in_match="PLAYER_A",
+            opponent_id="P2",
         )
         req1 = wrap_message(msg1, request_id=1)
-        
+
         # Message 2: Ack
         msg2 = GameJoinAck(
-            sender="player:P01", timestamp="2025-01-01T12:00:01Z", conversation_id=conv_id,
-            match_id="M1", player_id="P01", arrival_timestamp="2025-01-01T12:00:01Z", accept=True
+            sender="player:P01",
+            timestamp="2025-01-01T12:00:01Z",
+            conversation_id=conv_id,
+            match_id="M1",
+            player_id="P01",
+            arrival_timestamp="2025-01-01T12:00:01Z",
+            accept=True,
         )
         req2 = wrap_message(msg2, request_id=2)
-        
+
         assert req1.id != req2.id
         assert req1.params["conversation_id"] == req2.params["conversation_id"]
+
 
 @pytest.mark.unit
 class TestProtocolVersion:
@@ -195,6 +203,7 @@ class TestProtocolVersion:
         """Verify JSON-RPC version is strictly '2.0'."""
         with pytest.raises(ValidationError):
             JSONRPCRequest(jsonrpc="1.0", method="test", params={}, id=1)
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

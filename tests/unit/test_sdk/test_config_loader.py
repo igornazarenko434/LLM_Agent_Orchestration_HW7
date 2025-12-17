@@ -8,19 +8,21 @@ Tests configuration file loading and validation:
 - Error handling for missing/invalid files
 """
 
-import pytest
 import json
 import tempfile
 from pathlib import Path
-from pydantic import ValidationError
+
+import pytest
 from league_sdk.config_loader import (
-    load_json_file,
-    validate_config,
-    load_system_config,
-    load_league_config,
     load_agents_config,
+    load_json_file,
+    load_league_config,
+    load_system_config,
+    validate_config,
 )
-from league_sdk.config_models import SystemConfig, LeagueConfig
+from league_sdk.config_models import LeagueConfig, SystemConfig
+from pydantic import ValidationError
+
 
 @pytest.mark.unit
 class TestLoadJSONFile:
@@ -48,6 +50,7 @@ class TestLoadJSONFile:
         with pytest.raises(json.JSONDecodeError):
             load_json_file(test_file)
 
+
 @pytest.mark.unit
 class TestValidateConfig:
     """Test configuration validation."""
@@ -64,20 +67,20 @@ class TestValidateConfig:
                 "game_over_sec": 5,
                 "match_result_sec": 10,
                 "league_query_sec": 10,
-                "generic_sec": 10
+                "generic_sec": 10,
             },
             "retry_policy": {
                 "max_retries": 3,
                 "backoff_strategy": "exponential",
                 "initial_delay_sec": 2.0,
                 "max_delay_sec": 10.0,
-                "retryable_errors": ["E005", "E006"]
+                "retryable_errors": ["E005", "E006"],
             },
             "security": {
                 "auth_token_length": 32,
                 "token_ttl_minutes": 1440,
                 "require_auth": True,
-                "allowed_origins": ["*"]
+                "allowed_origins": ["*"],
             },
             "network": {
                 "host": "localhost",
@@ -85,8 +88,8 @@ class TestValidateConfig:
                 "referee_port_start": 8001,
                 "referee_port_end": 8002,
                 "player_port_start": 8101,
-                "player_port_end": 9100
-            }
+                "player_port_end": 9100,
+            },
         }
 
         config = validate_config(data, SystemConfig)
@@ -99,11 +102,12 @@ class TestValidateConfig:
 
         data = {
             "schema_version": "1.0.0",
-            "protocol_version": "invalid_version"  # Should be "league.v2"
+            "protocol_version": "invalid_version",  # Should be "league.v2"
         }
 
         with pytest.raises(PydanticValidationError):
             validate_config(data, SystemConfig)
+
 
 @pytest.mark.unit
 class TestLoadSystemConfig:
@@ -138,20 +142,20 @@ class TestLoadSystemConfig:
                 "game_over_sec": 8,
                 "match_result_sec": 12,
                 "league_query_sec": 15,
-                "generic_sec": 15
+                "generic_sec": 15,
             },
             "retry_policy": {
                 "max_retries": 5,
                 "backoff_strategy": "linear",
                 "initial_delay_sec": 1.0,
                 "max_delay_sec": 5.0,
-                "retryable_errors": ["E005"]
+                "retryable_errors": ["E005"],
             },
             "security": {
                 "auth_token_length": 64,
                 "token_ttl_minutes": 720,
                 "require_auth": False,
-                "allowed_origins": ["http://localhost:3000"]
+                "allowed_origins": ["http://localhost:3000"],
             },
             "network": {
                 "host": "0.0.0.0",
@@ -159,8 +163,8 @@ class TestLoadSystemConfig:
                 "referee_port_start": 9001,
                 "referee_port_end": 9002,
                 "player_port_start": 9101,
-                "player_port_end": 10100
-            }
+                "player_port_end": 10100,
+            },
         }
         config_file.write_text(json.dumps(config_data))
 
@@ -169,6 +173,7 @@ class TestLoadSystemConfig:
         assert config.retry_policy.max_retries == 5
         assert config.security.auth_token_length == 64
         assert config.network.league_manager_port == 9000
+
 
 @pytest.mark.unit
 class TestLoadLeagueConfig:
@@ -199,16 +204,9 @@ class TestLoadLeagueConfig:
             "display_name": "Test League 2025",
             "game_type": "even_odd",
             "status": "ACTIVE",
-            "scoring": {
-                "points_for_win": 5,
-                "points_for_draw": 2,
-                "points_for_loss": 0
-            },
+            "scoring": {"points_for_win": 5, "points_for_draw": 2, "points_for_loss": 0},
             "schedule_type": "round_robin",
-            "participants": {
-                "min_players": 4,
-                "max_players": 100
-            }
+            "participants": {"min_players": 4, "max_players": 100},
         }
         config_file.write_text(json.dumps(config_data))
 
@@ -217,6 +215,7 @@ class TestLoadLeagueConfig:
         assert config.status == "ACTIVE"
         assert config.scoring.points_for_win == 5
         assert config.participants.min_players == 4
+
 
 @pytest.mark.unit
 class TestLoadAgentsConfig:
@@ -267,9 +266,9 @@ class TestLoadAgentsConfig:
                     "display_name": "Test Player",
                     "endpoint": "http://localhost:8101/mcp",
                     "port": 8101,
-                    "active": True
+                    "active": True,
                 }
-            ]
+            ],
         }
         config_file.write_text(json.dumps(config_data))
 
@@ -277,6 +276,7 @@ class TestLoadAgentsConfig:
         assert isinstance(config, dict)
         assert len(config["agents"]) == 1
         assert config["agents"][0]["agent_id"] == "TEST01"
+
 
 @pytest.mark.unit
 class TestErrorHandling:
@@ -303,10 +303,14 @@ class TestErrorHandling:
 
         config_file = tmp_path / "invalid_system.json"
         # Invalid protocol_version will trigger ValidationError
-        config_file.write_text(json.dumps({
-            "schema_version": "1.0.0",
-            "protocol_version": "invalid_version"  # Must be "league.v2"
-        }))
+        config_file.write_text(
+            json.dumps(
+                {
+                    "schema_version": "1.0.0",
+                    "protocol_version": "invalid_version",  # Must be "league.v2"
+                }
+            )
+        )
 
         with pytest.raises(PydanticValidationError):
             load_system_config(config_file)

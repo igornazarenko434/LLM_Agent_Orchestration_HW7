@@ -78,12 +78,12 @@ A **Technical Loss** is a special administrative outcome awarded by the Referee 
 
 ## 6. Protocol-Aligned Match Flow (league.v2 over JSON-RPC)
 
-1) **Invitation**: Referee sends `GAME_INVITATION` (JSON-RPC method `GAME_INVITATION`) to both players with `match_id`, `league_id`, `conversation_id`, and timestamp.  
-2) **Join Ack**: Each player must respond with `GAME_JOIN_ACK` within **5s**. Missing/late → `E001` timeout and technical loss for the offender.  
-3) **Parity Choice**: Referee issues `CHOOSE_PARITY_CALL` to each player; players respond with `CHOOSE_PARITY_RESPONSE` including `"even"` or `"odd"` within **30s**. Invalid choice → `E010 INVALID_MOVE`; timeout → `E001` and technical loss.  
-4) **Draw Number**: Referee draws integer `N` in `[1,10]` using cryptographic randomness (see §7).  
-5) **Determine Outcome**: Apply rules in §3 and scoring in §4.  
-6) **Notify Players**: Referee sends `GAME_OVER` to both players with drawn number, choices, winner/draw flag, and applied error codes if any.  
+1) **Invitation**: Referee sends `GAME_INVITATION` (JSON-RPC method `GAME_INVITATION`) to both players with `match_id`, `league_id`, `conversation_id`, and timestamp.
+2) **Join Ack**: Each player must respond with `GAME_JOIN_ACK` within **5s**. Missing/late → `E001` timeout and technical loss for the offender.
+3) **Parity Choice**: Referee issues `CHOOSE_PARITY_CALL` to each player; players respond with `CHOOSE_PARITY_RESPONSE` including `"even"` or `"odd"` within **30s**. Invalid choice → `E010 INVALID_MOVE`; timeout → `E001` and technical loss.
+4) **Draw Number**: Referee draws integer `N` in `[1,10]` using cryptographic randomness (see §7).
+5) **Determine Outcome**: Apply rules in §3 and scoring in §4.
+6) **Notify Players**: Referee sends `GAME_OVER` to both players with drawn number, choices, winner/draw flag, and applied error codes if any.
 7) **Report Upstream**: Referee sends `MATCH_RESULT_REPORT` to League Manager; LM updates standings and broadcasts `LEAGUE_STANDINGS_UPDATE` and round/league announcements when applicable.
 
 All messages must include the league.v2 envelope fields (`protocol`, `message_type`, `sender`, `timestamp`, `conversation_id`, `auth_token` post-registration). See `SHARED/league_sdk/protocol.py` for exact schemas.

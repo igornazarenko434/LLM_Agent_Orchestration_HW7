@@ -10,11 +10,11 @@ This module provides:
 """
 
 import functools
-import time
 import logging
+import time
 from datetime import datetime, timedelta, timezone
-from typing import Callable, TypeVar, Any, Dict, Optional, Tuple
 from pathlib import Path
+from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
 
 __all__ = [
     "retry_with_backoff",
@@ -24,18 +24,20 @@ __all__ = [
     "RetryConfig",
     "call_with_retry",
     "get_retry_config",
-    "is_error_retryable"
+    "is_error_retryable",
 ]
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 # ============================================================================
 # EXCEPTION CLASSES
 # ============================================================================
 
+
 class RetryableError(Exception):
     """Base class for errors that should be retried."""
+
     def __init__(self, message: str, error_code: Optional[str] = None):
         super().__init__(message)
         self.error_code = error_code
@@ -43,6 +45,7 @@ class RetryableError(Exception):
 
 class NonRetryableError(Exception):
     """Base class for errors that should not be retried."""
+
     def __init__(self, message: str, error_code: Optional[str] = None):
         super().__init__(message)
         self.error_code = error_code
@@ -50,6 +53,7 @@ class NonRetryableError(Exception):
 
 class MaxRetriesExceededError(Exception):
     """Raised when maximum retry attempts are exceeded."""
+
     def __init__(self, message: str, retry_count: int, last_error: Exception):
         super().__init__(message)
         self.retry_count = retry_count
@@ -59,6 +63,7 @@ class MaxRetriesExceededError(Exception):
 # ============================================================================
 # RETRY CONFIGURATION
 # ============================================================================
+
 
 class RetryConfig:
     """
@@ -84,7 +89,7 @@ class RetryConfig:
         "E009",  # ROUND_NOT_ACTIVE (connection error)
         "E014",  # RATE_LIMIT_EXCEEDED
         "E015",  # INTERNAL_SERVER_ERROR
-        "E016"   # SERVICE_UNAVAILABLE
+        "E016",  # SERVICE_UNAVAILABLE
     ]
 
     @classmethod
@@ -103,6 +108,7 @@ class RetryConfig:
 
         try:
             import json
+
             with open(config_path, "r") as f:
                 config = json.load(f)
                 return config.get("retry_policy", {})
@@ -113,7 +119,7 @@ class RetryConfig:
                 "backoff_strategy": cls.BACKOFF_STRATEGY,
                 "initial_delay_sec": cls.INITIAL_DELAY_SEC,
                 "max_delay_sec": cls.MAX_DELAY_SEC,
-                "retryable_errors": cls.RETRYABLE_ERRORS
+                "retryable_errors": cls.RETRYABLE_ERRORS,
             }
 
 
@@ -144,6 +150,7 @@ def is_error_retryable(error_code: str) -> bool:
 # ============================================================================
 # CIRCUIT BREAKER PATTERN
 # ============================================================================
+
 
 class CircuitBreaker:
     """
@@ -189,8 +196,9 @@ class CircuitBreaker:
 
         if self.state == "OPEN":
             # Check if timeout expired, transition to HALF_OPEN
-            if self.last_failure_time and \
-               datetime.now(timezone.utc) - self.last_failure_time > timedelta(seconds=self.reset_timeout):
+            if self.last_failure_time and datetime.now(
+                timezone.utc
+            ) - self.last_failure_time > timedelta(seconds=self.reset_timeout):
                 self.state = "HALF_OPEN"
                 return True
             return False
@@ -227,7 +235,7 @@ class CircuitBreaker:
             "failures": self.failures,
             "failure_threshold": self.failure_threshold,
             "last_failure_time": self.last_failure_time.isoformat() if self.last_failure_time else None,
-            "reset_timeout_sec": self.reset_timeout
+            "reset_timeout_sec": self.reset_timeout,
         }
 
 
@@ -235,13 +243,14 @@ class CircuitBreaker:
 # RETRY DECORATOR WITH EXPONENTIAL BACKOFF
 # ============================================================================
 
+
 def retry_with_backoff(
     max_retries: Optional[int] = None,
     retryable_exceptions: Tuple = (ConnectionError, TimeoutError, RetryableError),
     initial_delay: Optional[float] = None,
     max_delay: Optional[float] = None,
     logger: Optional[logging.Logger] = None,
-    track_retry_info: bool = False
+    track_retry_info: bool = False,
 ) -> Callable:
     """
     Decorator for retrying functions with exponential backoff.
@@ -291,10 +300,10 @@ def retry_with_backoff(
                         logger.info(
                             f"Retry successful for {func.__name__} on attempt {attempt + 1}",
                             extra={
-                                'event_type': 'RETRY_SUCCESS',
-                                'attempt': attempt + 1,
-                                'total_retries': attempt
-                            }
+                                "event_type": "RETRY_SUCCESS",
+                                "attempt": attempt + 1,
+                                "total_retries": attempt,
+                            },
                         )
 
                     return result
@@ -305,28 +314,32 @@ def retry_with_backoff(
                     # Calculate next retry time
                     if attempt < max_retries - 1:
                         # Exponential backoff: 2^attempt * initial_delay
-                        delay = min(initial_delay * (RetryConfig.BACKOFF_MULTIPLIER ** attempt), max_delay)
+                        delay = min(
+                            initial_delay * (RetryConfig.BACKOFF_MULTIPLIER**attempt), max_delay
+                        )
                         next_retry_at = datetime.now(timezone.utc) + timedelta(seconds=delay)
 
-                        retry_attempts.append({
-                            "attempt": attempt + 1,
-                            "error": str(e),
-                            "delay_seconds": delay,
-                            "next_retry_at": next_retry_at.isoformat()
-                        })
+                        retry_attempts.append(
+                            {
+                                "attempt": attempt + 1,
+                                "error": str(e),
+                                "delay_seconds": delay,
+                                "next_retry_at": next_retry_at.isoformat(),
+                            }
+                        )
 
                         if logger:
                             logger.warning(
                                 f"Retry {attempt + 1}/{max_retries} for {func.__name__} after {delay}s",
                                 extra={
-                                    'event_type': 'RETRY_ATTEMPT',
-                                    'attempt': attempt + 1,
-                                    'max_retries': max_retries,
-                                    'delay_seconds': delay,
-                                    'next_retry_at': next_retry_at.isoformat(),
-                                    'error': str(e),
-                                    'error_type': type(e).__name__
-                                }
+                                    "event_type": "RETRY_ATTEMPT",
+                                    "attempt": attempt + 1,
+                                    "max_retries": max_retries,
+                                    "delay_seconds": delay,
+                                    "next_retry_at": next_retry_at.isoformat(),
+                                    "error": str(e),
+                                    "error_type": type(e).__name__,
+                                },
                             )
 
                         time.sleep(delay)
@@ -336,26 +349,24 @@ def retry_with_backoff(
                             logger.error(
                                 f"Max retries ({max_retries}) exceeded for {func.__name__}",
                                 extra={
-                                    'event_type': 'RETRY_EXHAUSTED',
-                                    'max_retries': max_retries,
-                                    'total_attempts': attempt + 1,
-                                    'error': str(e)
-                                }
+                                    "event_type": "RETRY_EXHAUSTED",
+                                    "max_retries": max_retries,
+                                    "total_attempts": attempt + 1,
+                                    "error": str(e),
+                                },
                             )
 
                         # Raise MaxRetriesExceededError with context
                         error_msg = f"Max retries ({max_retries}) exceeded: {str(e)}"
                         max_retries_error = MaxRetriesExceededError(
-                            error_msg,
-                            retry_count=attempt + 1,
-                            last_error=e
+                            error_msg, retry_count=attempt + 1, last_error=e
                         )
 
                         if track_retry_info:
                             max_retries_error.retry_info = {
                                 "retry_count": attempt + 1,
                                 "max_retries": max_retries,
-                                "attempts": retry_attempts
+                                "attempts": retry_attempts,
                             }
 
                         raise max_retries_error
@@ -366,10 +377,10 @@ def retry_with_backoff(
                         logger.error(
                             f"Non-retryable error in {func.__name__}: {e}",
                             extra={
-                                'event_type': 'NON_RETRYABLE_ERROR',
-                                'error': str(e),
-                                'error_type': type(e).__name__
-                            }
+                                "event_type": "NON_RETRYABLE_ERROR",
+                                "error": str(e),
+                                "error_type": type(e).__name__,
+                            },
                         )
                     raise
 
@@ -378,6 +389,7 @@ def retry_with_backoff(
                 raise last_exception
 
         return wrapper
+
     return decorator
 
 
@@ -385,13 +397,14 @@ def retry_with_backoff(
 # HTTP REQUEST RETRY WRAPPER
 # ============================================================================
 
+
 def call_with_retry(
     endpoint: str,
     method: str,
     params: Dict[str, Any],
     timeout: int = 30,
     logger: Optional[logging.Logger] = None,
-    circuit_breaker: Optional[CircuitBreaker] = None
+    circuit_breaker: Optional[CircuitBreaker] = None,
 ) -> Dict[str, Any]:
     """
     Send JSON-RPC 2.0 request with retry logic.
@@ -430,7 +443,7 @@ def call_with_retry(
                 "error_code": "E016",
                 "error_name": "SERVICE_UNAVAILABLE",
                 "error_description": f"Circuit breaker OPEN for {endpoint}",
-                "circuit_breaker_state": circuit_breaker.get_state()
+                "circuit_breaker_state": circuit_breaker.get_state(),
             }
         }
 
@@ -444,13 +457,8 @@ def call_with_retry(
         try:
             response = requests.post(
                 endpoint,
-                json={
-                    "jsonrpc": "2.0",
-                    "method": method,
-                    "params": params,
-                    "id": 1
-                },
-                timeout=timeout
+                json={"jsonrpc": "2.0", "method": method, "params": params, "id": 1},
+                timeout=timeout,
             )
             response.raise_for_status()
 
@@ -469,19 +477,19 @@ def call_with_retry(
 
             if attempt < max_retries - 1:
                 # Calculate delay: 2, 4, 8 seconds
-                delay = initial_delay * (RetryConfig.BACKOFF_MULTIPLIER ** attempt)
+                delay = initial_delay * (RetryConfig.BACKOFF_MULTIPLIER**attempt)
 
                 if logger:
                     logger.warning(
                         f"Request failed, retry {attempt + 1}/{max_retries} after {delay}s",
                         extra={
-                            'event_type': 'HTTP_RETRY',
-                            'endpoint': endpoint,
-                            'method': method,
-                            'attempt': attempt + 1,
-                            'delay_seconds': delay,
-                            'error': str(e)
-                        }
+                            "event_type": "HTTP_RETRY",
+                            "endpoint": endpoint,
+                            "method": method,
+                            "attempt": attempt + 1,
+                            "delay_seconds": delay,
+                            "error": str(e),
+                        },
                     )
 
                 time.sleep(delay)
@@ -491,12 +499,12 @@ def call_with_retry(
         logger.error(
             f"Max retries exceeded for {endpoint}",
             extra={
-                'event_type': 'HTTP_RETRY_EXHAUSTED',
-                'endpoint': endpoint,
-                'method': method,
-                'max_retries': max_retries,
-                'last_error': str(last_error)
-            }
+                "event_type": "HTTP_RETRY_EXHAUSTED",
+                "endpoint": endpoint,
+                "method": method,
+                "max_retries": max_retries,
+                "last_error": str(last_error),
+            },
         )
 
     return {
@@ -507,7 +515,7 @@ def call_with_retry(
             "retry_info": {
                 "retry_count": max_retries,
                 "max_retries": max_retries,
-                "last_error": str(last_error)
-            }
+                "last_error": str(last_error),
+            },
         }
     }

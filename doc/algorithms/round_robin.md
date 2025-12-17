@@ -51,46 +51,46 @@ Let players be indices $0$ to $N-1$.
 def generate_schedule(players):
     """
     Generates a round-robin schedule for a list of players.
-    
+
     Args:
         players: List of player IDs.
-        
+
     Returns:
         List of rounds, where each round is a list of (p1, p2) tuples.
     """
     n = len(players)
-    
+
     # Handle odd number of players
     if n % 2 == 1:
         players.append(None) # None represents a bye
         n += 1
-        
+
     rounds = []
     # Indices for rotation: keep 0 fixed, rotate 1 to n-1
     rotation_indices = list(range(n))
-    
+
     # Total rounds for single round-robin is n-1
     for r in range(n - 1):
         current_round = []
-        
+
         # Pair players
         for i in range(n // 2):
             p1_idx = rotation_indices[i]
             p2_idx = rotation_indices[n - 1 - i]
-            
+
             p1 = players[p1_idx]
             p2 = players[p2_idx]
-            
+
             # If neither is a bye, schedule the match
             if p1 is not None and p2 is not None:
                 current_round.append((p1, p2))
-                
+
         rounds.append(current_round)
-        
+
         # Rotate indices: keep [0], take last element and insert at [1]
         # [0, 1, 2, 3] -> [0, 3, 1, 2] -> [0, 2, 3, 1]
         rotation_indices = [rotation_indices[0]] + [rotation_indices[-1]] + rotation_indices[1:-1]
-        
+
     return rounds
 ```
 

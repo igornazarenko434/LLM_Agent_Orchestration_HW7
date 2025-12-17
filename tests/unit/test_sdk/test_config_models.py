@@ -9,19 +9,20 @@ Tests Pydantic models for configuration files:
 """
 
 import pytest
-from pydantic import ValidationError
 from league_sdk.config_models import (
-    SystemConfig,
     AgentConfig,
-    LeagueConfig,
     GameConfig,
-    TimeoutConfig,
-    RetryPolicyConfig,
-    SecurityConfig,
+    LeagueConfig,
     NetworkConfig,
+    RetryPolicyConfig,
     ScoringConfig,
-    validate_port_in_range
+    SecurityConfig,
+    SystemConfig,
+    TimeoutConfig,
+    validate_port_in_range,
 )
+from pydantic import ValidationError
+
 
 @pytest.mark.unit
 class TestTimeoutConfig:
@@ -40,10 +41,7 @@ class TestTimeoutConfig:
 
     def test_custom_timeouts(self):
         """Test custom timeout values."""
-        config = TimeoutConfig(
-            registration_sec=20,
-            game_join_ack_sec=10
-        )
+        config = TimeoutConfig(registration_sec=20, game_join_ack_sec=10)
         assert config.registration_sec == 20
         assert config.game_join_ack_sec == 10
         # Check defaults are preserved for others
@@ -54,10 +52,11 @@ class TestTimeoutConfig:
         # Test lower bound (ge=1)
         with pytest.raises(ValidationError):
             TimeoutConfig(registration_sec=0)
-        
+
         # Test upper bound (le=60 for registration)
         with pytest.raises(ValidationError):
             TimeoutConfig(registration_sec=61)
+
 
 @pytest.mark.unit
 class TestRetryPolicyConfig:
@@ -74,10 +73,7 @@ class TestRetryPolicyConfig:
 
     def test_custom_retry_policy(self):
         """Test custom retry policy."""
-        config = RetryPolicyConfig(
-            max_retries=5,
-            backoff_strategy="linear"
-        )
+        config = RetryPolicyConfig(max_retries=5, backoff_strategy="linear")
         assert config.max_retries == 5
         assert config.backoff_strategy == "linear"
 
@@ -85,6 +81,7 @@ class TestRetryPolicyConfig:
         """Test validation of backoff strategy."""
         with pytest.raises(ValidationError):
             RetryPolicyConfig(backoff_strategy="random")  # Invalid strategy
+
 
 @pytest.mark.unit
 class TestSecurityConfig:
@@ -107,6 +104,7 @@ class TestSecurityConfig:
         with pytest.raises(ValidationError):
             SecurityConfig(auth_token_length=16)
 
+
 @pytest.mark.unit
 class TestNetworkConfig:
     """Test NetworkConfig model."""
@@ -124,6 +122,7 @@ class TestNetworkConfig:
         config = NetworkConfig(host="0.0.0.0", league_manager_port=9000)
         assert config.host == "0.0.0.0"
         assert config.league_manager_port == 9000
+
 
 @pytest.mark.unit
 class TestSystemConfig:
@@ -144,7 +143,7 @@ class TestSystemConfig:
             "schema_version": "1.0.0",
             "protocol_version": "league.v2",
             "timeouts": {"registration_sec": 15},
-            "security": {"auth_token_length": 64}
+            "security": {"auth_token_length": 64},
         }
         config = SystemConfig(**data)
         assert config.timeouts.registration_sec == 15
@@ -157,6 +156,7 @@ class TestSystemConfig:
         with pytest.raises(ValidationError):
             SystemConfig(protocol_version="league.v1")
 
+
 @pytest.mark.unit
 class TestAgentConfig:
     """Test AgentConfig model."""
@@ -168,7 +168,7 @@ class TestAgentConfig:
             agent_type="player",
             display_name="Test Player",
             endpoint="http://localhost:8101/mcp",
-            port=8101
+            port=8101,
         )
         assert config.agent_id == "P01"
         assert config.active is True  # Default
@@ -181,7 +181,7 @@ class TestAgentConfig:
                 agent_type="player",
                 display_name="Test",
                 endpoint="http://localhost",
-                port=8000
+                port=8000,
             )
 
     def test_agent_type_validation(self):
@@ -192,8 +192,9 @@ class TestAgentConfig:
                 agent_type="spectator",  # Invalid type
                 display_name="Test",
                 endpoint="http://localhost",
-                port=8000
+                port=8000,
             )
+
 
 @pytest.mark.unit
 class TestScoringConfig:
@@ -211,17 +212,14 @@ class TestScoringConfig:
         config = ScoringConfig(points_for_win=5)
         assert config.points_for_win == 5
 
+
 @pytest.mark.unit
 class TestLeagueConfig:
     """Test LeagueConfig model."""
 
     def test_valid_league_config(self):
         """Test valid league configuration."""
-        config = LeagueConfig(
-            league_id="league_2025",
-            display_name="Test League",
-            game_type="even_odd"
-        )
+        config = LeagueConfig(league_id="league_2025", display_name="Test League", game_type="even_odd")
         assert config.status == "PENDING"  # Default
         assert config.scoring.points_for_win == 3  # Default
 
@@ -231,7 +229,7 @@ class TestLeagueConfig:
             LeagueConfig(
                 league_id="League 2025",  # Contains spaces/caps
                 display_name="Test",
-                game_type="even_odd"
+                game_type="even_odd",
             )
 
     def test_league_status_validation(self):
@@ -241,7 +239,7 @@ class TestLeagueConfig:
                 league_id="test",
                 display_name="Test",
                 game_type="even_odd",
-                status="ARCHIVED"  # Invalid status
+                status="ARCHIVED",  # Invalid status
             )
 
     def test_league_config_from_json(self):
@@ -250,10 +248,11 @@ class TestLeagueConfig:
             "league_id": "test_league",
             "display_name": "Test League",
             "game_type": "even_odd",
-            "scoring": {"points_for_win": 5}
+            "scoring": {"points_for_win": 5},
         }
         config = LeagueConfig(**data)
         assert config.scoring.points_for_win == 5
+
 
 @pytest.mark.unit
 class TestGameConfig:
@@ -262,9 +261,7 @@ class TestGameConfig:
     def test_valid_game_config(self):
         """Test valid game configuration."""
         config = GameConfig(
-            game_type="even_odd",
-            display_name="Even/Odd",
-            rules_module="games.even_odd"
+            game_type="even_odd", display_name="Even/Odd", rules_module="games.even_odd"
         )
         assert config.supports_draw is True  # Default
         assert config.max_round_time_sec == 60  # Default
@@ -272,11 +269,7 @@ class TestGameConfig:
     def test_game_type_pattern_validation(self):
         """Test game type regex pattern."""
         with pytest.raises(ValidationError):
-            GameConfig(
-                game_type="Even-Odd",  # Invalid format
-                display_name="Test",
-                rules_module="test"
-            )
+            GameConfig(game_type="Even-Odd", display_name="Test", rules_module="test")  # Invalid format
 
     def test_game_config_from_json(self):
         """Test creating GameConfig from dict."""
@@ -284,10 +277,11 @@ class TestGameConfig:
             "game_type": "even_odd",
             "display_name": "Even/Odd",
             "rules_module": "games.even_odd",
-            "game_specific_config": {"range": [1, 10]}
+            "game_specific_config": {"range": [1, 10]},
         }
         config = GameConfig(**data)
         assert config.game_specific_config["range"] == [1, 10]
+
 
 @pytest.mark.unit
 class TestPortValidation:
@@ -296,10 +290,10 @@ class TestPortValidation:
     def test_league_manager_port_validation(self):
         """Test League Manager port validation."""
         network_config = NetworkConfig()
-        
+
         # Valid
         assert validate_port_in_range(8000, "league_manager", network_config) is True
-        
+
         # Invalid
         with pytest.raises(ValueError):
             validate_port_in_range(8001, "league_manager", network_config)
@@ -307,11 +301,11 @@ class TestPortValidation:
     def test_referee_port_validation(self):
         """Test Referee port validation."""
         network_config = NetworkConfig()
-        
+
         # Valid
         assert validate_port_in_range(8001, "referee", network_config) is True
         assert validate_port_in_range(8002, "referee", network_config) is True
-        
+
         # Invalid
         with pytest.raises(ValueError):
             validate_port_in_range(8003, "referee", network_config)
@@ -319,13 +313,14 @@ class TestPortValidation:
     def test_player_port_validation(self):
         """Test Player port validation."""
         network_config = NetworkConfig()
-        
+
         # Valid
         assert validate_port_in_range(8101, "player", network_config) is True
-        
+
         # Invalid
         with pytest.raises(ValueError):
             validate_port_in_range(8000, "player", network_config)
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
