@@ -1,0 +1,154 @@
+{
+  "schema_version": "1.0.0",
+  "last_updated": "2025-01-15T00:00:00Z",
+  "league_manager": {
+    "agent_id": "LM01",
+    "agent_type": "league_manager",
+    "display_name": "League Manager",
+    "endpoint": "http://localhost:8000/mcp",
+    "port": 8000,
+    "active": true,
+    "version": "1.0.0",
+    "capabilities": [
+      "register_referee",
+      "register_player",
+      "report_match_result",
+      "get_standings",
+      "broadcast_announcements"
+    ],
+    "game_types": ["even_odd"],
+    "metadata": {
+      "max_concurrent_leagues": 10,
+      "max_players_per_league": 10000,
+      "supported_game_types": ["even_odd"]
+    }
+  },
+  "referees": [
+    {
+      "agent_id": "REF01",
+      "agent_type": "referee",
+      "display_name": "Referee 01",
+      "endpoint": "http://localhost:8001/mcp",
+      "port": 8001,
+      "active": true,
+      "version": "1.0.0",
+      "capabilities": [
+        "conduct_match",
+        "enforce_timeouts",
+        "determine_winner",
+        "report_results"
+      ],
+      "game_types": ["even_odd"],
+      "max_concurrent_matches": 10,
+      "metadata": {
+        "match_timeout_enforcement": true,
+        "supports_draw": true,
+        "specialization": "even_odd"
+      }
+    },
+    {
+      "agent_id": "REF02",
+      "agent_type": "referee",
+      "display_name": "Referee 02",
+      "endpoint": "http://localhost:8002/mcp",
+      "port": 8002,
+      "active": true,
+      "version": "1.0.0",
+      "capabilities": [
+        "conduct_match",
+        "enforce_timeouts",
+        "determine_winner",
+        "report_results"
+      ],
+      "game_types": ["even_odd"],
+      "max_concurrent_matches": 10,
+      "metadata": {
+        "match_timeout_enforcement": true,
+        "supports_draw": true,
+        "specialization": "even_odd"
+      }
+    }
+  ],
+  "players": [
+    {
+      "agent_id": "P01",
+      "agent_type": "player",
+      "display_name": "Player 01",
+      "endpoint": "http://localhost:8101/mcp",
+      "port": 8101,
+      "active": true,
+      "version": "1.0.0",
+      "capabilities": [
+        "handle_game_invitation",
+        "choose_parity",
+        "notify_match_result"
+      ],
+      "game_types": ["even_odd"],
+      "metadata": {
+        "strategy": "random",
+        "team": "alpha",
+        "skill_level": "beginner"
+      }
+    },
+    {
+      "agent_id": "P02",
+      "agent_type": "player",
+      "display_name": "Player 02",
+      "endpoint": "http://localhost:8102/mcp",
+      "port": 8102,
+      "active": true,
+      "version": "1.0.0",
+      "capabilities": [
+        "handle_game_invitation",
+        "choose_parity",
+        "notify_match_result"
+      ],
+      "game_types": ["even_odd"],
+      "metadata": {
+        "strategy": "history_based",
+        "team": "beta",
+        "skill_level": "intermediate"
+      }
+    },
+    {
+      "agent_id": "P03",
+      "agent_type": "player",
+      "display_name": "Player 03",
+      "endpoint": "http://localhost:8103/mcp",
+      "port": 8103,
+      "active": true,
+      "version": "1.0.0",
+      "capabilities": [
+        "handle_game_invitation",
+        "choose_parity",
+        "notify_match_result"
+      ],
+      "game_types": ["even_odd"],
+      "metadata": {
+        "strategy": "random",
+        "team": "gamma",
+        "skill_level": "beginner"
+      }
+    },
+    {
+      "agent_id": "P04",
+      "agent_type": "player",
+      "display_name": "Player 04",
+      "endpoint": "http://localhost:8104/mcp",
+      "port": 8104,
+      "active": true,
+      "version": "1.0.0",
+      "capabilities": [
+        "handle_game_invitation",
+        "choose_parity",
+        "notify_match_result"
+      ],
+      "game_types": ["even_odd"],
+      "metadata": {
+        "strategy": "random",
+        "team": "delta",
+        "skill_level": "beginner"
+      }
+    }
+  ]
+}

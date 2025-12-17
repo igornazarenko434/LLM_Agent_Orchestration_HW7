@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "last_updated": "2025-01-15T00:00:00Z",
+  "games": [
+    {
+      "game_type": "even_odd",
+      "display_name": "Even/Odd",
+      "description": "Players choose 'even' or 'odd'. A random number (1-10) is drawn. The player who chose the correct parity wins. If both choose the same parity, it's a draw.",
+      "rules_module": "agents.referee.games.even_odd",
+      "supports_draw": true,
+      "max_round_time_sec": 60,
+      "min_players": 2,
+      "max_players": 2,
+      "game_specific_config": {
+        "random_range_min": 1,
+        "random_range_max": 10,
+        "valid_choices": ["even", "odd"],
+        "draw_method": "cryptographic",
+        "rules": {
+          "win_condition": "Player's choice matches the parity of the drawn number",
+          "draw_condition": "Both players choose the same parity",
+          "parity_definition": {
+            "even": [2, 4, 6, 8, 10],
+            "odd": [1, 3, 5, 7, 9]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "system_id": "league_system_prod",
+  "protocol_version": "league.v2",
+  "last_updated": "2025-01-15T00:00:00Z",
+  "timeouts": {
+    "registration_sec": 10,
+    "game_join_ack_sec": 5,
+    "parity_choice_sec": 30,
+    "game_over_sec": 5,
+    "match_result_sec": 10,
+    "league_query_sec": 10,
+    "generic_sec": 10
+  },
+  "retry_policy": {
+    "max_retries": 3,
+    "backoff_strategy": "exponential",
+    "initial_delay_sec": 2.0,
+    "max_delay_sec": 10.0,
+    "retryable_errors": ["E001", "E005", "E006", "E009", "E014", "E015", "E016"]
+  },
+  "circuit_breaker": {
+    "failure_threshold": 5,
+    "reset_timeout_sec": 60
+  },
+  "security": {
+    "auth_token_length": 32,
+    "token_ttl_minutes": 1440,
+    "require_auth": true,
+    "allowed_origins": ["*"]
+  },
+  "network": {
+    "host": "localhost",
+    "league_manager_port": 8000,
+    "referee_port_start": 8001,
+    "referee_port_end": 8002,
+    "player_port_start": 8101,
+    "player_port_end": 9100,
+    "max_connections": 100,
+    "request_timeout_sec": 30
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "json",
+    "max_file_size_mb": 100,
+    "backup_count": 5
+  }
+}

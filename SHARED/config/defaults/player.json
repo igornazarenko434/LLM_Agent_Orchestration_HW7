@@ -1,0 +1,23 @@
+{
+  "agent_type": "player",
+  "version": "1.0.0",
+  "log_level": "INFO",
+  "game_types": [
+    "even_odd"
+  ],
+  "capabilities": [
+    "handle_game_invitation",
+    "choose_parity",
+    "notify_match_result"
+  ],
+  "metadata": {
+    "strategy": "random",
+    "team": "default",
+    "skill_level": "beginner",
+    "auto_register": true
+  },
+  "retry_policy_override": {
+    "max_retries": 3,
+    "initial_delay_sec": 2.0
+  }
+}

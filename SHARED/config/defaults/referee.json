@@ -1,0 +1,25 @@
+{
+  "agent_type": "referee",
+  "version": "1.0.0",
+  "log_level": "INFO",
+  "game_types": [
+    "even_odd"
+  ],
+  "capabilities": [
+    "conduct_match",
+    "enforce_timeouts",
+    "determine_winner",
+    "report_results"
+  ],
+  "max_concurrent_matches": 10,
+  "metadata": {
+    "match_timeout_enforcement": true,
+    "supports_draw": true,
+    "specialization": "even_odd",
+    "auto_register": true
+  },
+  "retry_policy_override": {
+    "max_retries": 3,
+    "initial_delay_sec": 2.0
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "last_updated": "2025-01-15T00:00:00Z",
+  "league_id": "league_2025_even_odd",
+  "display_name": "2025 Even/Odd Championship League",
+  "game_type": "even_odd",
+  "status": "ACTIVE",
+  "scoring": {
+    "win_points": 3,
+    "draw_points": 1,
+    "loss_points": 0,
+    "technical_loss_points": 0,
+    "tiebreaker_order": ["points", "wins", "head_to_head", "random"]
+  },
+  "schedule_type": "round_robin",
+  "participants": {
+    "min_players": 2,
+    "max_players": 10000
+  },
+  "registration_deadline": null,
+  "start_time": null,
+  "registered_players": [],
+  "assigned_referees": [],
+  "metadata": {
+    "description": "Official 2025 Even/Odd League Championship",
+    "season": "2025",
+    "division": "main",
+    "created_at": "2025-01-15T00:00:00Z",
+    "created_by": "league_manager:LM01"
+  }
+}
