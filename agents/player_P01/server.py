@@ -91,6 +91,11 @@ class PlayerAgent(BaseAgent):
             senders[f"player:{player.get('agent_id')}"] = "player"
         return senders
 
+    def shutdown(self) -> None:
+        """Transition to SHUTDOWN state and stop the server."""
+        self._transition("SHUTDOWN")
+        self.stop()
+
     def _register_mcp_route(self) -> None:
         """Attach /mcp JSON-RPC endpoint to the FastAPI app."""
 
