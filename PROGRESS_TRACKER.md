@@ -13,7 +13,7 @@
 
 | Metric | Status | Target | Percentage |
 |--------|--------|--------|-----------|
-| **Total Missions** | 22 / 47 | 47 | 47% |
+| **Total Missions** | 24 / 47 | 47 | 51% |
 | **Quality Gates Passed** | 0 / 5 | 5 | 0% (QG-1 Ready) |
 | **Test Coverage** | 91% | ≥85% | **✅ EXCEEDED** |
 | **Protocol Compliance** | 18 / 18 | 18 message types | 100% |
@@ -30,11 +30,11 @@
 | **1. Project Documentation** | 25 pts | 2 / 6 | 33% | 🔄 In Progress |
 | **2. Research & Analysis** | 20 pts | 4 / 4 | 100% | ✅ Complete |
 | **3. README & Documentation** | 15 pts | 0 / 5 | 0% | ☐ Not Started |
-| **4. Structure & Code Quality** | 12 pts | 4 / 8 | 50% | 🔄 In Progress |
+| **4. Structure & Code Quality** | 12 pts | 6 / 8 | 75% | 🔄 In Progress |
 | **5. Testing & QA** | 10 pts | 2 / 6 | 33% | 🔄 In Progress |
 | **6. Configuration & Security** | 8 pts | 5 / 5 | 100% | ✅ Complete |
 | **7. Architecture & Design + Polish** | 10 pts | 1 / 4 | 25% | 🔄 In Progress |
-| **TOTAL** | **100 pts** | **18 / 38** | **47%** | **🔄 In Progress** |
+| **TOTAL** | **100 pts** | **20 / 38** | **53%** | **🔄 In Progress** |
 
 ---
 
@@ -135,7 +135,7 @@
 - [x] All configuration files created and validated
 - [x] Shared SDK installed and importable
 - [x] Protocol models defined with Pydantic
-- [x] Unit tests for SDK modules: 100% pass rate (161/161 tests)
+- [x] Unit tests for SDK modules: 100% pass rate (172/172 tests)
 - [x] Code quality: flake8 ready
 - [x] **Test coverage: 91% (exceeded 85% target!)**
 
@@ -190,7 +190,7 @@
   - Status: ✅ **Completed** (2025-12-16)
   - Dependencies: M0.3
   - Output: pytest.ini, conftest.py, fixtures
-  - Evidence: 161 tests passing
+  - Evidence: 172 tests passing
 
 - [x] **M4.1** Unit Test Templates (1h) - P0
   - Status: ✅ **Completed** (2025-12-17)
@@ -263,14 +263,20 @@
 ---
 
 ### M7: Agent Implementation (14 missions, 38h)
-**Progress:** 0 / 14 (0%)
+**Progress:** 2 / 14 (14%) 🔄 **IN PROGRESS**
 
 #### Core Agent Infrastructure
-- [ ] **M7.1** Agent Base Class & Common Utilities (2h) - P0
-  - Status: ☐ **NEXT UP** - Ready to start after QG-1
+- [x] **M7.1** Agent Base Class & Common Utilities (2h) - P0
+  - Status: ✅ **Completed** (2025-12-17)
   - Dependencies: M2.x, M0.3
-  - Output: agents/base/agent_base.py
-  - **Will integrate JsonLogger here**
+  - Output: agents/base/agent_base.py + unit tests
+  - Integrated JsonLogger, config loader, retry client
+
+- [x] **M7.2** Player Agent - MCP Server Setup (2h) - P0
+  - Status: ✅ **Completed** (2025-12-17)
+  - Dependencies: M7.1, M2.1
+  - Output: agents/player_P01/server.py + handlers + tests
+  - Features: /mcp JSON-RPC routing (invitation, parity call, match result)
 
 #### Player Agent (4 missions)
 - [ ] **M7.2** Player Agent - MCP Server Setup (2h) - P0
@@ -368,19 +374,19 @@
 | M4: Testing Infrastructure | 9.0 | ~6.0 | -3.0h | 🔄 33% Complete |
 | M5: Research & Protocol Design | 5.5 | ~3.5 | -2.0h | 🔄 80% Complete |
 | M6: UX & Developer Experience | 6.5 | 0 | - | ☐ Not Started |
-| M7: Agent Implementation | 38.0 | 0 | - | ☐ Not Started |
+| M7: Agent Implementation | 38.0 | ~4.0 | - | 🔄 14% Complete |
 | M8: Documentation | 9.5 | 0 | - | ☐ Not Started |
 | M9: Submission & Deployment | 7.0 | 0 | - | ☐ Not Started |
-| **TOTAL** | **98.5** | **29.5** | **-3.0h** | **30% Complete** |
+| **TOTAL** | **98.5** | **33.5** | **-2.5h** | **34% Complete** |
 
 ### Time Allocation by Priority
 
 | Priority | Missions | Est. Hours | Completed | Remaining |
 |----------|----------|-----------|-----------|-----------|
-| P0 (Critical) | 33 | 74.0h | 18 missions | 15 missions |
+| P0 (Critical) | 33 | 74.0h | 20 missions | 13 missions |
 | P1 (High) | 10 | 18.0h | 4 missions | 6 missions |
 | P2 (Medium) | 4 | 6.5h | 1 mission | 3 missions |
-| **TOTAL** | **47** | **98.5h** | **23** | **24** |
+| **TOTAL** | **47** | **98.5h** | **25** | **22** |
 
 ---
 
@@ -392,10 +398,10 @@
 3. [ ] **QG-1 - Pass Foundation Quality Gate** (READY!)
 
 ### Short-term (Next 5-7 Tasks)
-4. [ ] **M7.1** - Implement Agent Base Class (integrate logger & retry)
-5. [ ] **M7.2** - Player Agent MCP Server Setup
-6. [ ] **M7.3** - Player Agent Three Mandatory Tools
-7. [ ] **M7.4** - Player Agent Registration & Lifecycle
+4. [ ] **M7.3** - Player Agent Three Mandatory Tools
+5. [ ] **M7.4** - Player Agent Registration & Lifecycle
+6. [ ] **M7.5** - Referee Agent Match Conductor
+7. [ ] **M7.6** - Referee Timeout Enforcement
 
 ### Medium-term (After QG-2)
 8. [ ] M7.5-M7.8 - Implement Referee Agent
@@ -426,7 +432,7 @@
 
 | Milestone | Target Date | Status | Completion | Evidence |
 |-----------|-------------|--------|-----------|----------|
-| QG-1: Foundation Quality Gate | 2025-12-17 | ⏸ Ready | 100% | 161 tests, 91% coverage |
+| QG-1: Foundation Quality Gate | 2025-12-17 | ⏸ Ready | 100% | 172 tests, 91% coverage |
 | QG-2: Player Agent Quality Gate | TBD | Not Started | 0% | - |
 | QG-3: Match Execution Quality Gate | TBD | Not Started | 0% | - |
 | QG-4: End-to-End Quality Gate | TBD | Not Started | 0% | - |
@@ -468,13 +474,13 @@
 - [ ] Code quality: mypy passes
 - [ ] No TODO/FIXME in production code
 - [ ] Docstrings for all public APIs - ✅ Partially
-- [ ] Agent base class implemented
+- [x] Agent base class implemented
 - [ ] All 7 agents implemented
 **Score:** ~6 / 12 (50%)
 
 ### 5. Testing & QA (10 pts)
 - [x] Test coverage ≥85% - ✅ **91% achieved!**
-- [x] Unit tests pass (100+ tests) - ✅ **166 tests passing**
+- [x] Unit tests pass (100+ tests) - ✅ **172 tests passing**
 - [ ] Integration tests pass (30+ tests)
 - [ ] E2E tests pass (5+ tests)
 - [ ] Protocol compliance tests pass (18/18)
@@ -508,7 +514,7 @@
 
 ## Key Achievements So Far
 
-### ✅ Completed (23% of missions)
+### ✅ Completed (49% of missions)
 1. **Environment & Structure** - Python 3.14, venv, complete directory structure
 2. **Documentation** - PRD (102KB), Missions (64KB) with 47 tasks
 3. **Shared SDK** - Complete protocol layer with 18 message types
@@ -516,15 +522,17 @@
 5. **Data Layer** - Repository pattern with atomic writes
 6. **Logging Infrastructure** - JsonLogger with 99% coverage, 35 tests
 7. **Retry & Resilience** - Exponential backoff + Circuit Breaker, 94% coverage, 34 tests
-8. **Test Infrastructure** - 161 tests passing, **91% coverage**
+8. **Test Infrastructure** - 172 tests passing, **91% coverage**
+9. **Agent Base** - Shared BaseAgent with logging/config/retry scaffold + unit tests
+10. **Player MCP Server** - /mcp JSON-RPC dispatch with invitation/parity handling + tests
 
 ### 🎯 Current Sprint Focus
 - **Pass QG-1 (Foundation Quality Gate)** - All criteria met!
-- **Begin Agent Implementation** - M7.1 Agent Base Class next
+- **Player Agent tools** - M7.3 parity/logic and lifecycle hardening
 
 ### 📊 Health Metrics
 - **Test Coverage:** 91% (target: 85%) - ✅ **EXCEEDED**
-- **Tests Passing:** 161/161 (100%) - ✅ **PERFECT**
+- **Tests Passing:** 172/172 (100%) - ✅ **PERFECT**
 - **Protocol Models:** 18/18 (100%) - ✅ **COMPLETE**
 - **Error Codes:** 18/18 (100%) - ✅ **COMPLETE**
 - **Code Quality:** High - modular, tested, documented
@@ -533,13 +541,15 @@
 
 ## Notes
 
+- **2025-12-17:** Mission 7.2 completed - Player MCP server with JSON-RPC dispatch + tests
+- **2025-12-17:** Mission 7.1 completed - BaseAgent scaffold + unit tests
 - **2025-12-17:** Mission 2.4 & 2.5 completed - Logger (99% coverage) and Retry Policy (94% coverage)
 - **2025-12-17:** Overall SDK coverage now at 91% - exceeds 85% target for QG-1!
 - **2025-12-16:** Mission 2.1-2.3 completed - Protocol, Config, and Data layers
 - **2025-12-15:** PRD and Missions documents created
 - All verification commands documented and tested
 - Evidence collection is ongoing - screenshots and logs being captured
-- Ready to proceed to Agent Base Class implementation (M7.1)
+- Ready to proceed to Player Agent server (M7.2) and tools (M7.3)
 
 ---
 
@@ -562,7 +572,7 @@ python -c "from league_sdk import *; print('SDK OK')"
 ```bash
 # QG-1: Foundation (READY TO RUN!)
 pytest tests/ --cov=SHARED/league_sdk --cov-report=term
-# Expected: 91% coverage, 161 tests passing ✅
+# Expected: 91% coverage, 172 tests passing ✅
 
 # Import verification
 python -c "from league_sdk import JsonLogger, retry_with_backoff, CircuitBreaker; print('✅ All imports OK')"
@@ -587,4 +597,4 @@ pytest tests/test_protocol_models.py -v
 
 **Last Updated:** 2025-12-17
 **Next Review:** After QG-1 verification
-**Current Sprint:** QG-1 verification → M7.1 Agent Base Class
+**Current Sprint:** QG-1 verification → M7.3 Player Tools

@@ -1337,12 +1337,12 @@ ls dist | grep whl
 Create base agent class with common functionality: HTTP server setup, lifecycle management, logging.
 
 **Definition of Done:**
-- [ ] agents/base/agent_base.py with BaseAgent class
-- [ ] Common methods: start(), stop(), register(), setup_logger(), load_config()
-- [ ] FastAPI app initialization
-- [ ] Uvicorn server configuration
-- [ ] Graceful shutdown handler (SIGTERM/SIGINT)
-- [ ] Unit tests for base class
+- [x] agents/base/agent_base.py with BaseAgent class
+- [x] Common methods: start(), stop(), register(), setup_logger(), load_config()
+- [x] FastAPI app initialization
+- [x] Uvicorn server configuration
+- [x] Graceful shutdown handler (SIGTERM/SIGINT)
+- [x] Unit tests for base class
 
 **Self-Verify Command:**
 ```bash
@@ -1368,18 +1368,18 @@ pytest tests/unit/test_agent_base.py -v
 Set up FastAPI MCP server for player agent with /mcp endpoint and tool routing.
 
 **Definition of Done:**
-- [ ] agents/player_P01/server.py with FastAPI app
-- [ ] POST /mcp endpoint accepting JSON-RPC 2.0 requests
-- [ ] Request routing to tool handlers based on method name
-- [ ] Error handling for unknown methods
-- [ ] JSON-RPC 2.0 response format (result/error, id)
-- [ ] Server starts on configured port (8101)
+- [x] agents/player_P01/server.py with FastAPI app
+- [x] POST /mcp endpoint accepting JSON-RPC 2.0 requests
+- [x] Request routing to tool handlers based on method name
+- [x] Error handling for unknown methods
+- [x] JSON-RPC 2.0 response format (result/error, id)
+- [x] Server starts on configured port (8101)
 
 **Self-Verify Command:**
 ```bash
 python agents/player_P01/main.py --player-id=P01 --port=8101 &
 sleep 2 && \
-curl -X POST http://localhost:8101/mcp -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"ping","params":{},"id":1}' && \
+curl -X POST http://localhost:8101/mcp -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"GAME_INVITATION","params":{"protocol":"league.v2","message_type":"GAME_INVITATION","sender":"referee:REF01","timestamp":"2025-01-01T00:00:00Z","conversation_id":"conv-smoke-1","league_id":"league_2025_even_odd","round_id":1,"match_id":"R1M1","game_type":"even_odd","role_in_match":"PLAYER_A","opponent_id":"P02"},"id":1}' && \
 pkill -f "player_P01"
 ```
 
@@ -2271,11 +2271,11 @@ M0 (2h) + M2 (9.5h) + M7 (31h) + M8 (9.5h) + M9 (7h) = **59 hours**
 | **M4: Testing** | 6 | 9h | 33% | ⏳ In Progress |
 | **M5: Research** | 5 | 5.5h | 80% | ⏳ In Progress |
 | **M6: UX** | 4 | 6.5h | 0% | ☐ Not Started |
-| **M7: Agents** | 14 | 38h | 0% | ☐ Not Started |
+| **M7: Agents** | 14 | 38h | 7% | ⏳ In Progress |
 | **M8: Docs** | 5 | 9.5h | 0% | ☐ Not Started |
 | **M9: Submission** | 3 | 7h | 0% | ☐ Not Started |
 | **Quality Gates** | 5 | - | 0% | ⏳ In Progress |
-| **TOTAL** | **47 + 5 QGs** | **98.5h** | **47%** | **⏳ In Progress** |
+| **TOTAL** | **47 + 5 QGs** | **98.5h** | **49%** | **⏳ In Progress** |
 
 ---
 
