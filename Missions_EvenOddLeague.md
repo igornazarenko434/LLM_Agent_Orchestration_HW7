@@ -670,6 +670,35 @@ echo "Templates valid"
 
 ---
 
+### M3.5: Security & Environment Baseline
+**Priority:** P1 (High)
+**Estimated Time:** 1 hour
+
+**Description:**
+Add repo-level security/config hygiene artifacts.
+
+**Definition of Done:**
+- [ ] `.env.example` with commented variables (auth token length, ports, log level, retry overrides) and guidance on secrets
+- [ ] `.gitignore` updated with ≥15 patterns covering venv, pycache, logs, data backups, coverage, .env
+- [ ] Secret handling guidance added to configuration docs (no secrets in code/config)
+- [ ] Validate config loader supports env overrides where applicable
+
+**Self-Verify Command:**
+```bash
+cat .env.example | grep "LEAGUE_" && \
+grep -c "env" .gitignore && echo "Security baseline present"
+```
+
+**Expected Evidence:**
+- .env.example present and referenced in README
+- gitignore blocks secrets/artifacts
+- No secrets committed
+
+**Dependencies:** M3.0, M0.2
+**Blocks:** M6.8, CI security checks
+
+---
+
 ## M4: TESTING INFRASTRUCTURE
 
 ### M4.0: Pytest Configuration
@@ -852,6 +881,35 @@ pytest tests/load/test_concurrent_matches.py --concurrent=50 -v --timeout=1800
 
 ---
 
+### M4.6: Edge Case Matrix & Coverage Gate
+**Priority:** P1 (High)
+**Estimated Time:** 1.5 hours
+
+**Description:**
+Add edge-case tests and enforce coverage thresholds.
+
+**Definition of Done:**
+- [ ] ≥5 edge-case tests (timeouts, invalid moves, auth failures, protocol mismatch, duplicate conversations)
+- [ ] Coverage gate enforced at ≥85% in CI
+- [ ] Documentation of edge cases and expected outcomes
+
+**Self-Verify Command:**
+```bash
+pytest tests/edge_cases -v && \
+pytest --cov=agents --cov=SHARED/league_sdk --cov-report=term | grep "TOTAL" && \
+cat .github/workflows/test.yml | grep "coverage"
+```
+
+**Expected Evidence:**
+- Edge-case tests present and passing
+- Coverage gate configured and enforced
+- Edge-case matrix documented in testing guide
+
+**Dependencies:** M4.0, M4.2
+**Blocks:** QG-5
+
+---
+
 ## M5: RESEARCH & PROTOCOL DESIGN
 
 ### M5.1: MCP Protocol Research
@@ -967,6 +1025,34 @@ cat doc/error_handling_strategy.md | grep -E "E001|E018|retryable|LEAGUE_ERROR" 
 
 **Dependencies:** M0.2
 **Blocks:** M7.x (all agents need error handling)
+
+---
+
+### M5.5: Simulation & Research Notebook
+**Priority:** P2 (Medium)
+**Estimated Time:** 2 hours
+
+**Description:**
+Create a research/experimentation notebook to analyze strategies, timeouts, and load behaviors.
+
+**Definition of Done:**
+- [ ] Jupyter notebook in `doc/research_notes/` with ≥8 cells, including ≥2 LaTeX formulas
+- [ ] Experiments covering parity choice strategies, retry/backoff timing, and timeout impact
+- [ ] Plots (≥4 types) visualizing outcomes/latency
+- [ ] References (≥3) cited in notebook
+
+**Self-Verify Command:**
+```bash
+jupyter nbconvert --to html --execute doc/research_notes/experiments.ipynb && \
+ls doc/research_notes/experiments.html
+```
+
+**Expected Evidence:**
+- Executable notebook with results and visuals
+- Insights feeding into agent strategy or configuration recommendations
+
+**Dependencies:** M5.1, M4.x (test harness)
+**Blocks:** M8.7
 
 ---
 
@@ -1093,6 +1179,151 @@ cat doc/api_reference.md | grep -E "handle_game_invitation|choose_parity|notify_
 
 **Dependencies:** M0.2, M7.x (tools must be implemented)
 **Blocks:** M8.3
+
+---
+
+### M6.5: Code Quality Tooling
+**Priority:** P1 (High)
+**Estimated Time:** 2 hours
+
+**Description:**
+Configure linting, formatting, and type-checking for the codebase.
+
+**Definition of Done:**
+- [ ] `pylintrc` and/or `setup.cfg`/`pyproject.toml` with pylint/flake8 settings
+- [ ] `black` formatter configured (line length consistent with lint)
+- [ ] `mypy --strict` enabled with per-module ignores where justified
+- [ ] Commands documented in README and developer guide
+
+**Self-Verify Command:**
+```bash
+black --check agents SHARED && \
+flake8 agents SHARED && \
+pylint agents SHARED && \
+mypy agents SHARED --strict
+```
+
+**Expected Evidence:**
+- Config files present and enforced
+- Lint/format/type-check pass on clean tree
+- Deviations justified with inline comments or config ignores
+
+**Dependencies:** M0.3
+**Blocks:** M6.7, CI setup
+
+---
+
+### M6.6: Pre-Commit Hooks & Style Guide
+**Priority:** P1 (High)
+**Estimated Time:** 1.5 hours
+
+**Description:**
+Establish automated quality gates locally and codify team standards.
+
+**Definition of Done:**
+- [ ] `.pre-commit-config.yaml` with hooks: black, isort/ruff or flake8, mypy, trailing whitespace, end-of-file, detect-private-key
+- [ ] `STYLE_GUIDE.md` or `CONTRIBUTING.md` covering code style, commit messages, branching, PR checklist
+- [ ] Hooks installed and documented in README
+
+**Self-Verify Command:**
+```bash
+pre-commit run --all-files && \
+cat STYLE_GUIDE.md | grep -E "Code Style|Commit|Branch"
+```
+
+**Expected Evidence:**
+- Hooks run cleanly on repo
+- Style guide exists with actionable rules
+- Developers can onboard with one command
+
+**Dependencies:** M6.5
+**Blocks:** M6.7
+
+---
+
+### M6.7: CI/CD Pipeline
+**Priority:** P1 (High)
+**Estimated Time:** 2 hours
+
+**Description:**
+Create GitHub Actions (or GitLab CI) workflow to enforce quality gates.
+
+**Definition of Done:**
+- [ ] `.github/workflows/test.yml` (or `.gitlab-ci.yml`) runs: lint/format check, mypy, pytest with coverage
+- [ ] Caches dependencies for speed
+- [ ] Coverage gate (e.g., fail if <85%)
+- [ ] Badges placeholders added to README
+
+**Self-Verify Command:**
+```bash
+cat .github/workflows/test.yml | grep -E "pytest|mypy|flake8|black" && echo "CI wired"
+```
+
+**Expected Evidence:**
+- Workflow passes on main branch
+- Quality gates enforced automatically
+- Artifacts (coverage HTML) uploaded
+
+**Dependencies:** M6.5, M6.6
+**Blocks:** M9.0
+
+---
+
+### M6.8: README Quality Gate
+**Priority:** P1 (High)
+**Estimated Time:** 1.5 hours
+
+**Description:**
+Enhance README with all required sections per kickoff agent guidance.
+
+**Definition of Done:**
+- [ ] Sections: Overview, Architecture summary, Setup, Quick Start, Testing, Lint/Type-check commands, CI status/badges placeholder, Troubleshooting, Support matrix, Links to PRD/Missions
+- [ ] Commands verified on clean env
+- [ ] Table of contents for navigation
+
+**Self-Verify Command:**
+```bash
+cat README.md | grep -E "Architecture|Testing|Lint|Type|Troubleshooting" && echo "README sections present"
+```
+
+**Expected Evidence:**
+- README comprehensive and actionable
+- Matches actual commands/config
+- No stale instructions
+
+**Dependencies:** M6.5, M6.6, M6.7
+**Blocks:** M9.3
+
+---
+
+### M6.9: Packaging & Release Standards
+**Priority:** P2 (Medium)
+**Estimated Time:** 1.5 hours
+
+**Description:**
+Ensure project is installable and production-aligned.
+
+**Definition of Done:**
+- [ ] `pyproject.toml`/setup.cfg for agents package (pip-installable) with entry points as needed
+- [ ] Logging config file (YAML/JSON) documented and used by agents
+- [ ] Repository structure validated against package organization guidelines (__init__.py in packages)
+- [ ] Release/build script to generate wheel/sdist
+
+**Self-Verify Command:**
+```bash
+pip install . && \
+python -c \"import agents\" && \
+python -c \"import league_sdk\" && \
+ls dist | grep whl
+```
+
+**Expected Evidence:**
+- Install succeeds in clean venv
+- Packages import without issues
+- Build artifacts generated
+
+**Dependencies:** M6.5
+**Blocks:** M9.2
 
 ---
 
@@ -1602,12 +1833,14 @@ python -m pydoc agents.player_P01.server | grep "handle_game_invitation"
 Create doc/architecture.md documenting system architecture, data flow, and design decisions.
 
 **Definition of Done:**
-- [ ] System architecture diagram (ASCII art or link to image)
-- [ ] Component diagram showing agents and communication
-- [ ] Data flow diagram (config → agents → data → logs)
-- [ ] Sequence diagram for match flow
+- [ ] C4-1 (Context) and C4-2 (Container) diagrams showing agents, MCP endpoints, configs, data/log layers
+- [ ] C4-3 (Component) views for League Manager, Referee, Player, shared SDK
+- [ ] Sequence diagram for match flow and registration
 - [ ] State machine diagrams for agent lifecycle
-- [ ] ADRs summarized with links to PRD
+- [ ] Data flow diagram (config → agents → data → logs)
+- [ ] API/data contracts for JSON-RPC methods and persisted JSON schemas
+- [ ] ADR index linking to architecture decisions
+- [ ] Concurrency approach documented (threading vs multiprocessing) and building-block responsibilities (SRP)
 
 **Self-Verify Command:**
 ```bash
@@ -1709,6 +1942,87 @@ cat doc/testing_guide.md | grep -E "pytest|coverage|integration tests|E2E" && ec
 
 **Dependencies:** M4.x (test infrastructure)
 **Blocks:** M9.3
+
+---
+
+### M8.6: Architecture Decision Records (ADRs)
+**Priority:** P1 (High)
+**Estimated Time:** 1 hour
+
+**Description:**
+Document key architectural decisions with ADRs.
+
+**Definition of Done:**
+- [ ] `doc/adr/` directory created with numbered ADRs (e.g., 0001-use-fastapi, 0002-json-rpc-transport)
+- [ ] Each ADR includes context, decision, alternatives, consequences, and status
+- [ ] ADR index linked from architecture.md
+- [ ] Minimum ADR count: ≥5 (target ≥7 for 90+)
+
+**Self-Verify Command:**
+```bash
+ls doc/adr | grep 0001 && cat doc/adr/0001-use-fastapi.md | grep "Decision"
+```
+
+**Expected Evidence:**
+- ADRs exist and are referenced
+- Decisions align with PRD and protocol requirements
+
+**Dependencies:** M8.2
+**Blocks:** M9.0
+
+---
+
+### M8.7: Extensibility & ISO/IEC 25010 Usability Analysis
+**Priority:** P2 (Medium)
+**Estimated Time:** 1.5 hours
+
+**Description:**
+Analyze extensibility and usability quality characteristics and document extension points.
+
+**Definition of Done:**
+- [ ] doc/usability_extensibility.md mapping all ISO/IEC 25010 characteristics (functional suitability, performance, compatibility, usability, reliability, security, maintainability, portability) to current design with KPIs and verification commands where applicable
+- [ ] Extension points documented: adding games, agents, configs, retry/logging policies
+- [ ] UX/operability considerations for MCP endpoints (timeouts, helpful errors, health checks)
+- [ ] Risks and mitigations listed
+
+**Self-Verify Command:**
+```bash
+cat doc/usability_extensibility.md | grep -E "ISO/IEC 25010|Extensibility|Usability" && echo "Analysis complete"
+```
+
+**Expected Evidence:**
+- Clear mapping of quality attributes to current design
+- Actionable guidance for future extensions
+
+**Dependencies:** M8.2, M5.x
+**Blocks:** M9.0
+
+---
+
+### M8.8: Evidence Matrix & Risk Register Refresh
+**Priority:** P1 (High)
+**Estimated Time:** 1 hour
+
+**Description:**
+Consolidate verification artifacts and risks per kickoff/PRD requirements.
+
+**Definition of Done:**
+- [ ] Evidence matrix (≥30 entries for 90+) with item, verification command, status, artifact link
+- [ ] Risk register with ≥3 risks (likelihood/impact/mitigation/owner)
+- [ ] Linked from PRD and README
+
+**Self-Verify Command:**
+```bash
+cat doc/evidence_matrix.md | grep -c \"Evidence\" && \
+cat doc/risk_register.md | grep -E \"High|Medium|Low\"
+```
+
+**Expected Evidence:**
+- Evidence matrix and risk register exist and are current
+- Verification commands align with tests/scripts
+
+**Dependencies:** M1.x, M4.x, M9.0
+**Blocks:** M9.0
 
 ---
 
@@ -1850,6 +2164,32 @@ echo "All files ready for submission"
 
 **Dependencies:** M9.2, QG-5
 **Blocks:** None (final mission)
+
+---
+
+### M9.4: .claude Handoff Update
+**Priority:** P1 (High)
+**Estimated Time:** 30 minutes
+
+**Description:**
+Finalize `.claude` living documentation with mission outcomes and handoff notes.
+
+**Definition of Done:**
+- [ ] .claude file created/updated with summary of all missions, key decisions, verification commands, file locations, and common pitfalls
+- [ ] Linked from README and included in submission package
+- [ ] Reflects final test/coverage results and quality gates status
+
+**Self-Verify Command:**
+```bash
+cat .claude | grep -E "missions|decisions|commands" && echo ".claude updated"
+```
+
+**Expected Evidence:**
+- .claude present and current
+- Handoff-ready summary for evaluators
+
+**Dependencies:** M9.0, M8.x
+**Blocks:** Final submission
 
 ---
 

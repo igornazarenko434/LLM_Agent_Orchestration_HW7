@@ -457,6 +457,8 @@ Before starting the interview, verify your setup:
 
 4. **Testing & QA**: Unit + integration tests, pytest/unittest, coverage ≥70% (≥85% for 90+), edge-case matrices (≥5 tests), error-handling strategy, automated test reports
 
+4.5. **Quality Standards (CRITICAL - Most Common Deduction)**: Linting tools configured (pylint/.pylintrc or eslint/.eslintrc), CI/CD pipeline (.github/workflows/test.yml or .gitlab-ci.yml) running tests+linting+coverage, CONTRIBUTING.md or STYLE_GUIDE.md with code standards, pre-commit hooks (.pre-commit-config.yaml) for automatic quality checks, code formatter (black/prettier), type checking (mypy/TypeScript strict mode)
+
 5. **Research & Analysis**: Experiment roadmap with sensitivity analysis (≥3 parameters), Jupyter notebook (≥8 cells) with LaTeX formulas (≥2 for 90+), statistical analysis, ≥3 references, ≥4 high-quality plot types, publication-quality visualizations
 
 6. **UX & Extensibility**: Usability analysis (Nielsen's 10 heuristics for UI projects), accessibility plan, ≥8 screenshots minimum (≥20 for 90+), extensibility guide with ≥3 extension points and code examples
@@ -648,6 +650,21 @@ The .claude file is updated after EVERY mission completion with:
 
 ### Principle 13: Production-Grade Engineering
 All projects (regardless of type) MUST include:
+
+**Quality Standards & Code Quality Tools (CRITICAL - Professor deducted points in ALL homeworks)**:
+- **Linting tools configured**: pylint (Python) or eslint (JavaScript) with configuration file (.pylintrc or .eslintrc)
+- **CI/CD pipeline**: GitHub Actions (.github/workflows/test.yml) or GitLab CI that runs tests, linting, and coverage checks automatically
+- **Style guide or CONTRIBUTING.md**: Dedicated document with code style standards, contribution guidelines, and quality expectations
+- **Pre-commit hooks**: .pre-commit-config.yaml that runs automatic quality checks (linting, formatting, type checking) before each commit
+- **Code formatter**: black (Python) or prettier (JavaScript) configured and enforced
+- **Type checking**: mypy (Python) or TypeScript configured with strict mode
+- **Verification checklist**:
+  ✓ Linting configuration file exists and runs successfully
+  ✓ CI/CD pipeline file exists in .github/workflows/ or .gitlab-ci.yml
+  ✓ CONTRIBUTING.md or STYLE_GUIDE.md exists with comprehensive standards
+  ✓ .pre-commit-config.yaml exists and hooks are installed
+  ✓ All quality checks pass in CI/CD
+  ✓ Code formatter runs automatically
 
 **Package Organization (Chapter 15 - NEW v3.1)**:
 - **Proper Python package structure**: __init__.py in EVERY package and subpackage directory
@@ -3034,7 +3051,9 @@ My **recommendation is FastAPI** because:
 
 **Purpose**: Structured question-by-question interview to gather ALL requirements for PRD generation
 
-**Execution**: Follow sections A-M in order (Standard mode) or A, C, E only (Quick mode). Apply Section 3.1 protocol for every question.
+**Execution**: Follow sections A-N in order (Standard mode) or A, C, E, I only (Quick mode). Apply Section 3.1 protocol for every question.
+
+**NEW in v3.1**: Section I (Quality Standards & Code Quality) is MANDATORY in ALL modes and CANNOT BE SKIPPED - addresses #1 deduction area from professor feedback.
 
 ---
 
@@ -3382,7 +3401,94 @@ Agent: "Perfect! Let's begin the [Mode Name] interview. I'll ask questions secti
 
 ---
 
-## I. Research & Analysis
+## I. Quality Standards & Code Quality (CRITICAL - NEW v3.1)
+
+**⚠️ IMPORTANT**: This section addresses the #1 reason for point deductions in HW1, HW2, and HW3.
+
+**Questions** (ALL modes - CANNOT SKIP):
+
+1. **Linting tool configuration**: Which linting tool will you use?
+   - **Python projects**: pylint (recommended) or flake8
+   - **JavaScript projects**: eslint
+   - **Verification**: Configuration file (.pylintrc, .flake8, or .eslintrc.json) will be created in M3.3
+   - **Definition of Done (M3.3)**: `pylint src/` runs successfully with project-specific rules
+   - **Agent will auto-generate**: Standard configuration file with reasonable defaults
+
+2. **CI/CD pipeline**: Will you use GitHub Actions or GitLab CI?
+   - **Recommended**: GitHub Actions (most common, well-documented)
+   - **Alternative**: GitLab CI, Jenkins, Travis CI
+   - **Verification**: .github/workflows/test.yml (or .gitlab-ci.yml) will be created in M3.3
+   - **Pipeline MUST run**: Tests + Linting + Coverage checks on every push
+   - **Definition of Done (M3.3)**: Pipeline runs successfully on test commit, badge shows passing
+   - **Agent will auto-generate**: Complete workflow file with:
+     - Python version matrix (3.11+)
+     - Dependency installation
+     - Linting step (pylint/flake8/eslint)
+     - Test step (pytest with coverage)
+     - Coverage threshold enforcement (≥70% or ≥85% based on grade target)
+
+3. **Style guide / CONTRIBUTING.md**: What coding standards will you follow?
+   - **Required for 90+**: CONTRIBUTING.md or STYLE_GUIDE.md
+   - **Must include**:
+     - Code style standards (PEP 8 for Python, Airbnb for JavaScript)
+     - Naming conventions (variables, functions, classes, files)
+     - Commit message format (Conventional Commits recommended)
+     - Pull request process
+     - Testing requirements
+     - Documentation requirements
+   - **Verification**: CONTRIBUTING.md exists with ≥30 lines, covers all required topics
+   - **Definition of Done (M3.3)**: File created, reviewed, and followed throughout project
+   - **Agent will auto-generate**: Template CONTRIBUTING.md based on project type and language
+
+4. **Pre-commit hooks**: Will you use automated pre-commit checks?
+   - **Required for 90+**: .pre-commit-config.yaml configured
+   - **Recommended hooks**:
+     - black (Python formatter) or prettier (JavaScript formatter)
+     - pylint or flake8 or eslint (linting)
+     - mypy (Python type checking) or tsc (TypeScript)
+     - trailing-whitespace (removes trailing spaces)
+     - end-of-file-fixer (ensures newline at end)
+     - check-yaml (validates YAML files)
+   - **Verification**: `pre-commit install && pre-commit run --all-files` passes
+   - **Definition of Done (M3.3)**: Hooks installed, all checks pass, team members have hooks active
+   - **Agent will auto-generate**: Complete .pre-commit-config.yaml with language-appropriate hooks
+
+5. **Code formatter**: Which code formatter will you use?
+   - **Python**: black (recommended) or autopep8
+   - **JavaScript/TypeScript**: prettier
+   - **Configuration**: pyproject.toml [tool.black] section or .prettierrc
+   - **Verification**: `black --check src/` shows all files formatted
+   - **Definition of Done (M3.3)**: All code formatted, formatter runs in pre-commit hooks
+   - **Agent will auto-generate**: Formatter configuration in pyproject.toml or .prettierrc
+
+6. **Type checking**: Will you use static type checking?
+   - **Python**: mypy (recommended for 90+) with basic type hints
+   - **JavaScript**: TypeScript (strict mode)
+   - **Configuration**: mypy.ini or pyproject.toml [tool.mypy] section or tsconfig.json
+   - **Verification**: `mypy src/` runs successfully (can allow some errors initially, improve over time)
+   - **Definition of Done (M3.3)**: Type checker configured, critical paths have type hints, runs in CI/CD
+   - **Agent will auto-generate**: Basic mypy or TypeScript configuration
+
+**Mission Link**: All these requirements are implemented in **Mission M3.3: Quality Standards Setup**
+- Time: 3-4 hours
+- Dependencies: M3.2 (Logging), M2.1 (Repo Structure)
+- Blocks: GATE 2 (Architecture Gate will verify quality checks pass)
+
+**Quick Mode**: Agent sets all to recommended defaults (pylint, GitHub Actions, pre-commit with black+pylint+mypy)
+
+**Agent Auto-Generation Promise**:
+"I will generate ALL required configuration files in M3.3:
+- .pylintrc or .flake8 (linting rules)
+- .github/workflows/test.yml (CI/CD pipeline)
+- CONTRIBUTING.md (coding standards)
+- .pre-commit-config.yaml (pre-commit hooks)
+- pyproject.toml [tool.black] and [tool.mypy] (formatter and type checker)
+
+You won't need to write these from scratch - I'll provide working templates!"
+
+---
+
+## J. Research & Analysis
 
 **Questions** (Standard mode, SIMPLIFIED in Quick mode):
 
@@ -3411,7 +3517,7 @@ Agent: "Perfect! Let's begin the [Mode Name] interview. I'll ask questions secti
 
 ---
 
-## J. UX & Extensibility
+## K. UX & Extensibility
 
 **Questions** (Standard mode, SIMPLIFIED in Quick mode):
 
@@ -3441,7 +3547,7 @@ Agent: "Perfect! Let's begin the [Mode Name] interview. I'll ask questions secti
 
 ---
 
-## K. Documentation
+## L. Documentation
 
 **Questions** (ALL modes):
 
@@ -3461,7 +3567,7 @@ Agent: "Perfect! Let's begin the [Mode Name] interview. I'll ask questions secti
 
 ---
 
-## L. Pre-Submission Awareness
+## M. Pre-Submission Awareness
 
 **Questions** (ALL modes, QUICK acknowledgment):
 
@@ -3523,7 +3629,7 @@ This is just awareness - M9.1 mission will guide you through each item."
 
 ---
 
-## M. Final Verification
+## N. Final Verification
 
 **Questions** (ALL modes):
 
