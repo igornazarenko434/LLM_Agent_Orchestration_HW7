@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 
 from agents.base import BaseAgent
 from agents.player_P01 import handlers
+from league_sdk.config_loader import load_agents_config, load_json_file
 from league_sdk.logger import log_error, log_message_received, log_message_sent
 from league_sdk.protocol import (
     JSONRPCError,
@@ -26,6 +27,10 @@ from league_sdk.protocol import (
     GameInvitation,
     ErrorCode,
 )
+from league_sdk.protocol import MessageEnvelope
+
+AGENTS_CONFIG_PATH = "SHARED/config/agents/agents_config.json"
+GAMES_REGISTRY_PATH = "SHARED/config/games/games_registry.json"
 
 
 class PlayerAgent(BaseAgent):
@@ -45,12 +50,40 @@ class PlayerAgent(BaseAgent):
             host=host,
             port=port,
         )
+        self.agents_config = load_agents_config(AGENTS_CONFIG_PATH)
+        self.game_registry = load_json_file(GAMES_REGISTRY_PATH)
+        self.auth_token: Optional[str] = None
+
+        self.agent_record = self._get_player_record(agent_id)
+        if self.agent_record and not port:
+            self.port = self.agent_record.get("port", self.port)
+
+        self.allowed_senders = self._build_sender_index()
+        self.supported_game_types = {g["game_type"] for g in self.game_registry.get("games", [])}
+
         self._method_map: Dict[str, Callable[[Dict[str, Any]], Dict[str, Any]]] = {
-            "GAME_INVITATION": lambda params: handlers.handle_game_invitation(self.agent_id, params),
-            "CHOOSE_PARITY_CALL": lambda params: handlers.handle_choose_parity(self.agent_id, params),
+            "GAME_INVITATION": lambda params: handlers.handle_game_invitation(self.agent_id, params, self.auth_token),
+            "CHOOSE_PARITY_CALL": lambda params: handlers.handle_choose_parity(self.agent_id, params, self.auth_token),
             "MATCH_RESULT_REPORT": handlers.handle_match_result,
         }
         self._register_mcp_route()
+
+    def _get_player_record(self, agent_id: str) -> Optional[Dict[str, Any]]:
+        for player in self.agents_config.get("players", []):
+            if player.get("agent_id") == agent_id:
+                return player
+        return None
+
+    def _build_sender_index(self) -> Dict[str, str]:
+        senders: Dict[str, str] = {}
+        lm = self.agents_config.get("league_manager", {})
+        if lm:
+            senders[f"league_manager:{lm.get('agent_id')}"] = "league_manager"
+        for ref in self.agents_config.get("referees", []):
+            senders[f"referee:{ref.get('agent_id')}"] = "referee"
+        for player in self.agents_config.get("players", []):
+            senders[f"player:{player.get('agent_id')}"] = "player"
+        return senders
 
     def _register_mcp_route(self) -> None:
         """Attach /mcp JSON-RPC endpoint to the FastAPI app."""
@@ -58,32 +91,23 @@ class PlayerAgent(BaseAgent):
         @self.app.post("/mcp")
         async def mcp(request: Request):
             body = await request.json()
-            try:
-                rpc_request = JSONRPCRequest(**body)
-            except Exception as exc:
-                error = JSONRPCError(code=-32600, message="Invalid Request", data={"details": str(exc)})
-                self._log_error(error=error, payload=body)
-                return JSONResponse(status_code=400, content=JSONRPCResponse(id=body.get("id", 1), error=error).model_dump())
+            rpc_request = self._parse_rpc(body)
+            if isinstance(rpc_request, JSONResponse):
+                return rpc_request
 
-            # Validate params against league message schema
-            if rpc_request.method == "GAME_INVITATION":
-                GameInvitation(**rpc_request.params)
-            elif rpc_request.method == "CHOOSE_PARITY_CALL":
-                ChooseParityCall(**rpc_request.params)
-            elif rpc_request.method == "MATCH_RESULT_REPORT":
-                MatchResultReport(**rpc_request.params)
+            validation_error = self._validate_params(rpc_request)
+            if validation_error:
+                return validation_error
 
             handler = self._method_map.get(rpc_request.method)
             if not handler:
-                error = JSONRPCError(
+                return self._error_response(
+                    rpc_request.id,
                     code=-32601,
                     message="Method not found",
-                    data={"error_code": ErrorCode.INVALID_ENDPOINT, "method": rpc_request.method},
-                )
-                self._log_error(error=error, payload=rpc_request.model_dump())
-                return JSONResponse(
-                    status_code=404,
-                    content=JSONRPCResponse(id=rpc_request.id, error=error).model_dump(),
+                    error_code=ErrorCode.INVALID_ENDPOINT,
+                    status=404,
+                    payload=rpc_request.model_dump(),
                 )
 
             try:
@@ -93,15 +117,14 @@ class PlayerAgent(BaseAgent):
                 log_message_sent(self.std_logger, result)
                 return JSONResponse(status_code=200, content=rpc_response.model_dump())
             except Exception as exc:  # pragma: no cover - defensive
-                error = JSONRPCError(
+                return self._error_response(
+                    rpc_request.id,
                     code=-32000,
                     message="Server error",
-                    data={"error": str(exc), "method": rpc_request.method},
-                )
-                self._log_error(error=error, payload=rpc_request.model_dump())
-                return JSONResponse(
-                    status_code=500,
-                    content=JSONRPCResponse(id=rpc_request.id, error=error).model_dump(),
+                    error_code=ErrorCode.INTERNAL_SERVER_ERROR,
+                    status=500,
+                    payload=rpc_request.model_dump(),
+                    extra_data={"error": str(exc), "method": rpc_request.method},
                 )
 
     def _log_error(self, error: JSONRPCError, payload: Dict[str, Any]) -> None:
@@ -116,6 +139,108 @@ class PlayerAgent(BaseAgent):
             }
         )
         log_error(self.std_logger, details.get("error_code", ErrorCode.INTERNAL_SERVER_ERROR), details)
+
+    def _error_response(
+        self,
+        request_id: int | str,
+        code: int,
+        message: str,
+        error_code: str,
+        status: int,
+        payload: Dict[str, Any],
+        extra_data: Optional[Dict[str, Any]] = None,
+    ) -> JSONResponse:
+        data = {"error_code": error_code, **(extra_data or {})}
+        error = JSONRPCError(code=code, message=message, data=data)
+        self._log_error(error=error, payload=payload)
+        return JSONResponse(
+            status_code=status,
+            content=JSONRPCResponse(id=request_id, error=error).model_dump(),
+        )
+
+    def _parse_rpc(self, body: Dict[str, Any]) -> JSONRPCRequest | JSONResponse:
+        try:
+            return JSONRPCRequest(**body)
+        except Exception as exc:
+            error = JSONRPCError(
+                code=-32600,
+                message="Invalid Request",
+                data={"details": str(exc), "error_code": ErrorCode.INVALID_MESSAGE_FORMAT},
+            )
+            self._log_error(error=error, payload=body)
+            return JSONResponse(
+                status_code=400,
+                content=JSONRPCResponse(id=body.get("id", 1), error=error).model_dump(),
+            )
+
+    def _validate_params(self, rpc_request: JSONRPCRequest) -> Optional[JSONResponse]:
+        try:
+            if rpc_request.method == "GAME_INVITATION":
+                GameInvitation(**rpc_request.params)
+            elif rpc_request.method == "CHOOSE_PARITY_CALL":
+                ChooseParityCall(**rpc_request.params)
+            elif rpc_request.method == "MATCH_RESULT_REPORT":
+                MatchResultReport(**rpc_request.params)
+        except Exception as exc:
+            return self._error_response(
+                rpc_request.id,
+                code=-32602,
+                message="Invalid params",
+                error_code=ErrorCode.INVALID_MESSAGE_FORMAT,
+                status=400,
+                payload=rpc_request.model_dump(),
+                extra_data={"details": str(exc)},
+            )
+
+        params = rpc_request.params
+        if params.get("protocol") != "league.v2":
+            return self._error_response(
+                rpc_request.id,
+                code=-32000,
+                message="Protocol mismatch",
+                error_code=ErrorCode.PROTOCOL_VERSION_MISMATCH,
+                status=400,
+                payload=rpc_request.model_dump(),
+                extra_data={"supported_protocols": ["league.v2"]},
+            )
+
+        sender = params.get("sender")
+        if sender not in self.allowed_senders:
+            return self._error_response(
+                rpc_request.id,
+                code=-32602,
+                message="Sender not registered",
+                error_code=ErrorCode.AGENT_NOT_REGISTERED,
+                status=400,
+                payload=rpc_request.model_dump(),
+                extra_data={"sender": sender},
+            )
+
+        game_type = params.get("game_type")
+        if game_type and game_type not in self.supported_game_types:
+            return self._error_response(
+                rpc_request.id,
+                code=-32602,
+                message="Unsupported game_type",
+                error_code=ErrorCode.INVALID_MESSAGE_FORMAT,
+                status=400,
+                payload=rpc_request.model_dump(),
+                extra_data={"game_type": game_type, "supported": list(self.supported_game_types)},
+            )
+
+        auth_token = params.get("auth_token")
+        if not auth_token:
+            return self._error_response(
+                rpc_request.id,
+                code=-32001,
+                message="Missing auth token",
+                error_code=ErrorCode.AUTH_TOKEN_INVALID,
+                status=401,
+                payload=rpc_request.model_dump(),
+            )
+        # stash for responses
+        self.auth_token = auth_token
+        return None
 
 
 def build_player_agent(agent_id: str = "P01") -> PlayerAgent:

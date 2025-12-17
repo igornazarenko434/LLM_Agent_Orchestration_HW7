@@ -9,7 +9,7 @@ Implements the three required tools:
 
 import random
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from league_sdk.protocol import (
     ChooseParityCall,
@@ -30,7 +30,7 @@ def _utc_timestamp() -> str:
     )
 
 
-def handle_game_invitation(agent_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def handle_game_invitation(agent_id: str, params: Dict[str, Any], auth_token: Optional[str] = None) -> Dict[str, Any]:
     """Respond to GAME_INVITATION with GAME_JOIN_ACK."""
     invitation = GameInvitation(**params)
     ack = GameJoinAck(
@@ -44,10 +44,13 @@ def handle_game_invitation(agent_id: str, params: Dict[str, Any]) -> Dict[str, A
         arrival_timestamp=_utc_timestamp(),
         accept=True,
     )
-    return ack.model_dump()
+    payload = ack.model_dump()
+    if auth_token:
+        payload["auth_token"] = auth_token
+    return payload
 
 
-def handle_choose_parity(agent_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def handle_choose_parity(agent_id: str, params: Dict[str, Any], auth_token: Optional[str] = None) -> Dict[str, Any]:
     """Respond to CHOOSE_PARITY_CALL with CHOOSE_PARITY_RESPONSE (random strategy)."""
     call = ChooseParityCall(**params)
     parity_choice = random.choice(["even", "odd"])
@@ -60,7 +63,10 @@ def handle_choose_parity(agent_id: str, params: Dict[str, Any]) -> Dict[str, Any
         player_id=agent_id,
         parity_choice=parity_choice,
     )
-    return response.model_dump()
+    payload = response.model_dump()
+    if auth_token:
+        payload["auth_token"] = auth_token
+    return payload
 
 
 def handle_match_result(params: Dict[str, Any]) -> Dict[str, Any]:
