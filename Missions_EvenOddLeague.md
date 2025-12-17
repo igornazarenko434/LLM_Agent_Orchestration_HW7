@@ -1401,20 +1401,20 @@ pkill -f "player_P01"
 Implement handle_game_invitation, choose_parity, notify_match_result tools for player agent.
 
 **Definition of Done:**
-- [ ] handle_game_invitation() - Accepts GAME_INVITATION, returns GAME_JOIN_ACK within 5s
-- [ ] choose_parity() - Accepts CHOOSE_PARITY_CALL, returns choice ("even"/"odd") within 30s
-- [ ] notify_match_result() - Accepts GAME_OVER, updates history, returns acknowledgment
-- [ ] All tools validate message envelope
-- [ ] All tools include auth_token in responses
-- [ ] Enforce protocol == league.v2 and map validation errors to E002 (JSON-RPC -32602)
-- [ ] Reject unsupported game_type via games_registry config (E002) and ensure sender format is valid
-- [ ] Cross-check incoming sender against agents_config entries; reject mismatches with E004/E018
-- [ ] Auth token required on all non-registration calls (E012 on missing/invalid)
-- [ ] Load player metadata/port from agents_config/defaults to avoid drift
-- [ ] Map errors consistently: invalid params → -32602/E002, unknown method → -32601/E018, protocol mismatch → E011, timeout → E001
-- [ ] Log each tool call with conversation_id/match_id correlation
-- [ ] Strategy for choose_parity: random choice initially
-- [ ] Unit tests for each tool
+- [x] handle_game_invitation() - Accepts GAME_INVITATION, returns GAME_JOIN_ACK within 5s
+- [x] choose_parity() - Accepts CHOOSE_PARITY_CALL, returns choice ("even"/"odd") within 30s
+- [x] notify_match_result() - Accepts GAME_OVER, updates history, returns acknowledgment
+- [x] All tools validate message envelope
+- [x] All tools include auth_token in responses
+- [x] Enforce protocol == league.v2 and map validation errors to E002 (JSON-RPC -32602)
+- [x] Reject unsupported game_type via games_registry config (E002) and ensure sender format is valid
+- [x] Cross-check incoming sender against agents_config entries; reject mismatches with E004/E018
+- [x] Auth token required on all non-registration calls (E012 on missing/invalid)
+- [x] Load player metadata/port from agents_config/defaults to avoid drift
+- [x] Map errors consistently: invalid params → -32602/E002, unknown method → -32601/E018, protocol mismatch → E011, timeout → E001
+- [x] Log each tool call with conversation_id/match_id correlation
+- [x] Strategy for choose_parity: random choice initially
+- [x] Unit tests for each tool
 
 **Self-Verify Command:**
 ```bash
@@ -1440,15 +1440,15 @@ python tests/manual/test_player_tools.py --player-id=P01 --test-all
 Implement player registration with League Manager and lifecycle state management.
 
 **Definition of Done:**
-- [ ] send_registration_request() - Sends LEAGUE_REGISTER_REQUEST to League Manager
-- [ ] handle_registration_response() - Stores player_id and auth_token
-- [ ] State machine: INIT → REGISTERED → ACTIVE → SHUTDOWN
-- [ ] Retry registration on failure (3 retries with backoff)
-- [ ] Update state to REGISTERED on success
-- [ ] Use agents_config.json for player metadata/endpoint and system.json for LM endpoint/ports
-- [ ] Include protocol version league.v2 and validate LM response; store auth_token for later tool calls
-- [ ] Log state transitions and registration outcomes with correlation ids
-- [ ] Map errors consistently: invalid params → -32602/E002, protocol mismatch → E011, timeout → E001
+- [x] send_registration_request() - Sends LEAGUE_REGISTER_REQUEST to League Manager
+- [x] handle_registration_response() - Stores player_id and auth_token
+- [x] State machine: INIT → REGISTERED → ACTIVE → SHUTDOWN
+- [x] Retry registration on failure (3 retries with backoff)
+- [x] Update state to REGISTERED on success
+- [x] Use agents_config.json for player metadata/endpoint and system.json for LM endpoint/ports
+- [x] Include protocol version league.v2 and validate LM response; store auth_token for later tool calls
+- [x] Log state transitions and registration outcomes with correlation ids
+- [x] Map errors consistently: invalid params → -32602/E002, protocol mismatch → E011, timeout → E001
 - [ ] Integration test: Player registers successfully
 
 **Self-Verify Command:**

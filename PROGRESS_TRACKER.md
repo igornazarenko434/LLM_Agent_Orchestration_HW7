@@ -13,7 +13,7 @@
 
 | Metric | Status | Target | Percentage |
 |--------|--------|--------|-----------|
-| **Total Missions** | 24 / 47 | 47 | 51% |
+| **Total Missions** | 27 / 47 | 47 | 57% |
 | **Quality Gates Passed** | 0 / 5 | 5 | 0% (QG-1 Ready) |
 | **Test Coverage** | 91% | ≥85% | **✅ EXCEEDED** |
 | **Protocol Compliance** | 18 / 18 | 18 message types | 100% |
@@ -31,10 +31,10 @@
 | **2. Research & Analysis** | 20 pts | 4 / 4 | 100% | ✅ Complete |
 | **3. README & Documentation** | 15 pts | 0 / 5 | 0% | ☐ Not Started |
 | **4. Structure & Code Quality** | 12 pts | 6 / 8 | 75% | 🔄 In Progress |
-| **5. Testing & QA** | 10 pts | 2 / 6 | 33% | 🔄 In Progress |
+| **5. Testing & QA** | 10 pts | 3 / 6 | 50% | 🔄 In Progress |
 | **6. Configuration & Security** | 8 pts | 5 / 5 | 100% | ✅ Complete |
 | **7. Architecture & Design + Polish** | 10 pts | 1 / 4 | 25% | 🔄 In Progress |
-| **TOTAL** | **100 pts** | **20 / 38** | **53%** | **🔄 In Progress** |
+| **TOTAL** | **100 pts** | **22 / 38** | **58%** | **🔄 In Progress** |
 
 ---
 
@@ -263,7 +263,7 @@
 ---
 
 ### M7: Agent Implementation (14 missions, 38h)
-**Progress:** 2 / 14 (14%) 🔄 **IN PROGRESS**
+**Progress:** 4 / 14 (29%) 🔄 **IN PROGRESS**
 
 #### Core Agent Infrastructure
 - [x] **M7.1** Agent Base Class & Common Utilities (2h) - P0
@@ -279,9 +279,9 @@
   - Features: /mcp JSON-RPC routing (invitation, parity call, match result)
 
 #### Player Agent (4 missions)
-- [ ] **M7.2** Player Agent - MCP Server Setup (2h) - P0
-- [ ] **M7.3** Player Agent - Three Mandatory Tools (4h) - P0
-- [ ] **M7.4** Player Agent - Registration & Lifecycle (2h) - P0
+- [x] **M7.2** Player Agent - MCP Server Setup (2h) - P0
+- [x] **M7.3** Player Agent - Three Mandatory Tools (4h) - P0
+- [x] **M7.4** Player Agent - Registration & Lifecycle (2h) - P0
 
 ---
 
@@ -374,34 +374,34 @@
 | M4: Testing Infrastructure | 9.0 | ~6.0 | -3.0h | 🔄 33% Complete |
 | M5: Research & Protocol Design | 5.5 | ~3.5 | -2.0h | 🔄 80% Complete |
 | M6: UX & Developer Experience | 6.5 | 0 | - | ☐ Not Started |
-| M7: Agent Implementation | 38.0 | ~4.0 | - | 🔄 14% Complete |
+| M7: Agent Implementation | 38.0 | ~8.0 | - | 🔄 29% Complete |
 | M8: Documentation | 9.5 | 0 | - | ☐ Not Started |
 | M9: Submission & Deployment | 7.0 | 0 | - | ☐ Not Started |
-| **TOTAL** | **98.5** | **33.5** | **-2.5h** | **34% Complete** |
+| **TOTAL** | **98.5** | **37.5** | **-1.0h** | **38% Complete** |
 
 ### Time Allocation by Priority
 
 | Priority | Missions | Est. Hours | Completed | Remaining |
 |----------|----------|-----------|-----------|-----------|
-| P0 (Critical) | 33 | 74.0h | 20 missions | 13 missions |
+| P0 (Critical) | 33 | 74.0h | 22 missions | 11 missions |
 | P1 (High) | 10 | 18.0h | 4 missions | 6 missions |
 | P2 (Medium) | 4 | 6.5h | 1 mission | 3 missions |
-| **TOTAL** | **47** | **98.5h** | **25** | **22** |
+| **TOTAL** | **47** | **98.5h** | **27** | **20** |
 
 ---
 
 ## Next Actions (Priority Order)
 
 ### Immediate (Next 3 Tasks)
-1. [x] ~~M2.4 - Implement Structured Logging~~ ✅ DONE
-2. [x] ~~M2.5 - Implement Retry Policy~~ ✅ DONE
-3. [ ] **QG-1 - Pass Foundation Quality Gate** (READY!)
+1. [ ] **QG-1 - Pass Foundation Quality Gate** (READY!)
+2. [ ] **M7.5** - Referee Agent Match Conductor
+3. [ ] **M7.6** - Referee Timeout Enforcement
 
 ### Short-term (Next 5-7 Tasks)
-4. [ ] **M7.3** - Player Agent Three Mandatory Tools
-5. [ ] **M7.4** - Player Agent Registration & Lifecycle
-6. [ ] **M7.5** - Referee Agent Match Conductor
-7. [ ] **M7.6** - Referee Timeout Enforcement
+4. [ ] **M7.7** - Referee Agent Even/Odd Logic
+5. [ ] **M7.8** - Referee Registration & Setup
+6. [ ] **M7.9** - League Manager Registration Handler
+7. [ ] **M7.10** - Round-Robin Scheduler
 
 ### Medium-term (After QG-2)
 8. [ ] M7.5-M7.8 - Implement Referee Agent
