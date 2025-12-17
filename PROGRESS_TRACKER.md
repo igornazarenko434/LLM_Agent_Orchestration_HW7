@@ -135,7 +135,7 @@
 - [x] All configuration files created and validated
 - [x] Shared SDK installed and importable
 - [x] Protocol models defined with Pydantic
-- [x] Unit tests for SDK modules: 100% pass rate (172/172 tests)
+- [x] Unit tests for SDK modules: 100% pass rate (177/177 tests)
 - [x] Code quality: flake8 ready
 - [x] **Test coverage: 91% (exceeded 85% target!)**
 
@@ -190,7 +190,7 @@
   - Status: ✅ **Completed** (2025-12-16)
   - Dependencies: M0.3
   - Output: pytest.ini, conftest.py, fixtures
-  - Evidence: 172 tests passing
+  - Evidence: 177 tests passing
 
 - [x] **M4.1** Unit Test Templates (1h) - P0
   - Status: ✅ **Completed** (2025-12-17)
@@ -480,7 +480,7 @@
 
 ### 5. Testing & QA (10 pts)
 - [x] Test coverage ≥85% - ✅ **91% achieved!**
-- [x] Unit tests pass (100+ tests) - ✅ **172 tests passing**
+- [x] Unit tests pass (100+ tests) - ✅ **177 tests passing**
 - [ ] Integration tests pass (30+ tests)
 - [ ] E2E tests pass (5+ tests)
 - [ ] Protocol compliance tests pass (18/18)
@@ -522,17 +522,17 @@
 5. **Data Layer** - Repository pattern with atomic writes
 6. **Logging Infrastructure** - JsonLogger with 99% coverage, 35 tests
 7. **Retry & Resilience** - Exponential backoff + Circuit Breaker, 94% coverage, 34 tests
-8. **Test Infrastructure** - 172 tests passing, **91% coverage**
+8. **Test Infrastructure** - 177 tests passing, **91% coverage**
 9. **Agent Base** - Shared BaseAgent with logging/config/retry scaffold + unit tests
-10. **Player MCP Server** - /mcp JSON-RPC dispatch with invitation/parity handling + tests
+10. **Player MCP Server** - /mcp JSON-RPC dispatch with invitation/parity/registration + history persistence + tests
 
 ### 🎯 Current Sprint Focus
 - **Pass QG-1 (Foundation Quality Gate)** - All criteria met!
-- **Player Agent tools** - M7.3 parity/logic and lifecycle hardening
+- **Referee Agent** - M7.5/M7.6 orchestration and timeouts
 
 ### 📊 Health Metrics
 - **Test Coverage:** 91% (target: 85%) - ✅ **EXCEEDED**
-- **Tests Passing:** 172/172 (100%) - ✅ **PERFECT**
+- **Tests Passing:** 177/177 (100%) - ✅ **PERFECT**
 - **Protocol Models:** 18/18 (100%) - ✅ **COMPLETE**
 - **Error Codes:** 18/18 (100%) - ✅ **COMPLETE**
 - **Code Quality:** High - modular, tested, documented
