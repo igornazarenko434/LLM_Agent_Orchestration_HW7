@@ -17,6 +17,7 @@ from league_sdk.protocol import (
     GameInvitation,
     GameJoinAck,
     MatchResultReport,
+    GameOver,
 )
 
 
@@ -74,3 +75,18 @@ def handle_match_result(params: Dict[str, Any]) -> Dict[str, Any]:
     report = MatchResultReport(**params)
     # Business logic placeholder: could update local strategy/learning here.
     return {"status": "ack", "match_id": report.match_id, "message_type": report.message_type}
+
+
+def handle_game_over(params: Dict[str, Any], history: list[Dict[str, Any]], auth_token: Optional[str] = None) -> Dict[str, Any]:
+    """Handle GAME_OVER notification: store in history and acknowledge."""
+    game_over = GameOver(**params)
+    record = game_over.model_dump()
+    if auth_token:
+        record["auth_token"] = auth_token
+    history.append(record)
+    return {
+        "status": "ack",
+        "match_id": game_over.match_id,
+        "message_type": game_over.message_type,
+        "auth_token": auth_token,
+    }

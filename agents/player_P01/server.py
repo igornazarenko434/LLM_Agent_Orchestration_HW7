@@ -26,8 +26,8 @@ from league_sdk.protocol import (
     ChooseParityCall,
     GameInvitation,
     ErrorCode,
+    GameOver,
 )
-from league_sdk.protocol import MessageEnvelope
 
 AGENTS_CONFIG_PATH = "SHARED/config/agents/agents_config.json"
 GAMES_REGISTRY_PATH = "SHARED/config/games/games_registry.json"
@@ -60,10 +60,12 @@ class PlayerAgent(BaseAgent):
 
         self.allowed_senders = self._build_sender_index()
         self.supported_game_types = {g["game_type"] for g in self.game_registry.get("games", [])}
+        self.match_history: list[Dict[str, Any]] = []
 
         self._method_map: Dict[str, Callable[[Dict[str, Any]], Dict[str, Any]]] = {
             "GAME_INVITATION": lambda params: handlers.handle_game_invitation(self.agent_id, params, self.auth_token),
             "CHOOSE_PARITY_CALL": lambda params: handlers.handle_choose_parity(self.agent_id, params, self.auth_token),
+            "GAME_OVER": lambda params: handlers.handle_game_over(params, self.match_history, self.auth_token),
             "MATCH_RESULT_REPORT": handlers.handle_match_result,
         }
         self._register_mcp_route()
@@ -116,6 +118,16 @@ class PlayerAgent(BaseAgent):
                 rpc_response = JSONRPCResponse(id=rpc_request.id, result=result)
                 log_message_sent(self.std_logger, result)
                 return JSONResponse(status_code=200, content=rpc_response.model_dump())
+            except TimeoutError as exc:  # pragma: no cover - defensive
+                return self._error_response(
+                    rpc_request.id,
+                    code=-32000,
+                    message="Timeout",
+                    error_code=ErrorCode.TIMEOUT_ERROR,
+                    status=504,
+                    payload=rpc_request.model_dump(),
+                    extra_data={"error": str(exc), "method": rpc_request.method},
+                )
             except Exception as exc:  # pragma: no cover - defensive
                 return self._error_response(
                     rpc_request.id,
@@ -174,11 +186,25 @@ class PlayerAgent(BaseAgent):
             )
 
     def _validate_params(self, rpc_request: JSONRPCRequest) -> Optional[JSONResponse]:
+        params = rpc_request.params
+        if params.get("protocol") != "league.v2":
+            return self._error_response(
+                rpc_request.id,
+                code=-32602,
+                message="Protocol mismatch",
+                error_code=ErrorCode.PROTOCOL_VERSION_MISMATCH,
+                status=400,
+                payload=rpc_request.model_dump(),
+                extra_data={"supported_protocols": ["league.v2"]},
+            )
+
         try:
             if rpc_request.method == "GAME_INVITATION":
                 GameInvitation(**rpc_request.params)
             elif rpc_request.method == "CHOOSE_PARITY_CALL":
                 ChooseParityCall(**rpc_request.params)
+            elif rpc_request.method == "GAME_OVER":
+                GameOver(**rpc_request.params)
             elif rpc_request.method == "MATCH_RESULT_REPORT":
                 MatchResultReport(**rpc_request.params)
         except Exception as exc:
@@ -190,18 +216,6 @@ class PlayerAgent(BaseAgent):
                 status=400,
                 payload=rpc_request.model_dump(),
                 extra_data={"details": str(exc)},
-            )
-
-        params = rpc_request.params
-        if params.get("protocol") != "league.v2":
-            return self._error_response(
-                rpc_request.id,
-                code=-32000,
-                message="Protocol mismatch",
-                error_code=ErrorCode.PROTOCOL_VERSION_MISMATCH,
-                status=400,
-                payload=rpc_request.model_dump(),
-                extra_data={"supported_protocols": ["league.v2"]},
             )
 
         sender = params.get("sender")
