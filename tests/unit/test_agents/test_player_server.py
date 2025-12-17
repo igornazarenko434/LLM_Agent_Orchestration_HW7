@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from agents.player_P01.server import PlayerAgent
+from league_sdk.repositories import PlayerHistoryRepository
 
 
 @pytest.fixture(scope="module")
@@ -132,6 +133,10 @@ def test_handle_match_result_report(player_client: TestClient):
     assert body["result"]["status"] == "ack"
     assert body["result"]["auth_token"] == "tok-ref"
     assert body["id"] == 8
+    # Verify history persisted
+    repo = PlayerHistoryRepository("P99")
+    history = repo.load()
+    assert any(m["match_id"] == "R1M1" for m in history.get("matches", []))
 
 
 def test_parity_timeout_returns_e001(monkeypatch):

@@ -30,6 +30,7 @@ from league_sdk.protocol import (
     GameOver,
 )
 from league_sdk.protocol import LeagueRegisterRequest, LeagueRegisterResponse
+from league_sdk.repositories import PlayerHistoryRepository
 from league_sdk.retry import call_with_retry
 
 AGENTS_CONFIG_PATH = "SHARED/config/agents/agents_config.json"
@@ -63,14 +64,14 @@ class PlayerAgent(BaseAgent):
 
         self.allowed_senders = self._build_sender_index()
         self.supported_game_types = {g["game_type"] for g in self.game_registry.get("games", [])}
-        self.match_history: list[Dict[str, Any]] = []
+        self.history_repo = PlayerHistoryRepository(self.agent_id)
         self.state: str = "INIT"
 
         self._method_map: Dict[str, Callable[[Dict[str, Any]], Dict[str, Any]]] = {
             "GAME_INVITATION": lambda params: handlers.handle_game_invitation(self.agent_id, params, self.auth_token),
             "CHOOSE_PARITY_CALL": lambda params: handlers.handle_choose_parity(self.agent_id, params, self.auth_token),
-            "GAME_OVER": lambda params: handlers.handle_game_over(params, self.match_history, self.auth_token),
-            "MATCH_RESULT_REPORT": lambda params: handlers.handle_match_result(params, self.match_history, self.auth_token),
+            "GAME_OVER": lambda params: handlers.handle_game_over(params, self.history_repo, self.auth_token),
+            "MATCH_RESULT_REPORT": lambda params: handlers.handle_match_result(params, self.history_repo, self.auth_token),
         }
         self._register_mcp_route()
 

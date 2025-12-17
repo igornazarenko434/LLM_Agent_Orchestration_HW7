@@ -19,6 +19,7 @@ from league_sdk.protocol import (
     MatchResultReport,
     GameOver,
 )
+from league_sdk.repositories import PlayerHistoryRepository
 
 
 def _utc_timestamp() -> str:
@@ -71,7 +72,7 @@ def handle_choose_parity(agent_id: str, params: Dict[str, Any], auth_token: Opti
 
 
 def handle_match_result(
-    params: Dict[str, Any], history: Optional[list[Dict[str, Any]]] = None, auth_token: Optional[str] = None
+    params: Dict[str, Any], history: Optional[PlayerHistoryRepository | list[Dict[str, Any]]] = None, auth_token: Optional[str] = None
 ) -> Dict[str, Any]:
     """Handle MATCH_RESULT_REPORT notification by validating, storing, and returning ack."""
     if "game_result" in params and "result" not in params:
@@ -82,7 +83,19 @@ def handle_match_result(
     if auth_token:
         record["auth_token"] = auth_token
     if history is not None:
-        history.append(record)
+        if isinstance(history, PlayerHistoryRepository):
+            details = record.get("result", {})
+            history.add_match(
+                match_id=report.match_id,
+                league_id=record.get("league_id", ""),
+                round_id=record.get("round_id", 0),
+                opponent_id=details.get("opponent_id", ""),
+                result=details.get("status", ""),
+                points=details.get("points_awarded", 0),
+                details=details,
+            )
+        else:
+            history.append(record)
     return {
         "status": "ack",
         "match_id": report.match_id,
@@ -97,7 +110,19 @@ def handle_game_over(params: Dict[str, Any], history: list[Dict[str, Any]], auth
     record = game_over.model_dump()
     if auth_token:
         record["auth_token"] = auth_token
-    history.append(record)
+    if isinstance(history, PlayerHistoryRepository):
+        details = record.get("game_result", {})
+        history.add_match(
+            match_id=game_over.match_id,
+            league_id=record.get("league_id", ""),
+            round_id=record.get("round_id", 0),
+            opponent_id=details.get("opponent_id", ""),
+            result=details.get("status", ""),
+            points=details.get("points_awarded", 0),
+            details=details,
+        )
+    else:
+        history.append(record)
     return {
         "status": "ack",
         "match_id": game_over.match_id,
