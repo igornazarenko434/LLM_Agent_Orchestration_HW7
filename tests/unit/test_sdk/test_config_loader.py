@@ -174,6 +174,25 @@ class TestLoadSystemConfig:
         assert config.security.auth_token_length == 64
         assert config.network.league_manager_port == 9000
 
+    def test_env_overrides_apply(self, monkeypatch):
+        """Test that environment variables override JSON defaults."""
+        config_path = Path("SHARED/config/system.json")
+        if not config_path.exists():
+            pytest.skip("system.json not found")
+
+        monkeypatch.setenv("LEAGUE_MANAGER_PORT", "9001")
+        monkeypatch.setenv("TIMEOUT_GAME_JOIN_ACK", "7")
+        monkeypatch.setenv("RETRY_MAX_RETRIES", "4")
+        monkeypatch.setenv("TIMEOUT_GAME_OVER", "6")
+        monkeypatch.setenv("REQUEST_TIMEOUT_SEC", "25")
+        config = load_system_config(config_path)
+
+        assert config.network.league_manager_port == 9001
+        assert config.timeouts.game_join_ack_sec == 7
+        assert config.retry_policy.max_retries == 4
+        assert config.timeouts.game_over_sec == 6
+        assert config.network.request_timeout_sec == 25
+
 
 @pytest.mark.unit
 class TestLoadLeagueConfig:

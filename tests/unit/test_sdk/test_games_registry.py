@@ -52,7 +52,7 @@ class TestGamesRegistry:
         games = registry_data["games"]
         even_odd = next((g for g in games if g["game_type"] == "even_odd"), None)
 
-        config = even_odd.get("game_specific_config", {{}})
+        config = even_odd.get("game_specific_config", {})
         assert "random_range_min" in config
         assert "random_range_max" in config
         assert config["random_range_min"] == 1
@@ -66,7 +66,7 @@ class TestGamesRegistry:
         games = registry_data["games"]
         even_odd = next((g for g in games if g["game_type"] == "even_odd"), None)
 
-        config = even_odd.get("game_specific_config", {{}})
+        config = even_odd.get("game_specific_config", {})
         assert "rules" in config
         rules = config["rules"]
         assert "win_condition" in rules
