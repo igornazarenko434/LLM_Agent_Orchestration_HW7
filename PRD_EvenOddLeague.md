@@ -82,6 +82,68 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 | **Player Agent** | System Component | Participate in games, respond to invitations, make moves | MCP HTTP endpoints |
 | **End User (Future)** | Observer | Monitor league progress, view standings | CLI commands, log files |
 
+### 2.1 Personas
+
+#### Persona 1: Alex Chen - Player Agent Developer
+
+**Name:** Alex Chen
+**Role:** Senior Software Engineer / AI Agent Developer
+**Background:** 5+ years experience in Python backend development, recently transitioning to AI/ML agent development
+
+**Goals:**
+1. Build a competitive Player agent that implements intelligent parity selection strategies
+2. Achieve >60% win rate by analyzing opponent patterns and game history
+3. Learn Model Context Protocol (MCP) and agent orchestration best practices
+4. Create reusable, well-tested agent components that can be extended for future game types
+5. Maintain clean code with ≥85% test coverage to meet quality standards
+
+**Pain Points:**
+1. Unclear protocol specifications - struggles to understand exact message format requirements and error codes
+2. Difficult debugging - when agent communication fails, hard to trace whether issue is in protocol compliance, timeout handling, or message validation
+3. Integration complexity - setting up local development environment with multiple agents, coordinating ports, and managing concurrent requests is time-consuming
+4. Testing challenges - needs realistic test scenarios for timeout handling, circuit breaker behavior, and retry policies
+5. Performance optimization - uncertain how to balance response latency with sophisticated decision-making algorithms
+
+**How This Project Helps:**
+- **Comprehensive PRD** provides complete protocol specification with all 18 message types and 18 error codes clearly documented
+- **league_sdk package** offers ready-to-use utilities for logging, retry logic, circuit breakers, and protocol validation
+- **BaseAgent class** handles FastAPI server setup, health checks, graceful shutdown, and configuration loading automatically
+- **Extensive test suite** with 182 tests demonstrates correct protocol usage, timeout handling, and error scenarios
+- **Structured logging** (JSONL format) enables easy debugging of agent communication flows and performance analysis
+- **Code examples** in agents/player_P01/ provide working reference implementation for all required MCP tools
+
+---
+
+#### Persona 2: Jamie Rodriguez - League Operations Engineer
+
+**Name:** Jamie Rodriguez
+**Role:** DevOps Engineer / System Reliability Specialist
+**Background:** 7+ years managing distributed systems, CI/CD pipelines, and production monitoring
+
+**Goals:**
+1. Deploy and operate a reliable multi-agent tournament system that runs 24/7
+2. Monitor system health, detect failures early, and maintain ≥99.9% agent uptime
+3. Ensure data consistency across match results, standings, and player history repositories
+4. Implement automated testing and deployment pipelines for continuous agent improvements
+5. Generate analytics and reports on tournament performance, agent behavior, and system bottlenecks
+
+**Pain Points:**
+1. Operational complexity - managing 7+ agents (League Manager, 3 Referees, 4 Players) with different ports, configurations, and state machines
+2. Reliability concerns - needs robust retry policies, circuit breakers, and timeout enforcement to prevent cascading failures
+3. Data integrity - worried about race conditions in concurrent matches, file corruption, or inconsistent standings updates
+4. Observability gaps - needs structured logging, performance metrics, and error tracking across all agents
+5. Configuration management - must coordinate system-wide settings (timeouts, retry policies) across multiple config files and ensure consistency
+
+**How This Project Helps:**
+- **3-layer data architecture** (SHARED/config/, SHARED/data/, SHARED/logs/) with atomic file writes prevents data corruption
+- **Centralized configuration** in SHARED/config/system.json defines timeouts, retry policies, and circuit breaker thresholds for entire system
+- **Structured JSONL logging** with automatic rotation (100MB files, 5 backups) enables log aggregation and analysis tools
+- **Repository pattern** (StandingsRepository, MatchRepository, PlayerHistoryRepository) ensures data consistency through atomic writes and validation
+- **Resilience patterns** built-in: exponential backoff retry (2s→4s→8s), circuit breaker (5 failure threshold, 60s reset), timeout enforcement per message type
+- **Health check endpoints** on all agents enable automated monitoring and alerting
+- **Comprehensive test coverage** (85%+) with unit, integration, and E2E tests validates system behavior under normal and failure scenarios
+- **CI/CD ready** structure with pytest, coverage reports, and pre-commit hooks supports automated quality gates
+
 ---
 
 ## 3. KEY PERFORMANCE INDICATORS (KPIs)

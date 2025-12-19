@@ -13,7 +13,7 @@
 
 | Metric | Status | Target | Percentage |
 |--------|--------|--------|-----------|
-| **Total Missions** | 27 / 74 | 74 | 36% |
+| **Total Missions** | 28 / 74 | 74 | 38% |
 | **Quality Gates Passed** | 0 / 5 | 5 | 0% (QG-1 Ready) |
 | **Test Coverage** | 91% | ≥85% | **✅ EXCEEDED** |
 | **Protocol Compliance** | 18 / 18 | 18 message types | 100% |
@@ -27,7 +27,7 @@
 
 | Category | Weight | Tasks Complete | Progress | Status |
 |----------|--------|----------------|----------|--------|
-| **1. Project Documentation** | 25 pts | 2 / 9 | 22% | 🔄 In Progress |
+| **1. Project Documentation** | 25 pts | 3 / 9 | 33% | 🔄 In Progress |
 | **2. Research & Analysis** | 20 pts | 4 / 4 | 100% | ✅ Complete |
 | **3. README & Documentation** | 15 pts | 0 / 5 | 0% | ☐ Not Started |
 | **4. Structure & Code Quality** | 12 pts | 5 / 9 | 56% | 🔄 In Progress |
@@ -73,7 +73,7 @@
 ---
 
 ### M1: PRD & Requirements (5 missions, 11h)
-**Progress:** 2 / 5 (40%) 🔄 **IN PROGRESS**
+**Progress:** 3 / 5 (60%) 🔄 **IN PROGRESS**
 
 - [x] **M1.1** PRD Document Creation (4h) - P0
   - Status: ✅ **Completed** (2025-12-15)
@@ -87,12 +87,12 @@
   - Output: Missions_EvenOddLeague.md with 74 missions
   - Evidence: 64,236 bytes, all missions with DoD, verify commands
 
-- [ ] **M1.3** Add Personas to PRD (1.5h) - P0
-  - Status: ☐ **Not Started**
+- [x] **M1.3** Add Personas to PRD (1.5h) - P0
+  - Status: ✅ **Completed** (2025-12-19)
   - Dependencies: M1.1
-  - Output: PRD Section 2 updated with personas
-  - DoD: Add ≥2 personas with Name, Role, Goals, Pain Points, How Project Helps
-  - Examples: "Alex - Player Agent Developer", "Jamie - League Operator"
+  - Output: PRD Section 2.1 updated with 2 detailed personas
+  - Evidence: Alex Chen (Player Agent Developer) + Jamie Rodriguez (League Operations Engineer)
+  - Each persona includes: Name, Role, Background, Goals (5), Pain Points (5), How Project Helps (6-7 points)
   - Verify: `grep -A 10 "Persona" PRD_EvenOddLeague.md`
 
 - [ ] **M1.4** Add Research & Analysis Section to PRD (2h) - P1
@@ -588,7 +588,7 @@
 ### 1. Project Documentation (25 pts)
 - [x] PRD document complete (17+ sections) - ✅ 102KB file
 - [x] Missions document complete (74 missions) - ✅ Updated with all requirements
-- [ ] **M1.3:** Personas added to PRD (≥2) - ☐ CRITICAL GAP
+- [x] **M1.3:** Personas added to PRD (≥2) - ✅ COMPLETED (Alex Chen + Jamie Rodriguez)
 - [ ] **M1.4:** Research & Analysis section in PRD - ☐ CRITICAL GAP
 - [ ] **M1.5:** Open Questions & Assumptions in PRD - ☐ NEW
 - [ ] Evidence matrix (35+ entries)
