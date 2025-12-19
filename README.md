@@ -246,7 +246,8 @@ LLM_Agent_Orchestration_HW7/
 │   ├── pyproject.toml                  # Project metadata
 │   ├── PRD_EvenOddLeague.md            # Product Requirements Document (102KB)
 │   ├── PROGRESS_TRACKER.md             # Mission tracking and status
-│   └── STYLE_GUIDE.md                  # Code style guidelines
+│   └── guides/
+│       └── HOW_QUALITY_WORKS.md       # Quality standards workflow guide
 └── 📜 Project Documentation
     ├── README.md                       # This file
     └── LICENSE                         # MIT License
@@ -1362,7 +1363,8 @@ parity_choice = strategy.choose(history_repo.get_recent_matches(10))
 | **Round-Robin Algorithm** | `doc/algorithms/round_robin.md` | Scheduling algorithm with examples |
 | **Error Handling Strategy** | `doc/error_handling_strategy.md` | Error classification and retry logic |
 | **Implementation Logs** | `doc/prompt_log/*.md` | Mission implementation prompts |
-| **Style Guide** | `STYLE_GUIDE.md` | Code style and conventions |
+| **Contributing Guide** | `CONTRIBUTING.md` | Code style, workflow, and quality standards |
+| **Quality Workflow** | `doc/guides/HOW_QUALITY_WORKS.md` | How quality checks work locally and on CI/CD |
 | **API Reference** | ⚠️ Pending | Mission M6.4 - Auto-generated from docstrings |
 | **Architecture Docs** | ⚠️ Pending | Mission M8.2 - System design and patterns |
 | **Configuration Guide** | ⚠️ Pending | Mission M8.3 - Config file documentation |
@@ -1407,7 +1409,7 @@ We welcome contributions! Please follow these guidelines:
    ```
 
 4. **Make Changes**
-   - Follow [STYLE_GUIDE.md](STYLE_GUIDE.md)
+   - Follow [CONTRIBUTING.md](CONTRIBUTING.md)
    - Write tests for new features
    - Update documentation
 

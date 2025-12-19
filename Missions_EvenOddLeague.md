@@ -1482,7 +1482,7 @@ Establish automated quality gates locally and codify team standards.
 **Self-Verify Command:**
 ```bash
 pre-commit run --all-files && \
-cat STYLE_GUIDE.md | grep -E "Code Style|Commit|Branch"
+cat CONTRIBUTING.md | grep -E "Code Style|Commit|Branch"
 ```
 
 **Expected Evidence:**
