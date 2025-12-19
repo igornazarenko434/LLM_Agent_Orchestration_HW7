@@ -1,8 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
+from league_sdk.repositories import PlayerHistoryRepository
 
 from agents.player_P01.server import PlayerAgent
-from league_sdk.repositories import PlayerHistoryRepository
 
 
 @pytest.fixture(scope="module")
@@ -140,8 +140,9 @@ def test_handle_match_result_report(player_client: TestClient):
 
 
 def test_parity_timeout_returns_e001(monkeypatch):
-    from agents.player_P01.server import PlayerAgent
     import asyncio
+
+    from agents.player_P01.server import PlayerAgent
 
     agent = PlayerAgent(agent_id="P99")
     agent.config.timeouts.parity_choice_sec = 0.05
@@ -178,8 +179,9 @@ def test_parity_timeout_returns_e001(monkeypatch):
 
 
 def test_game_invitation_timeout_returns_e001():
-    from agents.player_P01.server import PlayerAgent
     import asyncio
+
+    from agents.player_P01.server import PlayerAgent
 
     agent = PlayerAgent(agent_id="P99")
     agent.config.timeouts.game_join_ack_sec = 0.05
@@ -243,7 +245,14 @@ def test_unknown_method_returns_error(player_client: TestClient):
     payload = {
         "jsonrpc": "2.0",
         "method": "UNKNOWN_METHOD",
-        "params": {"message_type": "UNKNOWN_METHOD", "protocol": "league.v2", "sender": "referee:REF01", "timestamp": "2025-01-01T00:00:00Z", "conversation_id": "conv-x", "auth_token": "tok-ref"},
+        "params": {
+            "message_type": "UNKNOWN_METHOD",
+            "protocol": "league.v2",
+            "sender": "referee:REF01",
+            "timestamp": "2025-01-01T00:00:00Z",
+            "conversation_id": "conv-x",
+            "auth_token": "tok-ref",
+        },
         "id": 3,
     }
     resp = player_client.post("/mcp", json=payload)

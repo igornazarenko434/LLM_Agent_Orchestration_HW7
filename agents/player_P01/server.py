@@ -14,24 +14,25 @@ from typing import Any, Callable, Dict, Optional
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
-
-from agents.base import BaseAgent
-from agents.player_P01 import handlers
 from league_sdk.config_loader import load_agents_config, load_json_file
 from league_sdk.logger import log_error, log_message_received, log_message_sent
 from league_sdk.protocol import (
+    ChooseParityCall,
+    ErrorCode,
+    GameInvitation,
+    GameOver,
     JSONRPCError,
     JSONRPCRequest,
     JSONRPCResponse,
+    LeagueRegisterRequest,
+    LeagueRegisterResponse,
     MatchResultReport,
-    ChooseParityCall,
-    GameInvitation,
-    ErrorCode,
-    GameOver,
 )
-from league_sdk.protocol import LeagueRegisterRequest, LeagueRegisterResponse
 from league_sdk.repositories import PlayerHistoryRepository
 from league_sdk.retry import call_with_retry
+
+from agents.base import BaseAgent
+from agents.player_P01 import handlers
 
 AGENTS_CONFIG_PATH = "SHARED/config/agents/agents_config.json"
 GAMES_REGISTRY_PATH = "SHARED/config/games/games_registry.json"
@@ -68,10 +69,18 @@ class PlayerAgent(BaseAgent):
         self.state: str = "INIT"
 
         self._method_map: Dict[str, Callable[[Dict[str, Any]], Dict[str, Any]]] = {
-            "GAME_INVITATION": lambda params: handlers.handle_game_invitation(self.agent_id, params, self.auth_token),
-            "CHOOSE_PARITY_CALL": lambda params: handlers.handle_choose_parity(self.agent_id, params, self.auth_token),
-            "GAME_OVER": lambda params: handlers.handle_game_over(params, self.history_repo, self.auth_token),
-            "MATCH_RESULT_REPORT": lambda params: handlers.handle_match_result(params, self.history_repo, self.auth_token),
+            "GAME_INVITATION": lambda params: handlers.handle_game_invitation(
+                self.agent_id, params, self.auth_token
+            ),
+            "CHOOSE_PARITY_CALL": lambda params: handlers.handle_choose_parity(
+                self.agent_id, params, self.auth_token
+            ),
+            "GAME_OVER": lambda params: handlers.handle_game_over(
+                params, self.history_repo, self.auth_token
+            ),
+            "MATCH_RESULT_REPORT": lambda params: handlers.handle_match_result(
+                params, self.history_repo, self.auth_token
+            ),
         }
         self._register_mcp_route()
 
@@ -125,7 +134,9 @@ class PlayerAgent(BaseAgent):
             try:
                 log_message_received(self.std_logger, rpc_request.model_dump())
                 timeout = self._timeout_for_method(rpc_request.method)
-                result = await asyncio.wait_for(self._execute_handler(handler, rpc_request.params), timeout=timeout)
+                result = await asyncio.wait_for(
+                    self._execute_handler(handler, rpc_request.params), timeout=timeout
+                )
                 rpc_response = JSONRPCResponse(id=rpc_request.id, result=result)
                 log_message_sent(self.std_logger, result)
                 return JSONResponse(status_code=200, content=rpc_response.model_dump())
@@ -277,9 +288,15 @@ class PlayerAgent(BaseAgent):
         self._transition("REGISTERING")
         conversation_id = self._conversation_id()
         player_meta = {
-            "display_name": self.agent_record.get("display_name", self.agent_id) if self.agent_record else self.agent_id,
+            "display_name": (
+                self.agent_record.get("display_name", self.agent_id)
+                if self.agent_record
+                else self.agent_id
+            ),
             "version": self.agent_record.get("version", "1.0.0") if self.agent_record else "1.0.0",
-            "game_types": self.agent_record.get("game_types", ["even_odd"]) if self.agent_record else ["even_odd"],
+            "game_types": (
+                self.agent_record.get("game_types", ["even_odd"]) if self.agent_record else ["even_odd"]
+            ),
             "contact_endpoint": f"http://{self.host}:{self.port}/mcp",
         }
         request = LeagueRegisterRequest(
@@ -345,7 +362,9 @@ class PlayerAgent(BaseAgent):
             },
         )
 
-    async def _execute_handler(self, handler: Callable[[Dict[str, Any]], Dict[str, Any]], params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_handler(
+        self, handler: Callable[[Dict[str, Any]], Dict[str, Any]], params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         result = handler(params)
         if asyncio.iscoroutine(result):
             result = await result

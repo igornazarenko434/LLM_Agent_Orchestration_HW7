@@ -27,7 +27,7 @@ from .logger import (
 )
 
 # Import core protocol models
-from .protocol import (  # Registration Messages; League Orchestration; Match Flow; Query Messages; Error Messages; JSON-RPC 2.0 Wrapper; Helper functions
+from .protocol import (  # Registration, Orchestration, Match Flow, Query, Errors, JSON-RPC, Helpers
     ChooseParityCall,
     ChooseParityResponse,
     ErrorCode,

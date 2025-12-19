@@ -20,7 +20,6 @@ from typing import Any, Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI
-
 from league_sdk.config_loader import load_system_config
 from league_sdk.config_models import SystemConfig
 from league_sdk.logger import JsonLogger, setup_logger
@@ -69,7 +68,7 @@ class BaseAgent:
 
         self.circuit_breaker: Optional[CircuitBreaker] = None
         if getattr(self.config, "circuit_breaker", None):
-            cb_cfg = self.config.circuit_breaker  # type: ignore[attr-defined]
+            cb_cfg = self.config.circuit_breaker
             self.circuit_breaker = CircuitBreaker(
                 failure_threshold=cb_cfg.get("failure_threshold", 5),
                 reset_timeout=cb_cfg.get("reset_timeout_sec", 60),
@@ -155,7 +154,7 @@ class BaseAgent:
         if wait and self._thread and self._thread.is_alive():
             self._thread.join(timeout=5)
 
-    def _handle_shutdown(self, signum, frame=None) -> None:  # type: ignore[override]
+    def _handle_shutdown(self, signum, frame=None) -> None:
         """Handle OS shutdown signals."""
         try:
             sig_name = signal.Signals(signum).name

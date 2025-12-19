@@ -16,23 +16,20 @@ from league_sdk.protocol import (
     ChooseParityResponse,
     GameInvitation,
     GameJoinAck,
-    MatchResultReport,
     GameOver,
+    MatchResultReport,
 )
 from league_sdk.repositories import PlayerHistoryRepository
 
 
 def _utc_timestamp() -> str:
     """Return ISO 8601 UTC timestamp without microseconds."""
-    return (
-        datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def handle_game_invitation(agent_id: str, params: Dict[str, Any], auth_token: Optional[str] = None) -> Dict[str, Any]:
+def handle_game_invitation(
+    agent_id: str, params: Dict[str, Any], auth_token: Optional[str] = None
+) -> Dict[str, Any]:
     """Respond to GAME_INVITATION with GAME_JOIN_ACK."""
     invitation = GameInvitation(**params)
     ack = GameJoinAck(
@@ -52,7 +49,9 @@ def handle_game_invitation(agent_id: str, params: Dict[str, Any], auth_token: Op
     return payload
 
 
-def handle_choose_parity(agent_id: str, params: Dict[str, Any], auth_token: Optional[str] = None) -> Dict[str, Any]:
+def handle_choose_parity(
+    agent_id: str, params: Dict[str, Any], auth_token: Optional[str] = None
+) -> Dict[str, Any]:
     """Respond to CHOOSE_PARITY_CALL with CHOOSE_PARITY_RESPONSE (random strategy)."""
     call = ChooseParityCall(**params)
     parity_choice = random.choice(["even", "odd"])
@@ -72,7 +71,9 @@ def handle_choose_parity(agent_id: str, params: Dict[str, Any], auth_token: Opti
 
 
 def handle_match_result(
-    params: Dict[str, Any], history: Optional[PlayerHistoryRepository | list[Dict[str, Any]]] = None, auth_token: Optional[str] = None
+    params: Dict[str, Any],
+    history: Optional[PlayerHistoryRepository | list[Dict[str, Any]]] = None,
+    auth_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Handle MATCH_RESULT_REPORT notification by validating, storing, and returning ack."""
     if "game_result" in params and "result" not in params:
@@ -104,7 +105,9 @@ def handle_match_result(
     }
 
 
-def handle_game_over(params: Dict[str, Any], history: list[Dict[str, Any]], auth_token: Optional[str] = None) -> Dict[str, Any]:
+def handle_game_over(
+    params: Dict[str, Any], history: list[Dict[str, Any]], auth_token: Optional[str] = None
+) -> Dict[str, Any]:
     """Handle GAME_OVER notification: store in history and acknowledge."""
     game_over = GameOver(**params)
     record = game_over.model_dump()

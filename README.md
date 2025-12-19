@@ -30,6 +30,7 @@
 - [Configuration](#-configuration)
 - [Technical Architecture](#-technical-architecture)
 - [Testing](#-testing)
+- [Quality Standards](#-quality-standards)
 - [Troubleshooting](#-troubleshooting)
 - [Research & Analysis](#-research--analysis)
 - [Quality Standards Summary](#-quality-standards-summary)
@@ -911,6 +912,147 @@ def test_game_invitation_validation():
     )
     assert invitation.message_type == "GAME_INVITATION"
     assert invitation.protocol == "league.v2"
+```
+
+---
+
+## ⭐ Quality Standards
+
+This project maintains production-ready code quality through automated tooling and comprehensive CI/CD enforcement.
+
+### Code Quality Tools
+
+| Tool | Purpose | Configuration | Status |
+|------|---------|---------------|--------|
+| **black** | Code formatting (line length: 104) | `pyproject.toml` | ✅ Enforced |
+| **isort** | Import sorting (black profile) | `pyproject.toml` | ✅ Enforced |
+| **flake8** | Linting (PEP 8 compliance) | `.flake8` | ✅ Enforced |
+| **mypy** | Static type checking | `mypy.ini` | ✅ Enforced |
+| **pylint** | Advanced linting | `pyproject.toml` | ✅ Configured |
+| **pytest** | Testing with coverage (≥85%) | `pyproject.toml` | ✅ Enforced |
+
+### Pre-Commit Hooks
+
+Automated quality checks run before every commit:
+
+#### Installation
+
+```bash
+# Install pre-commit (already in requirements.txt)
+pip install pre-commit
+
+# Install git hooks
+pre-commit install
+
+# Verify installation
+pre-commit --version
+```
+
+#### Running Hooks
+
+```bash
+# Run all hooks on staged files (automatic on commit)
+pre-commit run
+
+# Run all hooks on all files
+pre-commit run --all-files
+
+# Run specific hook
+pre-commit run black
+pre-commit run flake8
+```
+
+#### Configured Hooks
+
+1. **trailing-whitespace** - Remove trailing whitespace
+2. **end-of-file-fixer** - Ensure files end with newline
+3. **check-yaml** - Validate YAML syntax
+4. **check-json** - Validate JSON syntax
+5. **detect-private-key** - Prevent committing secrets
+6. **check-added-large-files** - Prevent large file commits
+7. **black** - Auto-format code
+8. **isort** - Sort imports
+9. **flake8** - Lint code
+10. **mypy** - Type checking
+
+### Manual Quality Checks
+
+Run quality checks manually before pushing:
+
+```bash
+# Format code (auto-fixes)
+black agents SHARED tests
+isort agents SHARED tests
+
+# Linting (report only)
+flake8 agents SHARED tests
+pylint agents SHARED
+
+# Type checking
+mypy agents SHARED --config-file=mypy.ini
+
+# All pre-commit hooks
+pre-commit run --all-files
+
+# Tests with coverage
+PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ \
+  --cov=SHARED/league_sdk \
+  --cov=agents \
+  --cov-report=term-missing \
+  --cov-fail-under=85
+```
+
+### CI/CD Pipeline
+
+Every push and pull request triggers automated quality gates via GitHub Actions:
+
+#### Quality Gates
+
+1. ✅ **Code Formatting** - `black --check` (line length: 104)
+2. ✅ **Import Sorting** - `isort --check-only`
+3. ✅ **Linting** - `flake8` (zero violations)
+4. ✅ **Type Checking** - `mypy` (no errors)
+5. ✅ **Tests** - `pytest` with coverage gate (≥85%)
+
+#### Workflow Configuration
+
+See `.github/workflows/test.yml` for full pipeline configuration.
+
+#### Build Status
+
+- **Python Versions:** 3.10, 3.11
+- **Test Coverage:** 85.23% (182 tests passing)
+- **Quality Gates:** All passing ✅
+
+### Contributing Guidelines
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+
+- Code style standards
+- Testing requirements
+- Commit message format (Conventional Commits)
+- Branching strategy
+- Pull request process
+- Development setup
+
+### Quality Verification
+
+Verify all quality standards are met:
+
+```bash
+# 1. Format check
+black --check agents SHARED tests
+
+# 2. Lint check
+flake8 agents SHARED tests
+
+# 3. Type check
+mypy agents SHARED
+
+# 4. Run tests
+PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ --cov-fail-under=85
+
+# Expected: All checks pass ✅
 ```
 
 ---

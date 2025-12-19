@@ -10,12 +10,12 @@ Tests the retry mechanism:
 """
 
 import time
-import requests
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+import requests
 from league_sdk.protocol import ErrorCode
 from league_sdk.retry import (
     CircuitBreaker,

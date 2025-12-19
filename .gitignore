@@ -87,3 +87,4 @@ dmypy.json
 # Distribution / packaging
 *.tar.gz
 *.zip
+.quality_check_venv/
