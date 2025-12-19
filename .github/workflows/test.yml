@@ -1,0 +1,99 @@
+name: Quality Gates
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  quality-checks:
+    name: Code Quality & Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e SHARED/league_sdk
+
+      - name: Verify SDK Installation
+        run: |
+          python -c "from league_sdk import JsonLogger, retry_with_backoff, CircuitBreaker; print('✅ SDK Imported Successfully')"
+
+      - name: Code Formatting Check (black)
+        run: |
+          black --check agents SHARED tests
+        continue-on-error: false
+
+      - name: Import Sorting Check (isort)
+        run: |
+          isort --check-only agents SHARED tests
+        continue-on-error: false
+
+      - name: Linting (flake8)
+        run: |
+          flake8 agents SHARED tests
+        continue-on-error: false
+
+      - name: Type Checking (mypy)
+        run: |
+          mypy agents SHARED --config-file=mypy.ini
+        continue-on-error: true  # Allow warnings initially, can make strict later
+
+      - name: Run Tests with Coverage
+        run: |
+          PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ \
+            --cov=SHARED/league_sdk \
+            --cov=agents \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-fail-under=85 \
+            -v
+        env:
+          PYTHONPATH: SHARED:$PYTHONPATH
+
+      - name: Upload Coverage to Codecov
+        if: success() && matrix.python-version == '3.10'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload Coverage HTML Report
+        if: always() && matrix.python-version == '3.10'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
+          retention-days: 30
+
+      - name: Quality Gates Summary
+        if: always()
+        run: |
+          echo "### Quality Gates Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Formatting (black) | ${{ steps.black.outcome == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Import Sorting (isort) | ${{ steps.isort.outcome == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Linting (flake8) | ${{ steps.flake8.outcome == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Type Checking (mypy) | ${{ steps.mypy.outcome == 'success' && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests & Coverage (≥85%) | ${{ steps.pytest.outcome == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
