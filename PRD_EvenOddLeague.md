@@ -2200,7 +2200,426 @@ class MatchRepository:
 
 ---
 
-## 17. EVIDENCE MATRIX (SCORE: 90-100)
+## 17. RESEARCH & ANALYSIS
+
+### 17.1 Research Methodology
+
+The Even/Odd League project implements a **research-first development approach**, conducting comprehensive research across four critical domains before implementation:
+
+1. **Protocol Research (M5.1):** JSON-RPC 2.0 specification analysis and MCP integration patterns
+2. **Game Theory (M5.2):** Even/Odd game rules, parity mathematics, and scoring systems
+3. **Algorithm Design (M5.3):** Round-robin scheduling using the Circle Method
+4. **Resilience Engineering (M5.4):** Error taxonomy, retry policies, and circuit breaker patterns
+
+**Research Outputs:**
+- `doc/research_notes/mcp_protocol.md` - JSON-RPC 2.0 + MCP tool calling patterns, FastAPI integration, league.v2 alignment
+- `doc/game_rules/even_odd.md` - Parity definitions, winner determination logic, technical loss conditions
+- `doc/algorithms/round_robin.md` - Circle Method pseudocode, referee assignment strategy, match ID generation
+- `doc/error_handling_strategy.md` - 18 error codes, retry policy (3 attempts, 2/4/8s backoff), circuit breaker thresholds
+
+### 17.2 Planned Experiments (M5.5: Simulation & Research Notebook)
+
+The following experiments will be conducted in `doc/research_notes/experiments.ipynb` to validate system behavior and optimize configuration:
+
+#### Experiment 1: Parity Choice Strategy Analysis
+**Objective:** Compare win rates across different player strategies.
+
+**Strategies to Test:**
+- **Random:** Uniform random selection of "even" or "odd" (baseline)
+- **Biased Even:** 70% even, 30% odd preference
+- **Biased Odd:** 30% even, 70% odd preference
+- **Adaptive:** Track opponent patterns and counter-select
+
+**Hypothesis:** Random strategy yields 50% win rate; biased strategies perform worse against adaptive opponents.
+
+**Metrics:**
+- Win rate per strategy over 1000 matches
+- Draw frequency (both players same choice)
+- Expected value: $E[\text{points}] = P(\text{win}) \times 3 + P(\text{draw}) \times 1 + P(\text{loss}) \times 0$
+
+**Statistical Analysis:** 95% confidence intervals, paired t-tests for significance.
+
+#### Experiment 2: Timeout Impact on Match Outcomes
+**Objective:** Measure frequency and impact of timeout violations (E001 errors).
+
+**Variables:**
+- Join timeout: 5s (baseline), 3s (strict), 10s (lenient)
+- Parity choice timeout: 30s (baseline), 15s (strict), 60s (lenient)
+- Simulated network latency: 0ms, 500ms, 1000ms, 2000ms
+
+**Hypothesis:** Latency >1s significantly increases technical loss rate.
+
+**Metrics:**
+- E001 error frequency per timeout configuration
+- Match completion rate
+- Average response time distribution
+
+#### Experiment 3: Retry & Backoff Timing Sensitivity
+**Objective:** Optimize retry policy parameters for transient failures.
+
+**Parameters to Test:**
+- Retry count: 2, 3 (baseline), 5 attempts
+- Backoff strategy: Linear (2s/4s/6s), Exponential (2s/4s/8s baseline), Aggressive (1s/2s/4s)
+- Circuit breaker threshold: 3, 5 (baseline), 10 failures
+
+**Hypothesis:** Exponential backoff with 3 retries balances recovery and latency.
+
+**Metrics:**
+- Recovery success rate (E005, E006, E009, E014, E015, E016 errors)
+- Average time to recovery
+- Circuit breaker open/closed state transitions
+
+**Statistical Analysis:** Monte Carlo simulation with 10,000 runs per configuration.
+
+### 17.3 Sensitivity Analysis Parameters
+
+Three critical system parameters will undergo sensitivity analysis to determine optimal configurations:
+
+| Parameter | Baseline | Range | NFR Link | Impact Metric |
+|-----------|----------|-------|----------|---------------|
+| **Join Timeout (s)** | 5 | [3, 5, 7, 10] | NFR-001 (Performance) | Technical loss rate, match completion time |
+| **Retry Interval (s)** | 2/4/8 (exponential) | [1/2/4, 2/4/8, 3/6/12] | NFR-002 (Reliability), NFR-011 (Fault Tolerance) | Recovery success rate, total retry overhead |
+| **Max Concurrent Matches** | 50 | [10, 25, 50, 100, 200] | NFR-003 (Scalability), NFR-001 (Performance) | Throughput (matches/min), CPU/memory usage, error rate |
+
+**Analysis Method:**
+- One-at-a-time (OAT) sensitivity analysis holding other parameters constant
+- Tornado diagrams showing parameter impact on KPIs
+- Identification of "safe operating zones" for each parameter
+
+### 17.4 Jupyter Notebook Structure (M5.5 Deliverable)
+
+**File:** `doc/research_notes/experiments.ipynb`
+
+**Minimum Requirements:**
+- **≥8 cells** (mix of markdown, code, visualizations)
+- **≥2 LaTeX formulas** (embedded in markdown cells)
+- **≥4 plots** (using matplotlib/seaborn)
+- **≥3 academic/technical references**
+
+**Planned Cell Structure:**
+
+| Cell # | Type | Content | LaTeX/Plot |
+|--------|------|---------|------------|
+| 1 | Markdown | Introduction, research questions, methodology overview | - |
+| 2 | Code | Import libraries, load simulation data, define helper functions | - |
+| 3 | Markdown | **Experiment 1: Parity Strategy Analysis** - Hypothesis, expected value formula | $E[\text{points}] = \sum_{i} P(s_i) \times \text{points}(s_i)$ |
+| 4 | Code + Plot | Run strategy simulations (1000 matches × 4 strategies), plot win rate comparison | **Plot 1:** Bar chart (Win Rate by Strategy) |
+| 5 | Markdown | **Experiment 2: Timeout Sensitivity** - Timeout impact formula | $P(\text{timeout}) = P(\text{latency} > T_{\text{deadline}})$ |
+| 6 | Code + Plot | Simulate network latency, measure E001 frequency, plot timeout rate vs latency | **Plot 2:** Line chart (Timeout Rate vs Latency) |
+| 7 | Markdown | **Experiment 3: Retry Policy Optimization** - Success rate and expected recovery time | - |
+| 8 | Code + Plot | Test retry configurations, measure recovery success, plot backoff comparison | **Plot 3:** Heatmap (Retry Config vs Success Rate) |
+| 9 | Code + Plot | Sensitivity analysis: tornado diagram for 3 parameters | **Plot 4:** Tornado diagram (Parameter Sensitivity) |
+| 10 | Markdown | **Conclusions & Recommendations** - Optimal parameter values, statistical significance summary | - |
+| 11 | Markdown | **References** - [1] JSON-RPC 2.0 Spec, [2] Round-Robin Tournament Algorithm (Wikipedia), [3] Exponential Backoff Best Practices (Google SRE) | - |
+
+### 17.5 Verification & Reproducibility
+
+**Reproducibility Requirements:**
+- All experiments use **deterministic seeds** for randomness (e.g., `random.seed(42)`)
+- Simulation parameters documented in notebook metadata
+- Plots include axis labels, legends, and 95% confidence intervals where applicable
+- Statistical tests report p-values and effect sizes
+
+**Verification Command:**
+```bash
+# Execute notebook and validate output
+jupyter nbconvert --to notebook --execute doc/research_notes/experiments.ipynb && \
+grep -E "LaTeX.*formula|plt\.show|matplotlib" doc/research_notes/experiments.ipynb | wc -l
+```
+
+**Expected Output:**
+- Notebook executes without errors
+- All plots render correctly
+- LaTeX formulas display properly
+- References cited in final cell
+
+### 17.6 Link to NFRs
+
+| Experiment | Related NFR | Question Answered |
+|------------|-------------|-------------------|
+| Parity Strategy Analysis | NFR-009 (Usability) | How do different strategies affect player experience and fairness? |
+| Timeout Sensitivity | NFR-001 (Performance), NFR-002 (Reliability) | What timeout values balance responsiveness and reliability? |
+| Retry Policy Optimization | NFR-011 (Fault Tolerance), NFR-002 (Reliability) | How many retries minimize downtime without excessive overhead? |
+| Concurrent Match Scaling | NFR-003 (Scalability), NFR-001 (Performance) | What is the maximum concurrent match capacity before degradation? |
+
+**Validation:**
+- Experimental results directly inform `SHARED/config/system.json` parameter tuning
+- Performance baselines from experiments feed into NFR-001 acceptance criteria
+- Reliability metrics validate NFR-002 uptime targets (99.9%)
+
+---
+
+## 18. OPEN QUESTIONS & ASSUMPTIONS
+
+### 18.1 Open Questions
+
+#### Q1: Optimal Circuit Breaker Threshold for Production
+**Context:** Current threshold is 5 consecutive failures (60s timeout) per `doc/error_handling_strategy.md`.
+
+**Question:** Is a 5-failure threshold too aggressive for real-world network variability, or too lenient for fast failure detection?
+
+**Risk Implication:**
+- **Too Aggressive:** False positives during brief network hiccups, unnecessary service degradation
+- **Too Lenient:** Slow detection of actual service outages, cascading failures
+
+**Mitigation:** Conduct load testing with injected failures (M5.5 experiment); consider adaptive thresholds based on recent error rate trends.
+
+**Investigation Plan:** Experiment 3 (Retry Policy Optimization) will test thresholds [3, 5, 10] and measure recovery time vs false positive rate.
+
+---
+
+#### Q2: Handling Ties in Final Standings
+**Context:** Win=3pts, Draw=1pt, Loss=0pts scoring system. Tiebreaker rules not yet defined.
+
+**Question:** How should ties in final standings be resolved? Options:
+1. Head-to-head record between tied players
+2. Total number of wins (ignoring draws)
+3. Alphabetical by player ID (arbitrary but deterministic)
+4. Declare co-champions (no tiebreaker)
+
+**Risk Implication:**
+- **Missing Tiebreaker:** Ambiguous final rankings, unclear winner declaration
+- **Complex Tiebreaker:** Implementation complexity, potential bugs
+
+**Mitigation:** Document tiebreaker rule in `doc/game_rules/even_odd.md` before M7.6 (League Manager implementation).
+
+**Current Assumption:** Ties allowed; no tiebreaker implemented (see A3 below).
+
+---
+
+#### Q3: Authentication Token Refresh Strategy
+**Context:** Players receive `auth_token` during registration (FR-013). Token lifetime and refresh policy undefined.
+
+**Question:** Should tokens expire? If yes:
+- What is the token TTL (time-to-live)?
+- How do players refresh expired tokens?
+- Does token refresh require re-registration?
+
+**Risk Implication:**
+- **No Expiry:** Security risk if token leaks; long-lived credentials
+- **Short Expiry:** Operational burden for token refresh; risk of mid-match expiry
+
+**Mitigation:** Start with **non-expiring tokens** for MVP (localhost-only, no internet exposure). Add token rotation in future version if deployed remotely.
+
+**Current Assumption:** Tokens do not expire; valid for entire league lifecycle (see A5 below).
+
+---
+
+#### Q4: Concurrency Model for Referee Match Handling
+**Context:** Each referee can handle up to `max_concurrent_matches` (config). Matches within a round can run in parallel (FR-014).
+
+**Question:** Should a single referee instance handle matches sequentially, or spawn concurrent workers?
+- **Option A:** Async/await within one FastAPI process (current design)
+- **Option B:** Worker pool with separate processes per match
+- **Option C:** Distributed referees across multiple machines
+
+**Risk Implication:**
+- **Option A:** Simpler implementation, but limited to single CPU core for compute-bound tasks
+- **Option B:** Better CPU utilization, but added process management complexity
+- **Option C:** Best scalability, but requires distributed coordination (out of PRD scope)
+
+**Current Assumption:** Use async/await (Option A) for MVP; acceptable for ≤100 concurrent matches on modern hardware (see A8 below).
+
+**Investigation Plan:** Load test with 50, 100, 200 concurrent matches (Experiment 4 in M5.5).
+
+---
+
+#### Q5: Deterministic Randomness for Testing vs Production
+**Context:** Referee draws random number 1-10 using `secrets.randbelow` (cryptographic randomness) per `doc/game_rules/even_odd.md`.
+
+**Question:** How to balance cryptographic security (production) with test reproducibility (seeded randomness)?
+
+**Risk Implication:**
+- **Crypto-only:** Tests are non-deterministic, harder to debug
+- **Seeded-only:** Production draws are predictable, violates fairness
+
+**Mitigation:** Use environment variable (e.g., `TEST_MODE=1`) to switch between `secrets` (production) and `random.seed(42)` (testing).
+
+**Current Assumption:** `secrets.randbelow` in production; optional seed hook for tests only (see A7 below).
+
+---
+
+### 18.2 Key Assumptions
+
+#### A1: Localhost-Only Deployment (No Remote Internet Access)
+**Assumption:** All agents run on `localhost` (ports 8000-8002, 8101-8104). No cross-machine communication required.
+
+**Rationale:** PRD scope excludes remote deployment; simplifies networking, security, and testing.
+
+**Impact:**
+- No need for TLS/SSL certificates
+- No DNS resolution or service discovery
+- No firewall or NAT traversal
+- Authentication tokens can be simpler (no need for JWT signing)
+
+**Risk:** If requirement changes to distributed deployment, significant refactor needed (add HTTPS, token signing, service mesh).
+
+**Validation:** All tests execute on single machine; no network configuration outside of `localhost`.
+
+---
+
+#### A2: File-Based Storage Sufficient for Scale
+**Assumption:** JSON file storage in `SHARED/data/` and `SHARED/logs/` is sufficient for ≤1000 players, ≤500,000 matches.
+
+**Rationale:** PRD targets "thousands of concurrent agents" but not "millions." File I/O benchmarks show JSON read/write <10ms for <1MB files.
+
+**Impact:**
+- No database setup or connection pooling
+- Simpler deployment and debugging (inspect files directly)
+- Atomic writes ensure data consistency (single-process write model)
+
+**Risk:**
+- File locks may become bottleneck at very high concurrency (>200 matches/sec)
+- No ACID transactions across multiple files
+- Manual data cleanup for large leagues (no auto-archival)
+
+**Mitigation:** Repository pattern (`league_sdk.repository`) allows future swap to SQLite/PostgreSQL without agent code changes.
+
+**Validation:** Load test with 100 concurrent matches writing to file storage (Experiment 4).
+
+---
+
+#### A3: Ties in Standings Are Acceptable (No Tiebreaker)
+**Assumption:** If two players finish with identical points, they are declared co-champions. No tiebreaker rule implemented.
+
+**Rationale:** Tiebreaker logic adds complexity. Single round-robin with 4-6 players rarely produces exact ties.
+
+**Impact:**
+- Simpler standings calculation (sort by points descending)
+- Potential for multiple "winners" in final broadcast
+
+**Risk:** User expectation may be that there is a single winner.
+
+**Mitigation:** Document behavior in `LEAGUE_COMPLETED` message; add tiebreaker in future if needed (see Q2).
+
+**Validation:** Test 4-player league where two players finish with same points; verify both ranked equally.
+
+---
+
+#### A4: Error Codes E001-E018 Are Exhaustive
+**Assumption:** The 18 defined error codes cover all failure modes in the system. No additional error codes needed.
+
+**Rationale:** Comprehensive error taxonomy from M5.4 research covers protocol, auth, game logic, and infrastructure failures.
+
+**Impact:**
+- Stable error code registry
+- Clear mapping to JSON-RPC error ranges (-32000 to -32099)
+- All error handlers implemented upfront
+
+**Risk:** Unanticipated edge cases may require new error codes, breaking backward compatibility.
+
+**Mitigation:** Reserve error code range E019-E099 for future use; include `INTERNAL_SERVER_ERROR (E015)` as catch-all.
+
+**Validation:** Code review confirms all `except` blocks map to one of 18 codes; no unhandled exceptions.
+
+---
+
+#### A5: Authentication Tokens Do Not Expire
+**Assumption:** `auth_token` issued during registration remains valid for the entire league lifecycle.
+
+**Rationale:** Localhost-only deployment has no internet-facing security threat. Token refresh adds complexity.
+
+**Impact:**
+- Simpler registration flow (one-time token issuance)
+- No token refresh logic or expiry checks
+- Tokens persist in player config files indefinitely
+
+**Risk:** If a player's token leaks (e.g., in logs), it remains valid indefinitely.
+
+**Mitigation:** Redact tokens from logs (already implemented); restrict file permissions on `data/players/` directories.
+
+**Validation:** Grep logs for auth tokens; ensure none appear in plain text (see Q3).
+
+---
+
+#### A6: Single Round-Robin Format (No Double Round-Robin)
+**Assumption:** Each pair of players meets exactly once (n*(n-1)/2 total matches). No home/away distinction.
+
+**Rationale:** PRD specifies single round-robin. Double round-robin would double match count and league duration.
+
+**Impact:**
+- Faster league completion (3 rounds for 4 players vs 6 rounds for double)
+- Simpler scheduling algorithm (Circle Method without reversal)
+- Lower computational load for large leagues
+
+**Risk:** Single round-robin may not provide enough statistical sample for accurate skill assessment.
+
+**Mitigation:** If more data needed, run multiple independent leagues (separate `league_id`).
+
+**Validation:** Verify 4-player league has exactly 6 matches; 6-player league has exactly 15 matches.
+
+---
+
+#### A7: Cryptographic Randomness for Draws (with Test Hook)
+**Assumption:** Referee uses `secrets.randbelow(10) + 1` for production draws, with optional seeded `random.randint` for tests only.
+
+**Rationale:** `secrets` module provides cryptographically secure randomness, ensuring fairness and unpredictability.
+
+**Impact:**
+- Fairness guarantee (no predictable patterns)
+- Compliance with game rules requiring unbiased draws
+- Test mode allows deterministic draws for reproducible test scenarios
+
+**Risk:** Tests become harder to debug if randomness cannot be controlled.
+
+**Mitigation:** Environment variable `TEST_MODE=1` switches to `random.seed(42)` (see Q5).
+
+**Validation:** Unit test verifies draw distribution is uniform (chi-squared test) over 10,000 draws.
+
+---
+
+#### A8: Async/Await Sufficient for ≤100 Concurrent Matches
+**Assumption:** FastAPI's async event loop can handle ≤100 concurrent matches on a single referee instance without thread pool.
+
+**Rationale:** Match flow is I/O-bound (HTTP requests, file writes), not CPU-bound. Async/await excels at I/O concurrency.
+
+**Impact:**
+- Simpler concurrency model (no process pool management)
+- Lower memory overhead (single process)
+- Sufficient for MVP target of 50 concurrent matches (NFR-003)
+
+**Risk:** CPU-bound operations (e.g., heavy logging, complex strategy calculations) could block event loop.
+
+**Mitigation:** Delegate blocking I/O to `run_in_executor` if profiling shows stalls (see M5.1 FastAPI best practices).
+
+**Validation:** Load test with 50, 100 concurrent matches; monitor event loop lag (Experiment 4).
+
+---
+
+### 18.3 Constraints & Limitations
+
+| Constraint | Source | Implication | Workaround |
+|------------|--------|-------------|------------|
+| **Python 3.10+ Required** | PRD Tech Stack | Cannot use older Python features; must install 3.10+ | Document in README; add version check in `setup.py` |
+| **JSON-RPC 2.0 (No Batching)** | M5.1 Compliance | Cannot batch multiple requests in one HTTP call | Accept limitation; simplifies timeout handling |
+| **Single-Process File Writes** | Data Architecture | No concurrent writes to same file from multiple processes | Use file locking or ensure exclusive ownership per agent |
+| **No Database Transactions** | File-Based Storage | Cannot rollback multi-file changes atomically | Design idempotent operations; use write-ahead logging if needed |
+| **Fixed Message Schema** | league.v2 Protocol | Cannot add new fields to messages without protocol version bump | Use `extra="allow"` in Pydantic models for backward compatibility |
+| **Localhost Ports 8000-8104** | Agent Config | Cannot bind to privileged ports (<1024) or conflicting services | Document port requirements; add port availability check in setup |
+| **No Real-Time Updates** | Polling-Based | Clients must poll for standings; no WebSocket/SSE push | Accept limitation or add future enhancement (out of scope) |
+| **Max 64KB Message Size** | HTTP Handler | Large match transcripts may exceed limit | Compress transcripts or paginate large responses |
+
+**Validation:** `python tests/test_constraints.py` verifies all constraints are enforced at runtime.
+
+---
+
+### 18.4 Risk Summary & Mitigation Status
+
+| Risk | Likelihood | Impact | Mitigation | Owner | Status |
+|------|------------|--------|------------|-------|--------|
+| **Circuit breaker too aggressive** | Medium | Medium | Experiment 3 (M5.5) to determine optimal threshold | System Architect | Open (Q1) |
+| **Tie in final standings** | Low | Low | Document tie-as-co-champion behavior; add tiebreaker if needed | Game Designer | Open (Q2) |
+| **Token security concern** | Low | High | Localhost-only deployment; redact tokens from logs | Security Lead | Mitigated (A5) |
+| **File storage bottleneck** | Medium | Medium | Repository pattern allows DB swap; load test validates limits | Data Architect | Mitigated (A2) |
+| **Async event loop blocking** | Low | Medium | Delegate blocking I/O to executor; load test under concurrency | Performance Engineer | Mitigated (A8) |
+| **Insufficient error codes** | Low | Medium | Reserve E019-E099; use E015 as catch-all | Protocol Designer | Mitigated (A4) |
+| **Non-deterministic tests** | Medium | Low | Add TEST_MODE env var for seeded randomness | Test Engineer | Mitigated (A7) |
+
+**Overall Risk Level:** **LOW** - All high/medium risks have documented mitigations or planned experiments.
+
+---
+
+## 19. EVIDENCE MATRIX (SCORE: 90-100)
 
 | # | Evidence Type | Location | Verification Command | Points |
 |---|---------------|----------|---------------------|--------|

@@ -361,7 +361,7 @@ grep -A 10 "Persona" PRD_EvenOddLeague.md | grep -E "Name|Role|Goals|Pain Points
 
 ---
 
-### M1.4: Add Research & Analysis Section to PRD
+### M1.4: Add Research & Analysis Section to PRD ✅ COMPLETED (2025-12-19)
 **Priority:** P1 (High)
 **Estimated Time:** 2 hours
 
@@ -390,7 +390,7 @@ grep -A 50 "Research & Analysis" PRD_EvenOddLeague.md | grep -E "sensitivity|par
 
 ---
 
-### M1.5: Open Questions & Assumptions
+### M1.5: Open Questions & Assumptions ✅ COMPLETED (2025-12-19)
 **Priority:** P2 (Medium)
 **Estimated Time:** 30 minutes
 
