@@ -26,10 +26,11 @@ dev = [
 ]
 
 [tool.setuptools]
-py-modules = ["league_sdk"]
+packages = ["league_sdk"]
+package-dir = {"league_sdk" = "."}
 
-[tool.setuptools.packages.find]
-where = ["."]
+[tool.setuptools.package-data]
+league_sdk = ["py.typed"]
 
 [tool.black]
 line-length = 104
@@ -68,7 +69,8 @@ warn_no_return = false
 warn_unreachable = true
 strict = false
 ignore_missing_imports = true
-exclude = ["venv", ".venv", "env", "dist", "build", "__pycache__"]
+explicit_package_bases = true
+exclude = ["venv", ".venv", "env", "dist", "build", "__pycache__", "setup.py"]
 
 [tool.pylint.messages_control]
 disable = [
