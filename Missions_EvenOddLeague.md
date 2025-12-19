@@ -34,8 +34,8 @@ This missions document provides a comprehensive, sequential breakdown of all tas
 - **CLI** components (command-line tools for agent management)
 - **Multi-agent orchestration** (3 agent types communicating via JSON-RPC 2.0)
 
-**Total Missions:** 47 missions across 10 categories
-**Expected Duration:** 40-60 hours for complete implementation
+**Total Missions:** 74 missions across 10 categories (M0-M9)
+**Expected Duration:** 60-80 hours for complete implementation
 **Target Grade:** 90-100 with all missions completed
 
 ---
@@ -333,6 +333,91 @@ grep -E "\*\*Definition of Done:\*\*" Missions_EvenOddLeague.md | wc -l
 
 ---
 
+### M1.3: Add Personas to PRD
+**Priority:** P0 (Critical)
+**Estimated Time:** 1.5 hours
+
+**Description:**
+Add detailed user personas to PRD Section 2 to provide context for stakeholders and design decisions.
+
+**Definition of Done:**
+- [ ] Section 2 in PRD with ≥2 complete personas
+- [ ] Each persona includes: Name, Role, Goals, Pain Points, How Project Helps
+- [ ] Personas are relevant to multi-agent orchestration context
+- [ ] Personas inform design decisions and requirements
+
+**Self-Verify Command:**
+```bash
+grep -A 10 "Persona" PRD_EvenOddLeague.md | grep -E "Name|Role|Goals|Pain Points|How Project Helps" && echo "Personas complete"
+```
+
+**Expected Evidence:**
+- PRD Section 2 contains ≥2 complete personas
+- Each persona has all required fields
+- Personas are well-defined and actionable
+
+**Dependencies:** M1.1
+**Blocks:** M1.4
+
+---
+
+### M1.4: Add Research & Analysis Section to PRD
+**Priority:** P1 (High)
+**Estimated Time:** 2 hours
+
+**Description:**
+Document research methodology, experiments to be tested, sensitivity analysis parameters, and planned Jupyter notebook structure.
+
+**Definition of Done:**
+- [ ] PRD Section includes Research & Analysis subsection
+- [ ] Experiments documented: parity strategies, timeout impacts, retry behaviors
+- [ ] ≥3 parameters defined for sensitivity analysis (e.g., timeout values, retry intervals, concurrent match counts)
+- [ ] Jupyter notebook plan documented: ≥8 cells, ≥2 LaTeX formulas, ≥4 plots, ≥3 references
+- [ ] Analysis approach linked to NFRs (performance, reliability)
+
+**Self-Verify Command:**
+```bash
+grep -A 50 "Research & Analysis" PRD_EvenOddLeague.md | grep -E "sensitivity|parameters|LaTeX|plots|references" && echo "Research section complete"
+```
+
+**Expected Evidence:**
+- Research & Analysis section present in PRD
+- Experiments and parameters clearly defined
+- Notebook structure aligns with M5.5 requirements
+
+**Dependencies:** M1.3
+**Blocks:** M5.5
+
+---
+
+### M1.5: Open Questions & Assumptions
+**Priority:** P2 (Medium)
+**Estimated Time:** 30 minutes
+
+**Description:**
+Document open questions, assumptions, and constraints that may impact design or implementation.
+
+**Definition of Done:**
+- [ ] PRD section listing ≥5 open questions
+- [ ] ≥5 key assumptions documented
+- [ ] Constraints and limitations identified
+- [ ] Risk implications noted for each
+
+**Self-Verify Command:**
+```bash
+grep -A 20 "Open Questions\|Assumptions" PRD_EvenOddLeague.md | grep -E "Q:|A:" && echo "Open questions documented"
+```
+
+**Expected Evidence:**
+- Open questions clearly stated
+- Assumptions explicit and traceable
+- Constraints inform design decisions
+
+**Dependencies:** M1.4
+**Blocks:** M8.8
+
+---
+
 ## M2: SETUP & ARCHITECTURE
 
 ### M2.0: Shared SDK Package Structure
@@ -454,6 +539,35 @@ pytest tests/unit/test_repositories.py -v
 
 **Dependencies:** M2.1
 **Blocks:** M7.4, M7.6 (agents need data persistence)
+
+---
+
+### M2.6: Thread Safety Documentation
+**Priority:** P2 (Medium)
+**Estimated Time:** 1 hour
+
+**Description:**
+Document thread safety considerations for concurrent agent operations and shared resource access.
+
+**Definition of Done:**
+- [ ] doc/thread_safety.md created documenting concurrency model
+- [ ] Thread-safe data access patterns documented (locks, atomics, immutability)
+- [ ] Repository layer thread safety guarantees documented
+- [ ] Shared resource access patterns (config, logs, data files) explained
+- [ ] Race condition prevention strategies documented
+
+**Self-Verify Command:**
+```bash
+cat doc/thread_safety.md | grep -E "Thread|Concurrent|Lock|Race|Atomic" && echo "Thread safety documented"
+```
+
+**Expected Evidence:**
+- Thread safety document exists
+- Concurrency patterns clearly explained
+- Repository operations documented as thread-safe
+
+**Dependencies:** M2.3 (repositories must exist)
+**Blocks:** M8.2
 
 ---
 
@@ -613,7 +727,43 @@ python -c "from league_sdk.config_loader import load_league_config; config = loa
 
 ---
 
-### M3.3: Game Registry Configuration
+### M3.3: Quality Standards Setup
+**Priority:** P1 (High)
+**Estimated Time:** 3-4 hours
+
+**Description:**
+Establish comprehensive quality standards and automation for code quality, testing, and CI/CD.
+
+**Definition of Done:**
+- [ ] CONTRIBUTING.md created (≥30 lines) with code style, commit conventions, PR checklist, branching strategy
+- [ ] .pre-commit-config.yaml with hooks: black, isort/ruff, pylint/flake8, mypy, trailing-whitespace, end-of-file-fixer, detect-private-key
+- [ ] .pylintrc or .flake8 configuration file with project-specific rules
+- [ ] .github/workflows/test.yml (CI pipeline) running lint, type-check, pytest with coverage gate (≥85%)
+- [ ] pyproject.toml with black and mypy configuration
+- [ ] All quality checks pass on current codebase
+- [ ] Pre-commit hooks installed and working
+
+**Self-Verify Command:**
+```bash
+test -f CONTRIBUTING.md && wc -l CONTRIBUTING.md && \
+test -f .pre-commit-config.yaml && grep -E "black|mypy|flake8" .pre-commit-config.yaml && \
+test -f .github/workflows/test.yml && grep "coverage" .github/workflows/test.yml && \
+pre-commit run --all-files && \
+echo "Quality standards complete"
+```
+
+**Expected Evidence:**
+- CONTRIBUTING.md exists with ≥30 lines
+- Pre-commit config includes all required hooks
+- CI workflow includes lint, type-check, and coverage gate
+- All quality checks pass
+
+**Dependencies:** M3.0
+**Blocks:** M6.5, M6.6, M6.7
+
+---
+
+### M3.4: Game Registry Configuration
 **Priority:** P1 (High)
 **Estimated Time:** 20 minutes
 
@@ -641,7 +791,7 @@ cat SHARED/config/games/games_registry.json | jq '.games[] | select(.game_type =
 
 ---
 
-### M3.4: Default Configuration Templates
+### M3.5: Default Configuration Templates
 **Priority:** P2 (Medium)
 **Estimated Time:** 30 minutes
 
@@ -670,7 +820,7 @@ echo "Templates valid"
 
 ---
 
-### M3.5: Security & Environment Baseline
+### M3.6: Security & Environment Baseline
 **Priority:** P1 (High)
 **Estimated Time:** 1 hour
 
@@ -696,6 +846,35 @@ grep -c "env" .gitignore && echo "Security baseline present"
 
 **Dependencies:** M3.0, M0.2
 **Blocks:** M6.8, CI security checks
+
+---
+
+### M3.7: Data Retention Policy
+**Priority:** P2 (Medium)
+**Estimated Time:** 30 minutes
+
+**Description:**
+Document data retention policy for logs, match data, and player history.
+
+**Definition of Done:**
+- [ ] doc/data_retention_policy.md created
+- [ ] Retention periods defined for: logs (30 days), match data (1 year), standings (permanent)
+- [ ] Cleanup procedures documented (manual/automated)
+- [ ] Archive strategy for historical data
+- [ ] Privacy considerations documented (PII handling if applicable)
+
+**Self-Verify Command:**
+```bash
+cat doc/data_retention_policy.md | grep -E "Retention|Cleanup|Archive|30 days|1 year" && echo "Data retention policy documented"
+```
+
+**Expected Evidence:**
+- Data retention policy document exists
+- Clear retention periods defined
+- Cleanup procedures documented
+
+**Dependencies:** M2.3 (data repositories)
+**Blocks:** M8.4
 
 ---
 
@@ -1030,28 +1209,37 @@ cat doc/error_handling_strategy.md | grep -E "E001|E018|retryable|LEAGUE_ERROR" 
 
 ### M5.5: Simulation & Research Notebook
 **Priority:** P2 (Medium)
-**Estimated Time:** 2 hours
+**Estimated Time:** 3-4 hours
 
 **Description:**
-Create a research/experimentation notebook to analyze strategies, timeouts, and load behaviors.
+Create comprehensive research/experimentation Jupyter notebook to analyze strategies, timeouts, and load behaviors with rigorous scientific methodology.
 
 **Definition of Done:**
-- [ ] Jupyter notebook in `doc/research_notes/` with ≥8 cells, including ≥2 LaTeX formulas
-- [ ] Experiments covering parity choice strategies, retry/backoff timing, and timeout impact
-- [ ] Plots (≥4 types) visualizing outcomes/latency
-- [ ] References (≥3) cited in notebook
+- [ ] Jupyter notebook in `doc/research_notes/experiments.ipynb` with ≥8 cells
+- [ ] ≥2 LaTeX formulas (e.g., win rate calculation, expected value, probability distributions)
+- [ ] ≥4 plots/visualizations (e.g., strategy comparison, timeout impact, latency distribution, win rate by strategy)
+- [ ] ≥3 academic/technical references cited (papers, RFCs, documentation)
+- [ ] Experiments covering: parity choice strategies (random, biased, adaptive), retry/backoff timing sensitivity, timeout impact on match outcomes
+- [ ] Statistical analysis with confidence intervals or significance testing
+- [ ] Recommendations for optimal configuration parameters
+- [ ] Notebook executes without errors and generates all outputs
 
 **Self-Verify Command:**
 ```bash
 jupyter nbconvert --to html --execute doc/research_notes/experiments.ipynb && \
-ls doc/research_notes/experiments.html
+ls doc/research_notes/experiments.html && \
+grep -E "LaTeX|\\$\\$|\\\\[a-z]" doc/research_notes/experiments.ipynb && \
+echo "Research notebook complete with formulas"
 ```
 
 **Expected Evidence:**
-- Executable notebook with results and visuals
-- Insights feeding into agent strategy or configuration recommendations
+- Executable notebook with ≥8 cells
+- ≥2 LaTeX formulas visible in rendered output
+- ≥4 plots generated and displayed
+- ≥3 references cited in bibliography/footnotes
+- Actionable insights and recommendations
 
-**Dependencies:** M5.1, M4.x (test harness)
+**Dependencies:** M1.4 (research plan), M5.1, M4.x (test harness)
 **Blocks:** M8.7
 
 ---
@@ -1182,7 +1370,70 @@ cat doc/api_reference.md | grep -E "handle_game_invitation|choose_parity|notify_
 
 ---
 
-### M6.5: Code Quality Tooling
+### M6.5: Screenshots & UX Documentation
+**Priority:** P1 (High)
+**Estimated Time:** 2 hours
+
+**Description:**
+Capture screenshots and document user experience for all agent interactions and system states.
+
+**Definition of Done:**
+- [ ] ≥8 screenshots captured (≥20 for 90+ target)
+- [ ] Screenshots cover: agent startup, registration flow, match invitation, parity choice, match result, standings update, error scenarios, graceful shutdown
+- [ ] doc/screenshots/ directory with organized PNG/JPG files
+- [ ] doc/ux_documentation.md with screenshot captions and UX commentary
+- [ ] Terminal output screenshots showing CLI interactions
+- [ ] Log output screenshots showing structured logging
+
+**Self-Verify Command:**
+```bash
+ls doc/screenshots/*.png | wc -l && \
+cat doc/ux_documentation.md | grep -E "Screenshot|Figure|UX|User Experience" && \
+echo "Screenshots and UX docs complete"
+```
+
+**Expected Evidence:**
+- ≥8 screenshots present (aim for ≥20 for highest grade)
+- Screenshots clearly labeled and organized
+- UX documentation explains each screenshot
+
+**Dependencies:** M7.14 (system must be running)
+**Blocks:** M8.4
+
+---
+
+### M6.6: Usability Analysis
+**Priority:** P1 (High)
+**Estimated Time:** 1.5 hours
+
+**Description:**
+Analyze system usability based on CLI design principles and accessibility standards.
+
+**Definition of Done:**
+- [ ] doc/usability_analysis.md created
+- [ ] CLI design principles analysis (discoverability, consistency, feedback, error prevention)
+- [ ] Accessibility considerations (screen readers, color contrast, text output)
+- [ ] Usability heuristics evaluation (Nielsen's 10 heuristics)
+- [ ] Error message clarity assessment
+- [ ] Documentation clarity evaluation
+
+**Self-Verify Command:**
+```bash
+cat doc/usability_analysis.md | grep -E "CLI|Usability|Accessibility|Heuristics|Nielsen" && echo "Usability analysis complete"
+```
+
+**Expected Evidence:**
+- Usability analysis document complete
+- CLI principles evaluated
+- Accessibility considerations documented
+- Recommendations for improvements
+
+**Dependencies:** M6.5 (screenshots), M6.1 (CLI must exist)
+**Blocks:** M8.7
+
+---
+
+### M6.7: Code Quality Tooling
 **Priority:** P1 (High)
 **Estimated Time:** 2 hours
 
@@ -1213,7 +1464,7 @@ mypy agents SHARED --strict
 
 ---
 
-### M6.6: Pre-Commit Hooks & Style Guide
+### M6.8: Pre-Commit Hooks & Style Guide
 **Priority:** P1 (High)
 **Estimated Time:** 1.5 hours
 
@@ -1236,12 +1487,12 @@ cat STYLE_GUIDE.md | grep -E "Code Style|Commit|Branch"
 - Style guide exists with actionable rules
 - Developers can onboard with one command
 
-**Dependencies:** M6.5
-**Blocks:** M6.7
+**Dependencies:** M6.7
+**Blocks:** M6.9
 
 ---
 
-### M6.7: CI/CD Pipeline
+### M6.9: CI/CD Pipeline
 **Priority:** P1 (High)
 **Estimated Time:** 2 hours
 
@@ -1264,12 +1515,12 @@ cat .github/workflows/test.yml | grep -E "pytest|mypy|flake8|black" && echo "CI 
 - Quality gates enforced automatically
 - Artifacts (coverage HTML) uploaded
 
-**Dependencies:** M6.5, M6.6
+**Dependencies:** M6.7, M6.8
 **Blocks:** M9.0
 
 ---
 
-### M6.8: README Quality Gate
+### M6.10: README Quality Gate
 **Priority:** P1 (High)
 **Estimated Time:** 1.5 hours
 
@@ -1291,12 +1542,12 @@ cat README.md | grep -E "Architecture|Testing|Lint|Type|Troubleshooting" && echo
 - Matches actual commands/config
 - No stale instructions
 
-**Dependencies:** M6.5, M6.6, M6.7
+**Dependencies:** M6.7, M6.8, M6.9
 **Blocks:** M9.3
 
 ---
 
-### M6.9: Packaging & Release Standards
+### M6.11: Packaging & Release Standards
 **Priority:** P2 (Medium)
 **Estimated Time:** 1.5 hours
 
@@ -1322,7 +1573,7 @@ ls dist | grep whl
 - Packages import without issues
 - Build artifacts generated
 
-**Dependencies:** M6.5
+**Dependencies:** M6.7
 **Blocks:** M9.2
 
 ---
@@ -1983,7 +2234,39 @@ ls doc/adr | grep 0001 && cat doc/adr/0001-use-fastapi.md | grep "Decision"
 
 ---
 
-### M8.7: Extensibility & ISO/IEC 25010 Usability Analysis
+### M8.7: Prompt Engineering Log
+**Priority:** P2 (Medium)
+**Estimated Time:** Ongoing (30 min setup + ongoing entries)
+
+**Description:**
+Maintain a prompt engineering log documenting all Claude/LLM interactions used during development.
+
+**Definition of Done:**
+- [ ] doc/prompt_engineering_log.md created
+- [ ] ≥10 prompt entries documented (target ≥15 for 90+)
+- [ ] Each entry includes: date, prompt text, model used, purpose/context, output quality assessment, iterations/refinements
+- [ ] Prompts categorized by: code generation, debugging, architecture design, documentation, testing
+- [ ] Lessons learned and best practices documented
+- [ ] Examples of successful and unsuccessful prompts
+
+**Self-Verify Command:**
+```bash
+cat doc/prompt_engineering_log.md | grep -c "^### Entry" && \
+cat doc/prompt_engineering_log.md | grep -E "Prompt|Purpose|Output|Iterations" && \
+echo "Prompt log complete"
+```
+
+**Expected Evidence:**
+- Prompt engineering log with ≥10 entries
+- Each entry well-documented
+- Insights on effective prompting strategies
+
+**Dependencies:** M0.2
+**Blocks:** M8.9
+
+---
+
+### M8.8: Extensibility & ISO/IEC 25010 Usability Analysis
 **Priority:** P2 (Medium)
 **Estimated Time:** 1.5 hours
 
@@ -2010,7 +2293,7 @@ cat doc/usability_extensibility.md | grep -E "ISO/IEC 25010|Extensibility|Usabil
 
 ---
 
-### M8.8: Evidence Matrix & Risk Register Refresh
+### M8.9: Evidence Matrix & Risk Register Refresh
 **Priority:** P1 (High)
 **Estimated Time:** 1 hour
 
@@ -2032,7 +2315,7 @@ cat doc/risk_register.md | grep -E \"High|Medium|Low\"
 - Evidence matrix and risk register exist and are current
 - Verification commands align with tests/scripts
 
-**Dependencies:** M1.x, M4.x, M9.0
+**Dependencies:** M1.x, M4.x, M8.8
 **Blocks:** M9.0
 
 ---
@@ -2047,7 +2330,7 @@ cat doc/risk_register.md | grep -E \"High|Medium|Low\"
 Run comprehensive pre-submission checklist covering all requirements.
 
 **Definition of Done:**
-- [ ] All 47 missions completed (check Dependencies: None for last missions)
+- [ ] All 74 missions completed (check Dependencies: None for last missions)
 - [ ] All 5 Quality Gates passed
 - [ ] Test coverage ≥85% overall
 - [ ] All protocol compliance tests pass (18/18)
@@ -2276,17 +2559,17 @@ M0 (2h) + M2 (9.5h) + M7 (31h) + M8 (9.5h) + M9 (7h) = **59 hours**
 | Category | Missions | Total Time | Completion % | Status |
 |----------|----------|------------|--------------|--------|
 | **M0: Kickoff** | 3 | 2h | 100% | ☑ Complete |
-| **M1: PRD** | 2 | 7h | 100% | ☑ Complete |
-| **M2: Setup** | 6 | 11.5h | 100% | ☑ Complete |
-| **M3: Config** | 5 | 2.5h | 100% | ☑ Complete |
-| **M4: Testing** | 6 | 9h | 33% | ⏳ In Progress |
-| **M5: Research** | 5 | 5.5h | 80% | ⏳ In Progress |
-| **M6: UX** | 4 | 6.5h | 0% | ☐ Not Started |
+| **M1: PRD** | 5 | 11h | 40% | ⏳ In Progress |
+| **M2: Setup** | 7 | 12.5h | 86% | ⏳ In Progress |
+| **M3: Config** | 8 | 8.5h | 62% | ⏳ In Progress |
+| **M4: Testing** | 7 | 9.5h | 29% | ⏳ In Progress |
+| **M5: Research** | 5 | 8h | 80% | ⏳ In Progress |
+| **M6: UX** | 11 | 15.5h | 0% | ☐ Not Started |
 | **M7: Agents** | 14 | 38h | 7% | ⏳ In Progress |
-| **M8: Docs** | 5 | 9.5h | 0% | ☐ Not Started |
-| **M9: Submission** | 3 | 7h | 0% | ☐ Not Started |
-| **Quality Gates** | 5 | - | 0% | ⏳ In Progress |
-| **TOTAL** | **47 + 5 QGs** | **98.5h** | **49%** | **⏳ In Progress** |
+| **M8: Docs** | 9 | 12h | 0% | ☐ Not Started |
+| **M9: Submission** | 5 | 8h | 0% | ☐ Not Started |
+| **Quality Gates** | 5 | - | 20% | ⏳ In Progress |
+| **TOTAL** | **74 + 5 QGs** | **125h** | **41%** | **⏳ In Progress** |
 
 ---
 
@@ -2385,7 +2668,7 @@ pytest tests/integration/test_<scenario>.py -v --timeout=60
 
 **END OF MISSIONS DOCUMENT**
 
-**Total Missions:** 47 missions + 5 Quality Gates
-**Estimated Total Effort:** 98.5 hours
+**Total Missions:** 74 missions + 5 Quality Gates
+**Estimated Total Effort:** 125 hours
 **Target Grade:** 90-100 with all missions completed
 **Project Type:** HYBRID (Backend API + CLI + Multi-Agent Orchestration)

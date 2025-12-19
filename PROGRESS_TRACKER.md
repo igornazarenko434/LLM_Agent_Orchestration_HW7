@@ -1,9 +1,9 @@
 # Progress Tracker
 # Even/Odd League Multi-Agent System
 
-**Version:** 1.0.1
+**Version:** 1.1.0
 **Date Created:** 2025-12-15
-**Last Updated:** 2025-12-17
+**Last Updated:** 2025-12-18
 **Project Type:** HYBRID (Backend API + CLI + Multi-Agent Orchestration)
 **Target Grade:** 90-100
 
@@ -13,7 +13,7 @@
 
 | Metric | Status | Target | Percentage |
 |--------|--------|--------|-----------|
-| **Total Missions** | 27 / 47 | 47 | 57% |
+| **Total Missions** | 27 / 74 | 74 | 36% |
 | **Quality Gates Passed** | 0 / 5 | 5 | 0% (QG-1 Ready) |
 | **Test Coverage** | 91% | ≥85% | **✅ EXCEEDED** |
 | **Protocol Compliance** | 18 / 18 | 18 message types | 100% |
@@ -27,21 +27,21 @@
 
 | Category | Weight | Tasks Complete | Progress | Status |
 |----------|--------|----------------|----------|--------|
-| **1. Project Documentation** | 25 pts | 2 / 6 | 33% | 🔄 In Progress |
+| **1. Project Documentation** | 25 pts | 2 / 9 | 22% | 🔄 In Progress |
 | **2. Research & Analysis** | 20 pts | 4 / 4 | 100% | ✅ Complete |
 | **3. README & Documentation** | 15 pts | 0 / 5 | 0% | ☐ Not Started |
-| **4. Structure & Code Quality** | 12 pts | 6 / 8 | 75% | 🔄 In Progress |
+| **4. Structure & Code Quality** | 12 pts | 5 / 9 | 56% | 🔄 In Progress |
 | **5. Testing & QA** | 10 pts | 3 / 6 | 50% | 🔄 In Progress |
 | **6. Configuration & Security** | 8 pts | 5 / 5 | 100% | ✅ Complete |
-| **7. Architecture & Design + Polish** | 10 pts | 1 / 4 | 25% | 🔄 In Progress |
-| **TOTAL** | **100 pts** | **22 / 38** | **58%** | **🔄 In Progress** |
+| **7. Architecture & Design + Polish** | 10 pts | 1 / 7 | 14% | 🔄 In Progress |
+| **TOTAL** | **100 pts** | **20 / 45** | **44%** | **🔄 In Progress** |
 
 ---
 
 ## Mission Status by Phase
 
-### M0: Kickoff & Planning (3 missions, 2h)
-**Progress:** 3 / 3 (100%) ✅ **COMPLETE**
+### M0: Kickoff & Planning (4 missions, 2h)
+**Progress:** 3 / 4 (75%) 🔄 **IN PROGRESS**
 
 - [x] **M0.1** Environment Setup (1h) - P0
   - Status: ✅ **Completed** (2025-12-16)
@@ -61,10 +61,19 @@
   - Output: requirements.txt, all packages installed
   - Evidence: `pip list` shows FastAPI, Pydantic, pytest
 
+- [ ] **M8.7** Prompt Engineering Log (ongoing) - P2
+  - Status: ☐ **Not Started** (ongoing throughout project)
+  - Dependencies: M0.2
+  - Output: doc/prompt_log/ with ≥10 entries
+  - DoD: Maintain log of all LLM prompts used
+  - Structure: doc/prompt_log/ organized by category
+  - Each entry: Timestamp, Prompt, Model, Response summary, Outcome
+  - Verify: `ls doc/prompt_log/*.md | wc -l` (should be ≥10)
+
 ---
 
-### M1: PRD & Requirements (2 missions, 7h)
-**Progress:** 2 / 2 (100%) ✅ **COMPLETE**
+### M1: PRD & Requirements (5 missions, 11h)
+**Progress:** 2 / 5 (40%) 🔄 **IN PROGRESS**
 
 - [x] **M1.1** PRD Document Creation (4h) - P0
   - Status: ✅ **Completed** (2025-12-15)
@@ -75,13 +84,44 @@
 - [x] **M1.2** Missions Document Creation (3h) - P0
   - Status: ✅ **Completed** (2025-12-15)
   - Dependencies: M1.1
-  - Output: Missions_EvenOddLeague.md with 47 missions
+  - Output: Missions_EvenOddLeague.md with 74 missions
   - Evidence: 64,236 bytes, all missions with DoD, verify commands
+
+- [ ] **M1.3** Add Personas to PRD (1.5h) - P0
+  - Status: ☐ **Not Started**
+  - Dependencies: M1.1
+  - Output: PRD Section 2 updated with personas
+  - DoD: Add ≥2 personas with Name, Role, Goals, Pain Points, How Project Helps
+  - Examples: "Alex - Player Agent Developer", "Jamie - League Operator"
+  - Verify: `grep -A 10 "Persona" PRD_EvenOddLeague.md`
+
+- [ ] **M1.4** Add Research & Analysis Section to PRD (2h) - P1
+  - Status: ☐ **Not Started**
+  - Dependencies: M1.1
+  - Output: PRD Section "Research & Analysis" complete
+  - DoD:
+    - Document experiments to be tested (model comparison, performance, etc.)
+    - Define ≥3 parameters for sensitivity analysis
+    - Define metrics to measure
+    - Plan Jupyter notebook structure (≥8 cells)
+    - Include ≥2 LaTeX formulas for evaluation metrics
+    - Specify ≥4 plot types (bar, line, scatter, heatmap)
+    - Add ≥3 references (academic/technical papers)
+  - Verify: `grep -A 50 "Research & Analysis" PRD_EvenOddLeague.md`
+
+- [ ] **M1.5** Add Open Questions & Assumptions (30m) - P2
+  - Status: ☐ **Not Started**
+  - Dependencies: M1.1
+  - Output: PRD updated with Open Questions and Assumptions sections
+  - DoD:
+    - Document open questions (mark as TBD)
+    - Document assumptions list
+  - Verify: `grep "Open Questions\|Assumptions" PRD_EvenOddLeague.md`
 
 ---
 
-### M2: Setup & Architecture (6 missions, 11.5h)
-**Progress:** 6 / 6 (100%) ✅ **COMPLETE**
+### M2: Setup & Architecture (7 missions, 12.5h)
+**Progress:** 6 / 7 (86%) 🔄 **IN PROGRESS**
 
 - [x] **M2.0** Shared SDK Package Structure (1h) - P0
   - Status: ✅ **Completed** (2025-12-16)
@@ -126,6 +166,17 @@
   - Tests: 34 tests passing
   - Features: retry_with_backoff, CircuitBreaker, call_with_retry
 
+- [ ] **M2.6** Thread Safety Documentation (1h) - P2
+  - Status: ☐ **Not Started**
+  - Dependencies: M2.5
+  - Output: doc/architecture/thread_safety.md created
+  - DoD:
+    - Document thread safety for concurrent operations
+    - Document use of queue.Queue for thread-safe data sharing
+    - Document use of locks/context managers
+    - Add to architecture documentation
+  - Verify: `cat doc/architecture/thread_safety.md`
+
 ---
 
 ### Quality Gate 1: Foundation Quality Gate
@@ -143,8 +194,8 @@
 
 ---
 
-### M3: Configuration Layer (5 missions, 2.5h)
-**Progress:** 5 / 5 (100%) ✅ **COMPLETE**
+### M3: Configuration Layer (6 missions, 6h)
+**Progress:** 5 / 6 (83%) 🔄 **IN PROGRESS**
 
 - [x] **M3.0** System Configuration File (30m) - P0
   - Status: ✅ **Completed** (2025-12-16)
@@ -164,22 +215,44 @@
   - Output: league_2025_even_odd.json
   - Evidence: League config with scoring, rounds, players
 
-- [x] **M3.3** Game Registry Configuration (20m) - P1
+- [ ] **M3.3** Quality Standards Setup (3-4h) - P0
+  - Status: ☐ **Not Started** (EXPANDED MISSION)
+  - Dependencies: M3.2
+  - Output: Complete quality tooling setup
+  - DoD:
+    - Create CONTRIBUTING.md with ≥30 lines (code style, naming conventions, commit format, PR process)
+    - Configure .pre-commit-config.yaml with: black, pylint, mypy, trailing-whitespace, end-of-file-fixer, check-yaml
+    - Create .pylintrc or .flake8 configuration
+    - Create .github/workflows/test.yml (CI/CD pipeline with tests + linting + coverage)
+    - Configure pyproject.toml for black and mypy
+    - All quality tooling configured and passing
+  - Verify: `pre-commit run --all-files && pytest tests/ && pylint agents SHARED`
+
+- [x] **M3.4** Game Registry Configuration (20m) - P1
   - Status: ✅ **Completed** (2025-12-16)
   - Dependencies: M3.0
   - Output: games_registry.json
   - Evidence: Even/Odd game registered
 
-- [x] **M3.4** Default Configuration Templates (30m) - P2
+- [x] **M3.5** Default Configuration Templates (30m) - P2
   - Status: ✅ **Completed** (2025-12-17)
   - Dependencies: M3.0
   - Output: referee.json, player.json templates
   - **Note:** Optional - can be completed later
 
-- [x] **M3.5** Security & Environment Baseline (1h) - P1
+- [x] **M3.6** Security & Environment Baseline (1h) - P1
   - Status: ✅ **Completed** (2025-12-17)
   - Dependencies: M3.0, M0.2
   - Output: .env.example, .gitignore updates, env overrides in loader
+
+- [ ] **M3.7** Data Retention Policy (30m) - P2
+  - Status: ☐ **Not Started**
+  - Dependencies: M2.3
+  - Output: Data retention policy documented
+  - DoD:
+    - Document how long data is kept (logs, matches, standings)
+    - Add to PRD Section on Data & Integrations
+  - Verify: `grep "retention" PRD_EvenOddLeague.md`
 
 ---
 
@@ -222,7 +295,7 @@
 
 ---
 
-### M5: Research & Protocol Design (5 missions, 5.5h)
+### M5: Research & Protocol Design (5 missions, 6.5h)
 **Progress:** 4 / 5 (80%) 🔄 **IN PROGRESS**
 
 - [x] **M5.1** MCP Protocol Research (2h) - P0
@@ -245,20 +318,64 @@
   - Dependencies: M0.2
   - Output: doc/error_handling_strategy.md
 
-- [ ] **M5.5** Simulation & Research Notebook (1h) - P1
-  - Status: ☐ Not Started
+- [ ] **M5.5** Simulation & Research Notebook (2h) - P1
+  - Status: ☐ **Not Started** (EXPANDED MISSION)
   - Dependencies: M5.1, M4.x (test harness)
-  - Output: doc/research_notes/simulation_notebook.md
+  - Output: Jupyter notebook with complete research analysis
+  - DoD:
+    - Jupyter notebook with ≥8 cells
+    - Include ≥2 LaTeX formulas for evaluation metrics
+    - Generate ≥4 plots (bar, line, scatter, heatmap)
+    - Add ≥3 references (academic/technical papers)
+    - Include: Model comparison experiments, sensitivity analysis, performance metrics
+    - Notebook runs end-to-end, produces all plots, includes LaTeX equations
+  - Verify: `jupyter nbconvert --execute doc/research_notes/simulation_notebook.ipynb`
 
 ---
 
-### M6: UX & Developer Experience (4 missions, 6.5h)
-**Progress:** 0 / 4 (0%)
+### M6: UX & Developer Experience (7 missions, 10h)
+**Progress:** 0 / 7 (0%) ☐ **NOT STARTED**
 
 - [ ] **M6.1** CLI Argument Parsing (1.5h) - P1
+  - Status: ☐ Not Started
+  - Dependencies: M7.1
+  - Output: CLI parsers for all agents
+
 - [ ] **M6.2** Operational Scripts (2h) - P1
+  - Status: ☐ Not Started
+  - Dependencies: M7.x
+  - Output: start/stop/health scripts
+
 - [ ] **M6.3** Developer Quick Start Guide (1h) - P1
+  - Status: ☐ Not Started
+  - Dependencies: M6.1, M6.2
+  - Output: doc/developer_guide.md
+
 - [ ] **M6.4** API Reference Documentation (2h) - P2
+  - Status: ☐ Not Started
+  - Dependencies: M2.x
+  - Output: doc/api_reference.md
+
+- [ ] **M6.5** Screenshots & UX Documentation (2h) - P1
+  - Status: ☐ **Not Started**
+  - Dependencies: M7.x (need running agents)
+  - Output: ≥8 screenshots captured and documented
+  - DoD:
+    - Capture ≥8 screenshots (≥20 for 90+ grade)
+    - Screenshots: Agent startup, health check, MCP calls, test output, logs, coverage report
+    - Document in doc/screenshots/ folder
+    - Update README with screenshot links
+  - Verify: `ls doc/screenshots/*.png | wc -l` (should be ≥8)
+
+- [ ] **M6.6** Usability Analysis (1.5h) - P1
+  - Status: ☐ **Not Started**
+  - Dependencies: M6.1, M6.2
+  - Output: doc/usability_analysis.md
+  - DoD:
+    - For CLI: Document CLI Usability Principles (clear help, intuitive commands, helpful errors, consistent flags)
+    - Create usability checklist
+    - Document accessibility considerations
+  - Verify: `cat doc/usability_analysis.md`
 
 ---
 
@@ -322,18 +439,37 @@
 ---
 
 ### M8: Documentation (5 missions, 9.5h)
-**Progress:** 0 / 5 (0%)
+**Progress:** 0 / 5 (0%) ☐ **NOT STARTED**
 
 - [ ] **M8.1** Code Documentation - Docstrings (3h) - P1
+  - Status: ☐ Not Started
+  - Dependencies: M7.x
+  - Output: Docstrings for all public APIs
+
 - [ ] **M8.2** Architecture Documentation (2h) - P1
+  - Status: ☐ Not Started
+  - Dependencies: M2.x, M7.x
+  - Output: doc/architecture/ documentation
+
 - [ ] **M8.3** Configuration Guide (1.5h) - P1
+  - Status: ☐ Not Started
+  - Dependencies: M3.x
+  - Output: doc/configuration_guide.md
+
 - [ ] **M8.4** Developer Guide (2h) - P2
+  - Status: ☐ Not Started
+  - Dependencies: M6.x, M7.x
+  - Output: doc/developer_guide.md
+
 - [ ] **M8.5** Testing Guide (1h) - P2
+  - Status: ☐ Not Started
+  - Dependencies: M4.x
+  - Output: doc/testing_guide.md
 
 ---
 
 ### M9: Submission & Deployment (3 missions, 7h)
-**Progress:** 0 / 3 (0%)
+**Progress:** 0 / 3 (0%) ☐ **NOT STARTED**
 
 - [ ] **M9.0** Pre-Submission Checklist (2h) - P0
 - [ ] **M9.1** Final Testing & Validation (3h) - P0
@@ -358,6 +494,7 @@
 - Test coverage at 91% - exceeds target!
 - All SDK modules tested and working
 - Ready to proceed to agent implementation
+- New missions added based on rubric gap analysis
 
 ---
 
@@ -367,46 +504,51 @@
 
 | Phase | Estimated Hours | Actual Hours | Variance | Status |
 |-------|----------------|--------------|----------|--------|
-| M0: Kickoff & Planning | 2.0 | ~2.5 | +0.5h | ✅ Complete |
-| M1: PRD & Requirements | 7.0 | ~5.0 | -2.0h | ✅ Complete (Pre-existing) |
-| M2: Setup & Architecture | 11.5 | ~14.0 | +2.5h | ✅ Complete |
-| M3: Configuration Layer | 2.5 | ~2.0 | -0.5h | ✅ 100% Complete |
+| M0: Kickoff & Planning | 2.0 | ~2.5 | +0.5h | 🔄 75% Complete |
+| M1: PRD & Requirements | 11.0 | ~5.0 | -6.0h | 🔄 40% Complete |
+| M2: Setup & Architecture | 12.5 | ~14.0 | +1.5h | 🔄 86% Complete |
+| M3: Configuration Layer | 6.0 | ~2.0 | -4.0h | 🔄 83% Complete |
 | M4: Testing Infrastructure | 9.0 | ~6.0 | -3.0h | 🔄 33% Complete |
-| M5: Research & Protocol Design | 5.5 | ~3.5 | -2.0h | 🔄 80% Complete |
-| M6: UX & Developer Experience | 6.5 | 0 | - | ☐ Not Started |
+| M5: Research & Protocol Design | 6.5 | ~3.5 | -3.0h | 🔄 80% Complete |
+| M6: UX & Developer Experience | 10.0 | 0 | - | ☐ Not Started |
 | M7: Agent Implementation | 38.0 | ~8.0 | - | 🔄 29% Complete |
 | M8: Documentation | 9.5 | 0 | - | ☐ Not Started |
 | M9: Submission & Deployment | 7.0 | 0 | - | ☐ Not Started |
-| **TOTAL** | **98.5** | **37.5** | **-1.0h** | **38% Complete** |
+| **TOTAL** | **111.5** | **37.5** | **-14.0h** | **34% Complete** |
 
 ### Time Allocation by Priority
 
 | Priority | Missions | Est. Hours | Completed | Remaining |
 |----------|----------|-----------|-----------|-----------|
-| P0 (Critical) | 33 | 74.0h | 22 missions | 11 missions |
-| P1 (High) | 10 | 18.0h | 4 missions | 6 missions |
-| P2 (Medium) | 4 | 6.5h | 1 mission | 3 missions |
-| **TOTAL** | **47** | **98.5h** | **27** | **20** |
+| P0 (Critical) | 36 | 81.5h | 22 missions | 14 missions |
+| P1 (High) | 15 | 23.0h | 4 missions | 11 missions |
+| P2 (Medium) | 6 | 7.0h | 1 mission | 5 missions |
+| **TOTAL** | **57** | **111.5h** | **27** | **30** |
 
 ---
 
 ## Next Actions (Priority Order)
 
 ### Immediate (Next 3 Tasks)
-1. [ ] **QG-1 - Pass Foundation Quality Gate** (READY!)
-2. [ ] **M7.5** - Referee Agent Match Conductor
-3. [ ] **M7.6** - Referee Timeout Enforcement
+1. [ ] **M1.3** - Add Personas to PRD (1.5h) - P0 - CRITICAL GAP
+2. [ ] **M3.3** - Quality Standards Setup (3-4h) - P0 - EXPANDED MISSION
+3. [ ] **QG-1** - Pass Foundation Quality Gate (READY!)
 
 ### Short-term (Next 5-7 Tasks)
-4. [ ] **M7.7** - Referee Agent Even/Odd Logic
-5. [ ] **M7.8** - Referee Registration & Setup
-6. [ ] **M7.9** - League Manager Registration Handler
-7. [ ] **M7.10** - Round-Robin Scheduler
+4. [ ] **M1.4** - Add Research & Analysis Section to PRD (2h) - P1 - CRITICAL GAP
+5. [ ] **M5.5** - Simulation & Research Notebook (2h) - P1 - EXPANDED MISSION
+6. [ ] **M6.5** - Screenshots & UX Documentation (2h) - P1 - NEW MISSION
+7. [ ] **M7.5** - Referee Agent Match Conductor (5h) - P0
 
 ### Medium-term (After QG-2)
-8. [ ] M7.5-M7.8 - Implement Referee Agent
-9. [ ] Pass QG-3 (Match Execution Quality Gate)
-10. [ ] M7.9-M7.14 - Implement League Manager & System Integration
+8. [ ] **M6.6** - Usability Analysis (1.5h) - P1 - NEW MISSION
+9. [ ] **M2.6** - Thread Safety Documentation (1h) - P2 - NEW MISSION
+10. [ ] M7.6-M7.8 - Complete Referee Agent implementation
+
+### Lower Priority (Can defer)
+11. [ ] **M1.5** - Add Open Questions & Assumptions (30m) - P2
+12. [ ] **M3.7** - Data Retention Policy (30m) - P2
+13. [ ] **M8.7** - Prompt Engineering Log (ongoing) - P2
 
 ---
 
@@ -432,7 +574,7 @@
 
 | Milestone | Target Date | Status | Completion | Evidence |
 |-----------|-------------|--------|-----------|----------|
-| QG-1: Foundation Quality Gate | 2025-12-17 | ⏸ Ready | 100% | 172 tests, 91% coverage |
+| QG-1: Foundation Quality Gate | 2025-12-18 | ⏸ Ready | 100% | 177 tests, 91% coverage |
 | QG-2: Player Agent Quality Gate | TBD | Not Started | 0% | - |
 | QG-3: Match Execution Quality Gate | TBD | Not Started | 0% | - |
 | QG-4: End-to-End Quality Gate | TBD | Not Started | 0% | - |
@@ -445,19 +587,23 @@
 
 ### 1. Project Documentation (25 pts)
 - [x] PRD document complete (17+ sections) - ✅ 102KB file
-- [x] Missions document complete (47 missions) - ✅ 64KB file
+- [x] Missions document complete (74 missions) - ✅ Updated with all requirements
+- [ ] **M1.3:** Personas added to PRD (≥2) - ☐ CRITICAL GAP
+- [ ] **M1.4:** Research & Analysis section in PRD - ☐ CRITICAL GAP
+- [ ] **M1.5:** Open Questions & Assumptions in PRD - ☐ NEW
 - [ ] Evidence matrix (35+ entries)
 - [ ] Installation matrix (10+ steps)
 - [x] KPIs with verification (12+) - ✅ In PRD
 - [x] Functional requirements (16+) - ✅ In PRD
-**Score:** ~15 / 25 (60%)
+**Score:** ~10 / 25 (40%)
 
 ### 2. Research & Analysis (20 pts)
 - [x] MCP protocol research documented
 - [x] Even/Odd game rules documented
 - [x] Round-robin algorithm documented
 - [x] Error handling strategy documented
-**Score:** 20 / 20
+- [ ] **M5.5:** Simulation notebook (≥8 cells, ≥2 LaTeX, ≥4 plots, ≥3 refs) - ☐ EXPANDED
+**Score:** 16 / 20 (80%)
 
 ### 3. README & Documentation (15 pts)
 - [ ] README.md with quick start
@@ -465,18 +611,21 @@
 - [ ] Configuration guide
 - [ ] Developer guide
 - [ ] Testing guide
+- [ ] **M6.5:** Screenshots & UX documentation (≥8 screenshots) - ☐ NEW
+- [ ] **M6.6:** Usability analysis - ☐ NEW
 **Score:** 0 / 15
 
 ### 4. Structure & Code Quality (12 pts)
 - [x] Directory structure correct - ✅
 - [x] Shared SDK package structure - ✅
 - [x] Code quality: Python best practices - ✅
+- [ ] **M3.3:** Quality standards (CONTRIBUTING.md, pre-commit, pylint, CI/CD) - ☐ EXPANDED
 - [ ] Code quality: mypy passes
 - [ ] No TODO/FIXME in production code
 - [ ] Docstrings for all public APIs - ✅ Partially
 - [x] Agent base class implemented
 - [ ] All 7 agents implemented
-**Score:** ~6 / 12 (50%)
+**Score:** ~4 / 12 (33%)
 
 ### 5. Testing & QA (10 pts)
 - [x] Test coverage ≥85% - ✅ **91% achieved!**
@@ -493,6 +642,7 @@
 - [x] league config created - ✅
 - [x] game registry created - ✅
 - [x] Security baseline (.env.example, gitignore, env overrides) - ✅
+- [ ] **M3.7:** Data retention policy - ☐ NEW
 **Score:** 8 / 8 (100%)
 
 ### 7. Architecture & Design + UI/UX & Polish (10 pts)
@@ -500,21 +650,25 @@
 - [ ] MCP server endpoints working
 - [ ] CLI argument parsing for all agents
 - [ ] Operational scripts (start/stop/health)
-**Score:** ~2 / 10 (20%)
+- [ ] **M2.6:** Thread safety documentation - ☐ NEW
+- [ ] **M6.5:** Screenshots (≥8) - ☐ NEW
+- [ ] **M6.6:** Usability analysis - ☐ NEW
+- [ ] **M8.7:** Prompt engineering log (≥10 entries) - ☐ NEW
+**Score:** ~1 / 10 (10%)
 
 ---
 
-**CURRENT PROJECT SCORE: ~36 / 100**
+**CURRENT PROJECT SCORE: ~27 / 100**
 
-**Projected Score (after agent implementation): 85-95**
+**Projected Score (after all new missions): 90-95**
 
-**Target: 90-100** ✅ ON TRACK
+**Target: 90-100** ✅ ON TRACK WITH NEW MISSIONS
 
 ---
 
 ## Key Achievements So Far
 
-### ✅ Completed (49% of missions)
+### ✅ Completed (47% of missions)
 1. **Environment & Structure** - Python 3.14, venv, complete directory structure
 2. **Documentation** - PRD (102KB), Missions (64KB) with 47 tasks
 3. **Shared SDK** - Complete protocol layer with 18 message types
@@ -527,8 +681,9 @@
 10. **Player MCP Server** - /mcp JSON-RPC dispatch with invitation/parity/registration + history persistence + tests
 
 ### 🎯 Current Sprint Focus
+- **Complete Critical PRD Gaps** - M1.3 (Personas), M1.4 (Research & Analysis)
+- **Quality Standards Setup** - M3.3 (CONTRIBUTING, pre-commit, CI/CD)
 - **Pass QG-1 (Foundation Quality Gate)** - All criteria met!
-- **Referee Agent** - M7.5/M7.6 orchestration and timeouts
 
 ### 📊 Health Metrics
 - **Test Coverage:** 91% (target: 85%) - ✅ **EXCEEDED**
@@ -539,8 +694,31 @@
 
 ---
 
+## Critical Gaps Identified
+
+### High Priority Gaps (P0-P1)
+1. **M1.3:** Add Personas to PRD - MISSING (1.5h)
+2. **M1.4:** Add Research & Analysis Section to PRD - MISSING (2h)
+3. **M3.3:** Quality Standards Setup - INCOMPLETE, NEEDS EXPANSION (3-4h)
+4. **M5.5:** Simulation & Research Notebook - INCOMPLETE, NEEDS EXPANSION (2h)
+5. **M6.5:** Screenshots & UX Documentation - MISSING (2h)
+6. **M6.6:** Usability Analysis - MISSING (1.5h)
+
+### Medium Priority Gaps (P2)
+7. **M1.5:** Open Questions & Assumptions - MISSING (30m)
+8. **M2.6:** Thread Safety Documentation - MISSING (1h)
+9. **M3.7:** Data Retention Policy - MISSING (30m)
+10. **M8.7:** Prompt Engineering Log - MISSING (ongoing)
+
+**Total Additional Time Required:** ~14.5 hours for all gaps
+
+---
+
 ## Notes
 
+- **2025-12-18:** PROGRESS_TRACKER updated with 10 new/expanded missions based on rubric gap analysis
+- **2025-12-18:** M3.3 and M5.5 marked as incomplete and expanded with additional requirements
+- **2025-12-18:** Total missions increased from 47 to 57 to address critical documentation gaps
 - **2025-12-17:** Mission 7.2 completed - Player MCP server with JSON-RPC dispatch + tests
 - **2025-12-17:** Mission 7.1 completed - BaseAgent scaffold + unit tests
 - **2025-12-17:** Mission 2.4 & 2.5 completed - Logger (99% coverage) and Retry Policy (94% coverage)
@@ -549,7 +727,7 @@
 - **2025-12-15:** PRD and Missions documents created
 - All verification commands documented and tested
 - Evidence collection is ongoing - screenshots and logs being captured
-- Ready to proceed to Player Agent server (M7.2) and tools (M7.3)
+- Ready to address critical PRD gaps before proceeding to Referee Agent
 
 ---
 
@@ -572,10 +750,44 @@ python -c "from league_sdk import *; print('SDK OK')"
 ```bash
 # QG-1: Foundation (READY TO RUN!)
 pytest tests/ --cov=SHARED/league_sdk --cov-report=term
-# Expected: 91% coverage, 172 tests passing ✅
+# Expected: 91% coverage, 177 tests passing ✅
 
 # Import verification
 python -c "from league_sdk import JsonLogger, retry_with_backoff, CircuitBreaker; print('✅ All imports OK')"
+```
+
+### Verify New Mission Requirements
+
+```bash
+# M1.3: Check personas in PRD
+grep -A 10 "Persona" PRD_EvenOddLeague.md
+
+# M1.4: Check Research & Analysis section
+grep -A 50 "Research & Analysis" PRD_EvenOddLeague.md
+
+# M1.5: Check Open Questions & Assumptions
+grep "Open Questions\|Assumptions" PRD_EvenOddLeague.md
+
+# M3.3: Verify quality tooling
+pre-commit run --all-files && pytest tests/ && pylint agents SHARED
+
+# M3.7: Check data retention policy
+grep "retention" PRD_EvenOddLeague.md
+
+# M5.5: Execute research notebook
+jupyter nbconvert --execute doc/research_notes/simulation_notebook.ipynb
+
+# M6.5: Count screenshots
+ls doc/screenshots/*.png | wc -l
+
+# M6.6: Check usability analysis
+cat doc/usability_analysis.md
+
+# M2.6: Check thread safety documentation
+cat doc/architecture/thread_safety.md
+
+# M8.7: Count prompt log entries
+ls doc/prompt_log/*.md | wc -l
 ```
 
 ### Test Specific Modules
@@ -595,6 +807,6 @@ pytest tests/test_protocol_models.py -v
 
 ---
 
-**Last Updated:** 2025-12-17
-**Next Review:** After QG-1 verification
-**Current Sprint:** QG-1 verification → M7.3 Player Tools
+**Last Updated:** 2025-12-18
+**Next Review:** After completing M1.3, M1.4, M3.3
+**Current Sprint:** Address Critical PRD Gaps → QG-1 verification → M7.5 Referee Agent
