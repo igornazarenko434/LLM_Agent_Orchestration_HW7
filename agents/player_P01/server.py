@@ -164,7 +164,7 @@ class PlayerAgent(BaseAgent):
                 rpc_response = JSONRPCResponse(id=rpc_request.id, result=result)
                 log_message_sent(self.std_logger, result)
                 return JSONResponse(status_code=200, content=rpc_response.model_dump())
-            except TimeoutError as exc:  # pragma: no cover - defensive
+            except (TimeoutError, asyncio.TimeoutError) as exc:  # pragma: no cover - defensive
                 return self._error_response(
                     rpc_request.id,
                     code=-32000,

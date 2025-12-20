@@ -1,5 +1,3 @@
-import sys
-
 import pytest
 from fastapi.testclient import TestClient
 from league_sdk.repositories import PlayerHistoryRepository
@@ -141,9 +139,6 @@ def test_handle_match_result_report(player_client: TestClient):
     assert any(m["match_id"] == "R1M1" for m in history.get("matches", []))
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 11), reason="Async timeout handling differs in Python < 3.11"
-)
 def test_parity_timeout_returns_e001(monkeypatch):
     import asyncio
 
@@ -183,9 +178,6 @@ def test_parity_timeout_returns_e001(monkeypatch):
     assert body["error"]["data"]["error_code"] == "E001"
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 11), reason="Async timeout handling differs in Python < 3.11"
-)
 def test_game_invitation_timeout_returns_e001():
     import asyncio
 
