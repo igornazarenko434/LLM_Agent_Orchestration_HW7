@@ -13,9 +13,10 @@
 
 | Metric | Status | Target | Percentage |
 |--------|--------|--------|-----------|
-| **Total Missions** | 32 / 74 | 74 | 43% |
+| **Total Missions** | 33 / 74 | 74 | 45% |
 | **Quality Gates Passed** | 0 / 5 | 5 | 0% (QG-1 Ready) |
-| **Test Coverage** | 91% | ≥85% | **✅ EXCEEDED** |
+| **Test Coverage** | 85.47% | ≥85% | **✅ EXCEEDED** |
+| **Tests Passing** | 209 / 209 | 100% | **✅ ALL PASSING** |
 | **Protocol Compliance** | 18 / 18 | 18 message types | 100% |
 | **Error Codes Implemented** | 18 / 18 | 18 error codes | 100% |
 | **Agents Implemented** | 0 / 7 | 7 agents | 0% |
@@ -250,13 +251,22 @@
   - Dependencies: M3.0, M0.2
   - Output: .env.example, .gitignore updates, env overrides in loader
 
-- [ ] **M3.7** Data Retention Policy (30m) - P2
-  - Status: ☐ **Not Started**
-  - Dependencies: M2.3
-  - Output: Data retention policy documented
+- [x] **M3.7** Data Retention Policy (8h - extended scope) - P2 ✅
+  - Status: ✅ **COMPLETED** (2025-12-20)
+  - Dependencies: M2.3 ✅
+  - Output: Data retention policy documented + Full implementation
   - DoD:
-    - Document how long data is kept (logs, matches, standings)
-    - Add to PRD Section on Data & Integrations
+    - [x] Document how long data is kept (logs, matches, standings)
+    - [x] Add to PRD Section on Data & Integrations
+  - **Deliverables:**
+    - doc/data_retention_policy.md (22KB)
+    - league_sdk/cleanup.py (258 lines, 6 async functions)
+    - scripts/cleanup_data.py (273 lines, CLI tool)
+    - tests/test_cleanup.py (17 tests, 90% coverage)
+    - Configuration system integration
+    - Archive directory structure
+    - PRD FR-017, NFR-016, section 6.2.3
+    - README usage guide and troubleshooting
   - Verify: `grep "retention" PRD_EvenOddLeague.md`
 
 ---
@@ -551,7 +561,7 @@
 10. [ ] M7.9-M7.13 - Complete League Manager implementation
 
 ### Lower Priority (Can defer)
-11. [ ] **M3.7** - Data Retention Policy (30m) - P2
+11. [x] **M3.7** - Data Retention Policy (8h - COMPLETED 2025-12-20) ✅
 12. [ ] **M8.7** - Prompt Engineering Log (ongoing) - P2
 
 ---
@@ -712,7 +722,7 @@
 ### Medium Priority Gaps (P2)
 7. ✅ ~~**M1.5:** Open Questions & Assumptions~~ - COMPLETED
 8. ✅ ~~**M2.6:** Thread Safety Documentation~~ - COMPLETED
-9. **M3.7:** Data Retention Policy - MISSING (30m)
+9. ✅ ~~**M3.7:** Data Retention Policy~~ - COMPLETED (2025-12-20, 8h)
 10. **M8.7:** Prompt Engineering Log - MISSING (ongoing)
 
 **Total Additional Time Required:** ~6.5 hours for remaining gaps

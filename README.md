@@ -5,7 +5,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Protocol](https://img.shields.io/badge/protocol-league.v2-green.svg)](docs/protocol_spec.md)
 [![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](htmlcov/index.html)
-[![Tests Passing](https://img.shields.io/badge/tests-199%20passing-success.svg)](tests/)
+[![Tests Passing](https://img.shields.io/badge/tests-209%20passing-success.svg)](tests/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
@@ -52,7 +52,7 @@ The **Even/Odd League** is a sophisticated multi-agent orchestration platform wh
 - ✅ **Protocol-Driven Communication:** JSON-RPC 2.0 over HTTP with league.v2 specification
 - ✅ **Resilience Engineering:** Exponential backoff retry, circuit breaker pattern, timeout enforcement
 - ✅ **Scalable Architecture:** Designed to support 10,000+ concurrent agents
-- ✅ **Comprehensive Testing:** 199 tests with 85% code coverage
+- ✅ **Comprehensive Testing:** 209 tests with 85% code coverage
 - ✅ **Structured Observability:** JSON Lines logging with correlation IDs
 
 **Current Status:** Foundation Complete (57% of missions) • Agent Infrastructure Ready • Production-Grade SDK
@@ -110,7 +110,7 @@ The Even/Odd League addresses these challenges through:
 - 🔄 **Log Rotation:** 100MB files, 5 backup generations
 
 ### Testing & Quality
-- ✅ **199 Tests Passing:** Unit, integration, protocol compliance
+- ✅ **209 Tests Passing:** Unit, integration, protocol compliance
 - 📊 **85% Coverage:** Comprehensive test suite for SDK and agents
 - 🔬 **Test Fixtures:** Reusable test utilities and mock data
 - 🎯 **Pytest Markers:** unit, integration, e2e, slow, protocol
@@ -123,7 +123,7 @@ The Even/Odd League addresses these challenges through:
 
 | Milestone | Status | Evidence |
 |-----------|--------|----------|
-| **Foundation Quality Gate (QG-1)** | ✅ Complete | 199 tests, 85% coverage, SDK operational |
+| **Foundation Quality Gate (QG-1)** | ✅ Complete | 209 tests, 85% coverage, SDK operational |
 | **Protocol Implementation** | ✅ Complete | 18/18 message types, 18/18 error codes |
 | **SDK Infrastructure** | ✅ Complete | Protocol, config, logging, retry, repositories, cleanup |
 | **Player Agent (P01)** | ✅ Complete | MCP server, 3 tools, registration flow |
@@ -137,7 +137,7 @@ The Even/Odd League addresses these challenges through:
 │ Metric                      │ Current  │ Target │
 ├─────────────────────────────┼──────────┼────────┤
 │ Test Coverage               │ 85%      │ ≥85%   │
-│ Tests Passing               │ 199/199  │ 100%   │
+│ Tests Passing               │ 209/209  │ 100%   │
 │ Protocol Compliance         │ 100%     │ 100%   │
 │ Config Validation           │ 100%     │ 100%   │
 │ Missions Complete           │ 27/47    │ 47     │
@@ -221,7 +221,7 @@ LLM_Agent_Orchestration_HW7/
 │   └── player_P04/                     # Player agent #4
 │       ├── __init__.py
 │       └── main.py                     # Reuses PlayerAgent class
-├── 🧪 tests/                           # Test suite (199 tests, 85% coverage)
+├── 🧪 tests/                           # Test suite (209 tests, 85% coverage)
 │   ├── conftest.py                     # Pytest fixtures and configuration
 │   ├── unit/                           # Unit tests for SDK and agents
 │   │   ├── test_sdk/
@@ -373,7 +373,7 @@ mkdir -p SHARED/archive/{logs,matches,players,leagues}
 PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ -v --cov=SHARED/league_sdk --cov=agents --cov-report=term
 ```
 
-Expected: `199 passed` with `85% coverage`
+Expected: `209 passed` with `85% coverage`
 
 #### 11. Install Pre-commit Hooks (Optional, Recommended)
 ```bash
@@ -1029,7 +1029,7 @@ pytest -m "not slow"
 | `test_config_models.py` | 16 | 99% | Config schemas |
 | `test_agent_base.py` | 6 | 83% | BaseAgent functionality |
 | `test_player_server.py` | 3 | 88% | PlayerAgent MCP server |
-| **TOTAL** | **199** | **85%** | **Comprehensive coverage** |
+| **TOTAL** | **209** | **85%** | **Comprehensive coverage** |
 
 ### Test Examples
 
@@ -1185,7 +1185,7 @@ See `.github/workflows/test.yml` for full pipeline configuration.
 #### Build Status
 
 - **Python Versions:** 3.10, 3.11
-- **Test Coverage:** 85% (199 tests passing)
+- **Test Coverage:** 85% (209 tests passing)
 - **Quality Gates:** All passing ✅
 
 ### Contributing Guidelines
@@ -1500,7 +1500,7 @@ Example: 4 players = 6 matches across 3 rounds
 
 | Gate | Status | Criteria |
 |------|--------|----------|
-| **QG-1: Foundation** | ✅ Passed | SDK operational, 85% coverage, 199 tests passing |
+| **QG-1: Foundation** | ✅ Passed | SDK operational, 85% coverage, 209 tests passing |
 | **QG-2: Player Agent** | ⏸ Ready | Player implements 3 tools, registration working |
 | **QG-3: Match Execution** | ☐ Pending | Referee conducts matches, timeouts enforced |
 | **QG-4: End-to-End** | ☐ Pending | Full 4-player league completes successfully |
