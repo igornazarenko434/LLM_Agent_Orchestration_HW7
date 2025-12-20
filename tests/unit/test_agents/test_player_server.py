@@ -218,10 +218,11 @@ def test_game_invitation_timeout_returns_e001():
     assert body["error"]["data"]["error_code"] == "E001"
 
 
-def test_registration_flow(monkeypatch):
+@pytest.mark.asyncio
+async def test_registration_flow(monkeypatch):
     agent = PlayerAgent(agent_id="P99")
 
-    def fake_call_with_retry(endpoint, method, params, timeout, logger, circuit_breaker=None):
+    async def fake_call_with_retry(endpoint, method, params, timeout, logger, circuit_breaker=None):
         return {
             "message_type": "LEAGUE_REGISTER_RESPONSE",
             "sender": "league_manager:LM01",
@@ -235,7 +236,7 @@ def test_registration_flow(monkeypatch):
         }
 
     monkeypatch.setattr("agents.player_P01.server.call_with_retry", fake_call_with_retry)
-    response = agent.send_registration_request()
+    response = await agent.send_registration_request()
     assert agent.state == "ACTIVE"
     assert agent.auth_token == "tok-issue"
     assert response["status"] == "ACCEPTED"

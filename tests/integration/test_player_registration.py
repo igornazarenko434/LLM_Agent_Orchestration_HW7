@@ -9,8 +9,9 @@ def player_agent():
     return PlayerAgent(agent_id="P99")
 
 
-def test_player_registers_successfully(monkeypatch, player_agent):
-    def fake_call_with_retry(endpoint, method, params, timeout, logger, circuit_breaker=None):
+@pytest.mark.asyncio
+async def test_player_registers_successfully(monkeypatch, player_agent):
+    async def fake_call_with_retry(endpoint, method, params, timeout, logger, circuit_breaker=None):
         return {
             "message_type": "LEAGUE_REGISTER_RESPONSE",
             "sender": "league_manager:LM01",
@@ -25,7 +26,7 @@ def test_player_registers_successfully(monkeypatch, player_agent):
 
     monkeypatch.setattr("agents.player_P01.server.call_with_retry", fake_call_with_retry)
 
-    resp = player_agent.send_registration_request()
+    resp = await player_agent.send_registration_request()
     assert resp["status"] == "ACCEPTED"
     assert player_agent.state == "ACTIVE"
     assert player_agent.auth_token == "tok-issue"

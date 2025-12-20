@@ -13,6 +13,7 @@ setup(
     install_requires=[
         "pydantic>=2.0.0",
         "requests>=2.28.0",
+        "httpx>=0.28.0",
         "python-dateutil>=2.8.0",
     ],
     extras_require={

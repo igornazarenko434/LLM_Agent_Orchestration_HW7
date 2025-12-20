@@ -9,6 +9,7 @@ This module provides:
 - Integration with league.v2 protocol error codes
 """
 
+import asyncio
 import functools
 import logging
 import time
@@ -154,11 +155,13 @@ def is_error_retryable(error_code: str) -> bool:
 
 class CircuitBreaker:
     """
-    Circuit breaker pattern for resilience.
+    Circuit breaker pattern for resilience with async/await support.
 
     Prevents repeated calls to a failing service by opening the circuit
     after a threshold of failures. After a timeout, allows one test call
     (half-open state) to check if service has recovered.
+
+    Thread-safe for async concurrent operations using asyncio.Lock.
 
     States:
     - CLOSED: Normal operation, requests allowed
@@ -183,45 +186,49 @@ class CircuitBreaker:
         self.failures = 0
         self.last_failure_time: Optional[datetime] = None
         self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
+        self._lock = asyncio.Lock()  # Async lock for thread safety
 
-    def can_execute(self) -> bool:
+    async def can_execute(self) -> bool:
         """
-        Check if request can be executed.
+        Check if request can be executed (async with lock for thread safety).
 
         Returns:
             True if request allowed, False if circuit is open
         """
-        if self.state == "CLOSED":
+        async with self._lock:
+            if self.state == "CLOSED":
+                return True
+
+            if self.state == "OPEN":
+                # Check if timeout expired, transition to HALF_OPEN
+                if self.last_failure_time and datetime.now(
+                    timezone.utc
+                ) - self.last_failure_time > timedelta(seconds=self.reset_timeout):
+                    self.state = "HALF_OPEN"
+                    return True
+                return False
+
+            # HALF_OPEN state: allow one test request
             return True
 
-        if self.state == "OPEN":
-            # Check if timeout expired, transition to HALF_OPEN
-            if self.last_failure_time and datetime.now(
-                timezone.utc
-            ) - self.last_failure_time > timedelta(seconds=self.reset_timeout):
-                self.state = "HALF_OPEN"
-                return True
-            return False
+    async def record_success(self) -> None:
+        """Record successful request, reset circuit to CLOSED (async with lock)."""
+        async with self._lock:
+            self.failures = 0
+            self.state = "CLOSED"
+            self.last_failure_time = None
 
-        # HALF_OPEN state: allow one test request
-        return True
+    async def record_failure(self) -> None:
+        """Record failed request, potentially open circuit (async with lock)."""
+        async with self._lock:
+            self.failures += 1
+            self.last_failure_time = datetime.now(timezone.utc)
 
-    def record_success(self) -> None:
-        """Record successful request, reset circuit to CLOSED."""
-        self.failures = 0
-        self.state = "CLOSED"
-        self.last_failure_time = None
-
-    def record_failure(self) -> None:
-        """Record failed request, potentially open circuit."""
-        self.failures += 1
-        self.last_failure_time = datetime.now(timezone.utc)
-
-        if self.failures >= self.failure_threshold:
-            self.state = "OPEN"
-        elif self.state == "HALF_OPEN":
-            # Test request failed, back to OPEN
-            self.state = "OPEN"
+            if self.failures >= self.failure_threshold:
+                self.state = "OPEN"
+            elif self.state == "HALF_OPEN":
+                # Test request failed, back to OPEN
+                self.state = "OPEN"
 
     def get_state(self) -> Dict[str, Any]:
         """
@@ -398,7 +405,7 @@ def retry_with_backoff(
 # ============================================================================
 
 
-def call_with_retry(
+async def call_with_retry(
     endpoint: str,
     method: str,
     params: Dict[str, Any],
@@ -407,7 +414,10 @@ def call_with_retry(
     circuit_breaker: Optional[CircuitBreaker] = None,
 ) -> Dict[str, Any]:
     """
-    Send JSON-RPC 2.0 request with retry logic.
+    Send JSON-RPC 2.0 request with retry logic (async with httpx).
+
+    THREAD SAFETY: Uses async httpx client for non-blocking I/O.
+    Critical for Mission 7: Enables concurrent match handling without blocking event loop.
 
     Per specification:
     - Max 3 retries with exponential backoff (2, 4, 8 seconds)
@@ -427,17 +437,17 @@ def call_with_retry(
         JSON-RPC response dictionary
 
     Example:
-        response = call_with_retry(
+        response = await call_with_retry(
             endpoint="http://localhost:8101/mcp",
             method="handle_game_invitation",
             params=invitation_message,
             timeout=30
         )
     """
-    import requests
+    import httpx
 
-    # Check circuit breaker
-    if circuit_breaker and not circuit_breaker.can_execute():
+    # Check circuit breaker (async)
+    if circuit_breaker and not await circuit_breaker.can_execute():
         return {
             "error": {
                 "error_code": "E016",
@@ -455,25 +465,27 @@ def call_with_retry(
 
     for attempt in range(max_retries):
         try:
-            response = requests.post(
-                endpoint,
-                json={"jsonrpc": "2.0", "method": method, "params": params, "id": 1},
-                timeout=timeout,
-            )
-            response.raise_for_status()
+            # Use async httpx client (non-blocking I/O)
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    endpoint,
+                    json={"jsonrpc": "2.0", "method": method, "params": params, "id": 1},
+                    timeout=timeout,
+                )
+                response.raise_for_status()
 
-            # Record success in circuit breaker
+            # Record success in circuit breaker (async)
             if circuit_breaker:
-                circuit_breaker.record_success()
+                await circuit_breaker.record_success()
 
             return response.json()
 
-        except (requests.Timeout, requests.ConnectionError) as e:
+        except (httpx.TimeoutException, httpx.ConnectError) as e:
             last_error = e
 
-            # Record failure in circuit breaker
+            # Record failure in circuit breaker (async)
             if circuit_breaker:
-                circuit_breaker.record_failure()
+                await circuit_breaker.record_failure()
 
             if attempt < max_retries - 1:
                 # Calculate delay: 2, 4, 8 seconds
@@ -492,7 +504,8 @@ def call_with_retry(
                         },
                     )
 
-                time.sleep(delay)
+                # Use async sleep (non-blocking)
+                await asyncio.sleep(delay)
 
     # Max retries exceeded, return error response
     if logger:

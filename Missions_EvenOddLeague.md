@@ -542,7 +542,7 @@ pytest tests/unit/test_repositories.py -v
 
 ---
 
-### M2.6: Thread Safety Documentation
+### M2.6: Thread Safety Documentation ✅ COMPLETED (2025-12-19)
 **Priority:** P2 (Medium)
 **Estimated Time:** 1 hour
 
@@ -550,11 +550,11 @@ pytest tests/unit/test_repositories.py -v
 Document thread safety considerations for concurrent agent operations and shared resource access.
 
 **Definition of Done:**
-- [ ] doc/thread_safety.md created documenting concurrency model
-- [ ] Thread-safe data access patterns documented (locks, atomics, immutability)
-- [ ] Repository layer thread safety guarantees documented
-- [ ] Shared resource access patterns (config, logs, data files) explained
-- [ ] Race condition prevention strategies documented
+- [x] doc/thread_safety.md created documenting concurrency model
+- [x] Thread-safe data access patterns documented (locks, atomics, immutability)
+- [x] Repository layer thread safety guarantees documented
+- [x] Shared resource access patterns (config, logs, data files) explained
+- [x] Race condition prevention strategies documented
 
 **Self-Verify Command:**
 ```bash
@@ -1633,6 +1633,12 @@ Set up FastAPI MCP server for player agent with /mcp endpoint and tool routing.
 - [x] JSON-RPC 2.0 response format (result/error, id)
 - [x] Server starts on configured port (8101)
 
+**Thread Safety (Already Implemented ✅):**
+- [x] MCP endpoint is async: `async def mcp(request: Request)` (server.py:113)
+- [x] Uses `await asyncio.wait_for()` for timeout handling (server.py:137)
+- [x] Uses async `call_with_retry()` for registration (server.py:310)
+- [x] Pattern established for Mission 7.5+ agents to follow
+
 **Self-Verify Command:**
 ```bash
 python agents/player_P01/main.py --player-id=P01 --port=8101 &
@@ -1726,6 +1732,38 @@ grep "REGISTERED" logs/agents/P01.log.jsonl
 
 ---
 
+#### M7.4.5: Player Data Cleanup on Unregister
+**Priority:** P2 (Medium)
+**Estimated Time:** 30 minutes
+
+**Description:**
+Implement cleanup of player-specific data when a player unregisters from the league.
+
+**Definition of Done:**
+- [x] Add cleanup_player_data() method to PlayerAgent
+- [x] On unregister/shutdown: Archive player history
+- [x] Delete temporary player files (if any)
+- [x] Log cleanup completion
+- [ ] Unit test for player cleanup
+
+**Self-Verify Command:**
+```bash
+# Create test player history and verify cleanup
+python -c "from pathlib import Path; import asyncio; from agents.player_P01.server import PlayerAgent; \
+  agent = PlayerAgent('P01'); asyncio.run(agent.cleanup_player_data())" && \
+ls SHARED/archive/players/P01/history_shutdown.json.gz
+```
+
+**Expected Evidence:**
+- Player history archived to SHARED/archive/players/{player_id}/history_shutdown.json.gz
+- Cleanup logged in player logs
+- Archive directory created automatically
+
+**Dependencies:** M7.4, M3.7 (Data Retention Policy)
+**Blocks:** None (optional enhancement)
+
+---
+
 ### M7.5: Referee Agent - Match Conductor
 **Priority:** P0 (Critical)
 **Estimated Time:** 5 hours
@@ -1744,6 +1782,15 @@ Implement complete match conductor flow: invitation → acknowledgment → choic
 - [ ] Post-Match: Send MATCH_RESULT_REPORT to League Manager
 - [ ] Match state machine: WAITING_FOR_PLAYERS → COLLECTING_CHOICES → DRAWING_NUMBER → FINISHED
 - [ ] Complete match transcript logged
+
+**Thread Safety Requirements (CRITICAL):**
+- [ ] ✅ Use async/await for all HTTP calls (`await call_with_retry()`)
+- [ ] ✅ conduct_match() must be async function
+- [ ] ✅ Use `asyncio.gather()` for concurrent invitations to both players
+- [ ] ✅ Use `await asyncio.sleep()` for delays (never `time.sleep()`)
+- [ ] ✅ Each match isolated by unique conversation_id
+- [ ] ✅ Can handle 50+ concurrent matches without blocking
+- [ ] ✅ Reference: `doc/architecture/thread_safety.md` Section 2.4
 
 **Self-Verify Command:**
 ```bash
@@ -1872,6 +1919,13 @@ Implement registration endpoint accepting REFEREE_REGISTER_REQUEST and LEAGUE_RE
 - [ ] Return REFEREE_REGISTER_RESPONSE / LEAGUE_REGISTER_RESPONSE
 - [ ] Unit tests for registration logic
 
+**Thread Safety Requirements (CRITICAL):**
+- [ ] ✅ MCP endpoint must be async: `async def mcp(request: Request)`
+- [ ] ✅ All registration handlers must be async
+- [ ] ✅ Store registrations in memory (dict) - no file I/O during registration
+- [ ] ✅ Use BaseAgent.register() pattern (already async in base class)
+- [ ] ✅ Can handle concurrent registrations from multiple agents
+
 **Self-Verify Command:**
 ```bash
 pytest tests/unit/test_league_manager/test_registration.py -v && \
@@ -1886,6 +1940,71 @@ python tests/manual/test_registration_endpoint.py --agent-type=player
 
 **Dependencies:** M7.1, M2.1
 **Blocks:** M7.10
+
+---
+
+#### M7.9.5: Data Retention Initialization
+**Priority:** P1 (High)
+**Estimated Time:** 30 minutes
+
+**Description:**
+Initialize data retention subsystem when League Manager starts.
+
+**Definition of Done:**
+- [ ] Load retention config on startup
+- [ ] Verify archive directories exist
+- [ ] Log retention policy status
+- [ ] Create archive directories if missing
+- [ ] Unit test for retention initialization
+
+**Implementation Notes:**
+```python
+# In agents/league_manager/server.py (to be created)
+from league_sdk.cleanup import get_retention_config
+from pathlib import Path
+
+class LeagueManager(BaseAgent):
+    def __init__(self, league_id: str):
+        super().__init__(agent_id="LM01", agent_type="league_manager")
+        self.league_id = league_id
+
+        # Initialize data retention
+        self.retention_config = get_retention_config()
+        self._init_data_retention()
+
+    def _init_data_retention(self):
+        """Initialize data retention subsystem."""
+        if not self.retention_config.get("enabled", True):
+            self.logger.warning("Data retention is DISABLED in config")
+            return
+
+        # Create archive directories
+        archive_path = Path(self.retention_config.get("archive_path", "SHARED/archive"))
+        for subdir in ["logs", "matches", "players", "leagues"]:
+            (archive_path / subdir).mkdir(parents=True, exist_ok=True)
+
+        self.logger.info("Data retention initialized", extra={
+            "logs_retention_days": self.retention_config.get("logs_retention_days"),
+            "match_retention_days": self.retention_config.get("match_data_retention_days"),
+            "archive_enabled": self.retention_config.get("archive_enabled"),
+            "archive_path": str(archive_path)
+        })
+```
+
+**Self-Verify Command:**
+```bash
+# Verify archive directories created
+ls -la SHARED/archive/ && \
+grep "Data retention initialized" logs/league/LM01.log.jsonl
+```
+
+**Expected Evidence:**
+- Archive directories created (logs/, matches/, players/, leagues/)
+- Retention configuration logged
+- No errors on startup
+
+**Dependencies:** M7.9, M3.7 (Data Retention Policy)
+**Blocks:** M7.13.5 (requires retention to be initialized)
 
 ---
 
@@ -1938,10 +2057,20 @@ Implement standings calculation and update logic.
 - [ ] Broadcast LEAGUE_STANDINGS_UPDATE to all players
 - [ ] Unit tests for standings calculation
 
+**Thread Safety Requirements (CRITICAL - Queue Processor):**
+- [ ] ✅ Use `SequentialQueueProcessor` for standings updates (eliminates race conditions)
+- [ ] ✅ Import: `from league_sdk import SequentialQueueProcessor`
+- [ ] ✅ Create processor in `__init__()` with `_update_standings_file` callback
+- [ ] ✅ Start processor in `start()` method: `await self.standings_processor.start()`
+- [ ] ✅ Stop processor in `stop()` method: `await self.standings_processor.stop(timeout=10.0)`
+- [ ] ✅ Enqueue results instead of direct updates (prevents race conditions)
+- [ ] ✅ Reference: `SHARED/league_sdk/QUEUE_PROCESSOR_GUIDE.md` for complete examples
+
 **Self-Verify Command:**
 ```bash
 pytest tests/unit/test_league_manager/test_standings.py -v && \
-python tests/test_standings_accuracy.py --matches=6 --verify
+python tests/test_standings_accuracy.py --matches=6 --verify && \
+grep "SequentialQueueProcessor" agents/league_manager/*.py
 ```
 
 **Expected Evidence:**
@@ -1971,10 +2100,17 @@ Implement report_match_result tool to receive MATCH_RESULT_REPORT from referees.
 - [ ] Send ROUND_COMPLETED if all matches in round finished
 - [ ] Integration test: Referee reports result, standings update
 
+**Thread Safety Requirements (CRITICAL):**
+- [ ] ✅ Enqueue match results to standings processor (don't update directly)
+- [ ] ✅ Handler returns immediately after enqueuing (non-blocking)
+- [ ] ✅ Multiple concurrent referees can safely report results: `await self.standings_processor.enqueue(result)`
+- [ ] ✅ Why Queue? Without: race condition → lost updates. With: sequential → zero lost updates
+
 **Self-Verify Command:**
 ```bash
 pytest tests/integration/test_match_result_reporting.py -v && \
-grep "LEAGUE_STANDINGS_UPDATE" logs/agents/P01.log.jsonl
+grep "LEAGUE_STANDINGS_UPDATE" logs/agents/P01.log.jsonl && \
+grep "standings_processor.enqueue" agents/league_manager/*.py
 ```
 
 **Expected Evidence:**
@@ -2004,10 +2140,17 @@ Implement league orchestration: round announcements, round management, league co
 - [ ] broadcast_league_completed() - Send LEAGUE_COMPLETED with champion
 - [ ] Integration test: Full league flow
 
+**Thread Safety Requirements:**
+- [ ] ✅ Use `asyncio.gather()` for concurrent broadcasts to all players
+- [ ] ✅ Broadcasting doesn't block main orchestration loop
+- [ ] ✅ Each broadcast uses `await call_with_retry()` (async)
+- [ ] ✅ Handle broadcast failures gracefully with `return_exceptions=True`
+
 **Self-Verify Command:**
 ```bash
 pytest tests/integration/test_league_orchestration.py -v && \
-grep "LEAGUE_COMPLETED" logs/league/league_2025_even_odd/league.log.jsonl
+grep "LEAGUE_COMPLETED" logs/league/league_2025_even_odd/league.log.jsonl && \
+grep "asyncio.gather" agents/league_manager/*.py
 ```
 
 **Expected Evidence:**
@@ -2018,6 +2161,143 @@ grep "LEAGUE_COMPLETED" logs/league/league_2025_even_odd/league.log.jsonl
 
 **Dependencies:** M7.10, M7.11, M7.12
 **Blocks:** M7.14
+
+---
+
+#### M7.13.5: Automated Cleanup Scheduler
+**Priority:** P0 (Critical)
+**Estimated Time:** 2 hours
+
+**Description:**
+Implement automated data retention cleanup scheduler that runs periodically.
+
+**Definition of Done:**
+- [ ] Add cleanup scheduler using asyncio task
+- [ ] Run cleanup on League Manager startup
+- [ ] Schedule periodic cleanup (daily at 2 AM UTC)
+- [ ] Run cleanup on league completion
+- [ ] Log all cleanup operations
+- [ ] Handle cleanup failures gracefully
+- [ ] Integration test for cleanup execution
+
+**Implementation Notes:**
+```python
+# In agents/league_manager/server.py
+from league_sdk.cleanup import run_full_cleanup
+import asyncio
+from datetime import datetime, time, timezone, timedelta
+
+class LeagueManager(BaseAgent):
+    def __init__(self, league_id: str):
+        super().__init__(agent_id="LM01", agent_type="league_manager")
+        self.league_id = league_id
+        self.retention_config = get_retention_config()
+        self._cleanup_task: Optional[asyncio.Task] = None
+        self._init_data_retention()
+
+    async def start(self):
+        """Start League Manager with cleanup scheduler."""
+        super().start(run_in_thread=True)
+
+        # Run initial cleanup on startup
+        if self.retention_config.get("enabled", True):
+            self.logger.info("Running initial data retention cleanup...")
+            try:
+                await run_full_cleanup(logger=self.std_logger)
+            except Exception as e:
+                self.logger.error(f"Initial cleanup failed: {e}", exc_info=True)
+
+            # Start periodic cleanup scheduler
+            self._cleanup_task = asyncio.create_task(self._run_cleanup_scheduler())
+
+        self.logger.info("League Manager started with cleanup scheduler")
+
+    async def _run_cleanup_scheduler(self):
+        """Run periodic cleanup at scheduled time (2 AM UTC daily)."""
+        while True:
+            try:
+                # Calculate next cleanup time (2 AM UTC)
+                now = datetime.now(timezone.utc)
+                next_run = datetime.combine(now.date(), time(2, 0), tzinfo=timezone.utc)
+
+                if next_run <= now:
+                    # If 2 AM already passed today, schedule for tomorrow
+                    next_run += timedelta(days=1)
+
+                sleep_seconds = (next_run - now).total_seconds()
+
+                self.logger.info(f"Next cleanup scheduled for {next_run.isoformat()}")
+                await asyncio.sleep(sleep_seconds)
+
+                # Run cleanup
+                self.logger.info("Starting scheduled data retention cleanup...")
+                results = await run_full_cleanup(logger=self.std_logger)
+
+                total_mb = sum(r.bytes_freed / (1024**2) for r in results.values())
+                self.logger.info(f"Scheduled cleanup completed, freed {total_mb:.2f} MB")
+
+            except asyncio.CancelledError:
+                self.logger.info("Cleanup scheduler cancelled")
+                break
+            except Exception as e:
+                self.logger.error(f"Cleanup scheduler error: {e}", exc_info=True)
+                # Wait 1 hour before retry
+                await asyncio.sleep(3600)
+
+    async def stop(self):
+        """Stop League Manager and cancel cleanup scheduler."""
+        if self._cleanup_task and not self._cleanup_task.done():
+            self._cleanup_task.cancel()
+            try:
+                await self._cleanup_task
+            except asyncio.CancelledError:
+                pass
+
+        super().stop()
+        self.logger.info("League Manager stopped")
+
+    async def on_league_completed(self, league_id: str):
+        """Callback when league completes - run final cleanup."""
+        self.logger.info(f"League {league_id} completed, running final cleanup...")
+
+        try:
+            # Archive all matches from this league immediately
+            from league_sdk.cleanup import archive_old_matches
+
+            await archive_old_matches(
+                retention_days=0,  # Archive all, regardless of age
+                logger=self.std_logger
+            )
+
+            self.logger.info(f"League {league_id} data archived successfully")
+
+        except Exception as e:
+            self.logger.error(f"Failed to archive league {league_id}: {e}", exc_info=True)
+```
+
+**Thread Safety:**
+- ✅ Cleanup runs in background asyncio task (non-blocking)
+- ✅ Uses `run_full_cleanup()` which is fully async
+- ✅ Scheduler cancellation handled gracefully
+- ✅ No shared mutable state (each cleanup is independent)
+
+**Self-Verify Command:**
+```bash
+# Test cleanup scheduler integration
+python -c "import asyncio; from agents.league_manager.server import LeagueManager; \
+  lm = LeagueManager('test_league'); asyncio.run(lm.start()); asyncio.sleep(2)" && \
+grep "Data retention cleanup" logs/league/LM01.log.jsonl
+```
+
+**Expected Evidence:**
+- Cleanup runs on League Manager startup
+- Cleanup scheduler task created and running
+- Periodic cleanup scheduled for 2 AM UTC
+- Final cleanup runs on league completion
+- All cleanup operations logged
+
+**Dependencies:** M7.9, M7.13, M7.9.5 (League Manager must be implemented, retention initialized)
+**Blocks:** None (final enhancement)
 
 ---
 

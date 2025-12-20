@@ -163,9 +163,11 @@ class BaseAgent:
         self.logger.info("Shutdown signal received", event_type="AGENT_SHUTDOWN", signal=sig_name)
         self.stop()
 
-    def register(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
+    async def register(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Register this agent with the League Manager via JSON-RPC.
+        Register this agent with the League Manager via JSON-RPC (async).
+
+        THREAD SAFETY: Uses async call_with_retry for non-blocking HTTP request.
 
         Args:
             metadata: Agent-specific metadata (player_meta or referee_meta content).
@@ -195,7 +197,7 @@ class BaseAgent:
             data={"endpoint": endpoint},
         )
 
-        return call_with_retry(
+        return await call_with_retry(
             endpoint=endpoint,
             method=payload["message_type"],
             params=payload,

@@ -10,10 +10,14 @@ Exposes /mcp JSON-RPC 2.0 endpoint with dispatch to required tools:
 from __future__ import annotations
 
 import asyncio
+import gzip
+import shutil
+from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from league_sdk.cleanup import get_retention_config
 from league_sdk.config_loader import load_agents_config, load_json_file
 from league_sdk.logger import log_error, log_message_received, log_message_sent
 from league_sdk.protocol import (
@@ -101,8 +105,28 @@ class PlayerAgent(BaseAgent):
             senders[f"player:{player.get('agent_id')}"] = "player"
         return senders
 
+    async def cleanup_player_data(self) -> None:
+        """Cleanup player data on unregister/shutdown."""
+        config = get_retention_config()
+        if not config.get("archive_enabled", True):
+            return
+
+        # Archive player history before shutdown
+        history_file = Path(f"SHARED/data/players/{self.agent_id}/history.json")
+        archive_path = Path(config.get("archive_path", "SHARED/archive"))
+        archive_file = archive_path / "players" / self.agent_id / "history_shutdown.json.gz"
+
+        if history_file.exists():
+            archive_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(history_file, "rb") as f_in:
+                with gzip.open(archive_file, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+
+            self.logger.info(f"Player data archived to {archive_file}")
+
     def shutdown(self) -> None:
-        """Transition to SHUTDOWN state and stop the server."""
+        """Cleanup and shutdown player agent."""
+        asyncio.run(self.cleanup_player_data())
         self._transition("SHUTDOWN")
         self.stop()
 
@@ -283,8 +307,8 @@ class PlayerAgent(BaseAgent):
         port = self.config.network.league_manager_port
         return f"http://{host}:{port}/mcp"
 
-    def send_registration_request(self) -> Dict[str, Any]:
-        """Send LEAGUE_REGISTER_REQUEST to League Manager with retry policy."""
+    async def send_registration_request(self) -> Dict[str, Any]:
+        """Send LEAGUE_REGISTER_REQUEST to League Manager with retry policy (async)."""
         self._transition("REGISTERING")
         conversation_id = self._conversation_id()
         player_meta = {
@@ -307,7 +331,7 @@ class PlayerAgent(BaseAgent):
             player_meta=player_meta,
         )
         payload = request.model_dump()
-        response = call_with_retry(
+        response = await call_with_retry(
             endpoint=self.registration_endpoint(),
             method=payload["message_type"],
             params=payload,

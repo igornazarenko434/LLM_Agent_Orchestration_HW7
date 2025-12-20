@@ -16,6 +16,17 @@ Protocol: league.v2
 __version__ = "1.0.0"
 __protocol__ = "league.v2"
 
+# Import data retention and cleanup utilities
+from .cleanup import (
+    CleanupStats,
+    archive_old_matches,
+    cleanup_old_logs,
+    get_retention_config,
+    prune_league_rounds,
+    prune_player_histories,
+    run_full_cleanup,
+)
+
 # Import logging infrastructure
 from .logger import (
     JSONFormatter,
@@ -56,6 +67,9 @@ from .protocol import (  # Registration, Orchestration, Match Flow, Query, Error
     validate_message_envelope,
     wrap_message,
 )
+
+# Import queue processor for thread-safe sequential processing
+from .queue_processor import SequentialQueueProcessor
 
 # Import retry infrastructure
 from .retry import (
@@ -125,4 +139,14 @@ __all__ = [
     "call_with_retry",
     "get_retry_config",
     "is_error_retryable",
+    # Queue Processor
+    "SequentialQueueProcessor",
+    # Data Retention & Cleanup
+    "CleanupStats",
+    "cleanup_old_logs",
+    "archive_old_matches",
+    "prune_player_histories",
+    "prune_league_rounds",
+    "get_retention_config",
+    "run_full_cleanup",
 ]

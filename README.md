@@ -5,7 +5,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Protocol](https://img.shields.io/badge/protocol-league.v2-green.svg)](docs/protocol_spec.md)
 [![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](htmlcov/index.html)
-[![Tests Passing](https://img.shields.io/badge/tests-182%20passing-success.svg)](tests/)
+[![Tests Passing](https://img.shields.io/badge/tests-199%20passing-success.svg)](tests/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
@@ -52,7 +52,7 @@ The **Even/Odd League** is a sophisticated multi-agent orchestration platform wh
 - ✅ **Protocol-Driven Communication:** JSON-RPC 2.0 over HTTP with league.v2 specification
 - ✅ **Resilience Engineering:** Exponential backoff retry, circuit breaker pattern, timeout enforcement
 - ✅ **Scalable Architecture:** Designed to support 10,000+ concurrent agents
-- ✅ **Comprehensive Testing:** 182 tests with 85% code coverage
+- ✅ **Comprehensive Testing:** 199 tests with 85% code coverage
 - ✅ **Structured Observability:** JSON Lines logging with correlation IDs
 
 **Current Status:** Foundation Complete (57% of missions) • Agent Infrastructure Ready • Production-Grade SDK
@@ -98,6 +98,10 @@ The Even/Odd League addresses these challenges through:
 - 🗄️ **Repository Pattern:** Standings, rounds, matches, player history
 - ⚙️ **Environment Overrides:** 15+ config settings via env vars
 - ✅ **Schema Validation:** Pydantic models for all configs and messages
+- 🗑️ **Data Retention:** Automated cleanup with configurable retention periods
+- 📦 **Archive Strategy:** Gzip compression (80% reduction) before deletion
+- ⏰ **Scheduled Cleanup:** Daily automated cleanup at 2 AM UTC
+- 🛡️ **Data Protection:** In-progress matches and active logs never deleted
 
 ### Observability
 - 📝 **Structured Logging:** JSON Lines format for log analysis tools
@@ -106,7 +110,7 @@ The Even/Odd League addresses these challenges through:
 - 🔄 **Log Rotation:** 100MB files, 5 backup generations
 
 ### Testing & Quality
-- ✅ **182 Tests Passing:** Unit, integration, protocol compliance
+- ✅ **199 Tests Passing:** Unit, integration, protocol compliance
 - 📊 **85% Coverage:** Comprehensive test suite for SDK and agents
 - 🔬 **Test Fixtures:** Reusable test utilities and mock data
 - 🎯 **Pytest Markers:** unit, integration, e2e, slow, protocol
@@ -119,9 +123,9 @@ The Even/Odd League addresses these challenges through:
 
 | Milestone | Status | Evidence |
 |-----------|--------|----------|
-| **Foundation Quality Gate (QG-1)** | ✅ Complete | 182 tests, 85% coverage, SDK operational |
+| **Foundation Quality Gate (QG-1)** | ✅ Complete | 199 tests, 85% coverage, SDK operational |
 | **Protocol Implementation** | ✅ Complete | 18/18 message types, 18/18 error codes |
-| **SDK Infrastructure** | ✅ Complete | Protocol, config, logging, retry, repositories |
+| **SDK Infrastructure** | ✅ Complete | Protocol, config, logging, retry, repositories, cleanup |
 | **Player Agent (P01)** | ✅ Complete | MCP server, 3 tools, registration flow |
 | **Configuration System** | ✅ Complete | System, agents, league, game configs |
 
@@ -133,7 +137,7 @@ The Even/Odd League addresses these challenges through:
 │ Metric                      │ Current  │ Target │
 ├─────────────────────────────┼──────────┼────────┤
 │ Test Coverage               │ 85%      │ ≥85%   │
-│ Tests Passing               │ 182/182  │ 100%   │
+│ Tests Passing               │ 199/199  │ 100%   │
 │ Protocol Compliance         │ 100%     │ 100%   │
 │ Config Validation           │ 100%     │ 100%   │
 │ Missions Complete           │ 27/47    │ 47     │
@@ -163,6 +167,8 @@ LLM_Agent_Orchestration_HW7/
 │   │   ├── repositories.py             # Data persistence layer (485 lines)
 │   │   ├── logger.py                   # JSONL structured logging (403 lines)
 │   │   ├── retry.py                    # Retry + Circuit Breaker (514 lines)
+│   │   ├── queue_processor.py          # Thread-safe sequential queue (59 lines)
+│   │   ├── cleanup.py                  # Data retention & cleanup (258 lines)
 │   │   ├── utils.py                    # Utility functions (33 lines)
 │   │   └── setup.py                    # Package installation config
 │   ├── config/                         # Configuration files (JSON)
@@ -180,10 +186,17 @@ LLM_Agent_Orchestration_HW7/
 │   │   ├── leagues/                    # League standings, rounds
 │   │   ├── matches/                    # Match records
 │   │   └── players/                    # Player history
-│   └── logs/                           # Structured logs (git-ignored)
-│       ├── agents/                     # Per-agent logs (P01.log.jsonl, etc.)
-│       ├── league/                     # League-level logs
-│       └── system/                     # System-level logs
+│   ├── logs/                           # Structured logs (git-ignored)
+│   │   ├── agents/                     # Per-agent logs (P01.log.jsonl, etc.)
+│   │   ├── league/                     # League-level logs
+│   │   └── system/                     # System-level logs
+│   ├── archive/                        # Archived data (compressed, git-ignored)
+│   │   ├── logs/                       # Old logs (gzipped)
+│   │   ├── matches/                    # Old match records (gzipped)
+│   │   ├── players/                    # Player history archives
+│   │   └── leagues/                    # League rounds archives
+│   └── scripts/                        # Utility scripts
+│       └── cleanup_data.py             # Manual cleanup script (273 lines)
 ├── 🤖 agents/                          # Agent implementations
 │   ├── base/                           # Shared base agent
 │   │   ├── __init__.py
@@ -208,7 +221,7 @@ LLM_Agent_Orchestration_HW7/
 │   └── player_P04/                     # Player agent #4
 │       ├── __init__.py
 │       └── main.py                     # Reuses PlayerAgent class
-├── 🧪 tests/                           # Test suite (182 tests, 85% coverage)
+├── 🧪 tests/                           # Test suite (199 tests, 85% coverage)
 │   ├── conftest.py                     # Pytest fixtures and configuration
 │   ├── unit/                           # Unit tests for SDK and agents
 │   │   ├── test_sdk/
@@ -216,6 +229,7 @@ LLM_Agent_Orchestration_HW7/
 │   │   │   ├── test_logger.py              # 35 tests - Logging infrastructure
 │   │   │   ├── test_retry.py               # 34 tests - Retry & circuit breaker
 │   │   │   ├── test_repositories.py        # 33 tests - Data persistence
+│   │   │   ├── test_cleanup.py             # 17 tests - Data retention & cleanup ✅
 │   │   │   ├── test_config_models.py       # 16 tests - Config schemas
 │   │   │   ├── test_config_loader.py       # Config loading + env overrides
 │   │   │   └── test_games_registry.py      # 8 tests - Game definitions
@@ -231,6 +245,7 @@ LLM_Agent_Orchestration_HW7/
 │   │   └── even_odd.md                 # Even/Odd game specification
 │   ├── algorithms/
 │   │   └── round_robin.md              # Round-robin scheduling algorithm
+│   ├── data_retention_policy.md        # Data lifecycle & cleanup specification (22KB) ✅
 │   ├── error_handling_strategy.md      # Error handling approach
 │   └── prompt_log/                     # Implementation prompt logs
 │       ├── mission_2_implementation_prompt.md
@@ -350,6 +365,7 @@ Expected files:
 ```bash
 mkdir -p SHARED/data/{leagues,matches,players}
 mkdir -p SHARED/logs/{agents,league,system}
+mkdir -p SHARED/archive/{logs,matches,players,leagues}
 ```
 
 #### 10. Run Tests to Validate Setup
@@ -357,7 +373,7 @@ mkdir -p SHARED/logs/{agents,league,system}
 PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ -v --cov=SHARED/league_sdk --cov=agents --cov-report=term
 ```
 
-Expected: `182 passed, 7 warnings` with `85% coverage`
+Expected: `199 passed` with `85% coverage`
 
 #### 11. Install Pre-commit Hooks (Optional, Recommended)
 ```bash
@@ -509,8 +525,9 @@ agent = PlayerAgent(
 # 2. Start the MCP server
 agent.start(run_in_thread=False)  # Blocks until shutdown
 
-# 3. Register with League Manager (in separate thread/process)
-response = agent.send_registration_request()
+# 3. Register with League Manager (async)
+import asyncio
+response = asyncio.run(agent.send_registration_request())
 print(response)
 # {
 #   "protocol": "league.v2",
@@ -626,6 +643,90 @@ history_repo.add_match(
 )
 ```
 
+#### Data Retention & Cleanup
+
+**Automated Cleanup (League Manager):**
+```python
+from league_sdk.cleanup import run_full_cleanup
+
+# Run full cleanup (all data types)
+results = await run_full_cleanup(logger=logger)
+
+# Print statistics
+for data_type, stats in results.items():
+    print(f"{data_type}: {stats.files_deleted} files deleted, {stats.mb_freed:.2f} MB freed")
+```
+
+**Manual Cleanup Script:**
+```bash
+# Preview what would be deleted (dry-run)
+python SHARED/scripts/cleanup_data.py --dry-run
+
+# Execute full cleanup
+python SHARED/scripts/cleanup_data.py --execute
+
+# Cleanup specific data type
+python SHARED/scripts/cleanup_data.py --execute --type logs
+
+# Custom retention period (override config)
+python SHARED/scripts/cleanup_data.py --execute --type matches --retention-days 180
+
+# Verbose output with statistics
+python SHARED/scripts/cleanup_data.py --execute --verbose
+```
+
+**Using Cleanup Functions Directly:**
+```python
+from league_sdk.cleanup import (
+    cleanup_old_logs,
+    archive_old_matches,
+    prune_player_histories,
+    prune_league_rounds,
+    get_retention_config
+)
+
+# Get current retention configuration
+config = get_retention_config()
+print(f"Logs retention: {config['logs_retention_days']} days")
+
+# Cleanup old logs (rotated logs only, active logs preserved)
+stats = await cleanup_old_logs(retention_days=30)
+print(f"Deleted {stats.files_deleted} old log files")
+
+# Archive old completed matches (in-progress matches preserved)
+stats = await archive_old_matches(retention_days=365)
+print(f"Archived {stats.files_archived} matches, freed {stats.mb_freed:.2f} MB")
+
+# Prune player history (removes old match records, preserves aggregate stats)
+stats = await prune_player_histories(retention_days=365)
+print(f"Pruned {stats.files_deleted} old match records from player histories")
+
+# Prune league rounds (removes old round records)
+stats = await prune_league_rounds(retention_days=365)
+print(f"Pruned {stats.files_deleted} old rounds")
+```
+
+**Player Agent Cleanup (on Shutdown):**
+```python
+# Automatically called when player shuts down
+async def cleanup_player_data(self):
+    """Archive player history before shutdown."""
+    config = get_retention_config()
+    if config.get("archive_enabled", True):
+        # Archive to SHARED/archive/players/{player_id}/history_shutdown.json.gz
+        # Logged automatically
+```
+
+**Configuration-Driven:**
+All retention periods are configurable in `SHARED/config/system.json` under `data_retention` section. Change retention periods without code changes!
+
+**Safety Guarantees:**
+- ✅ IN_PROGRESS matches never deleted
+- ✅ Active logs never deleted (only rotated logs)
+- ✅ Aggregate player stats always preserved
+- ✅ Standings data retained permanently
+- ✅ Atomic operations prevent data corruption
+
 ---
 
 ## ⚙️ Configuration
@@ -674,9 +775,33 @@ history_repo.add_match(
     "format": "json",
     "max_file_size_mb": 100,
     "backup_count": 5
+  },
+  "data_retention": {
+    "enabled": true,
+    "logs_retention_days": 30,
+    "match_data_retention_days": 365,
+    "player_history_retention_days": 365,
+    "rounds_retention_days": 365,
+    "standings_retention": "permanent",
+    "cleanup_schedule_cron": "0 2 * * *",
+    "archive_enabled": true,
+    "archive_path": "SHARED/archive/",
+    "archive_compression": "gzip"
   }
 }
 ```
+
+**Data Retention Configuration:**
+- **enabled**: Master switch for automated cleanup
+- **logs_retention_days**: Keep rotated logs for 30 days
+- **match_data_retention_days**: Keep completed matches for 1 year
+- **player_history_retention_days**: Keep individual match records for 1 year (stats preserved)
+- **rounds_retention_days**: Keep league round records for 1 year
+- **standings_retention**: "permanent" - never deleted
+- **cleanup_schedule_cron**: Daily at 2 AM UTC
+- **archive_enabled**: Compress and archive before deletion
+- **archive_path**: Location for archived data
+- **archive_compression**: "gzip" for 80% size reduction
 
 ### Environment Variables (`.env`)
 
@@ -767,16 +892,28 @@ Register all agents:
          │ • Data Repositories (atomic writes)     │
          │ • Structured Logging (JSONL)            │
          │ • Retry & Circuit Breaker               │
+         │ • Data Retention & Cleanup (async)      │
+         │ • Queue Processing (thread-safe)        │
          └─────────────────────────────────────────┘
                                │
                                ▼
          ┌─────────────────────────────────────────┐
-         │        3-LAYER DATA ARCHITECTURE        │
+         │        4-LAYER DATA ARCHITECTURE        │
          ├─────────────────────────────────────────┤
          │ CONFIG/  │ Static configuration files   │
          │ DATA/    │ Runtime data (standings)     │
          │ LOGS/    │ Append-only JSONL logs       │
+         │ ARCHIVE/ │ Compressed archived data     │
          └─────────────────────────────────────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │ Automated Cleanup    │
+                    │ (Daily 2 AM UTC)     │
+                    │ • Logs: 30 days      │
+                    │ • Matches: 365 days  │
+                    │ • Standings: ∞       │
+                    └──────────────────────┘
 ```
 
 ### Agent Communication Flow
@@ -888,10 +1025,11 @@ pytest -m "not slow"
 | `test_logger.py` | 35 | 99% | JSONL logging, rotation |
 | `test_retry.py` | 34 | 86% | Retry, circuit breaker |
 | `test_repositories.py` | 33 | 96% | Data persistence |
+| `test_cleanup.py` | 17 | 90% | Data retention & cleanup ✅ |
 | `test_config_models.py` | 16 | 99% | Config schemas |
 | `test_agent_base.py` | 6 | 83% | BaseAgent functionality |
 | `test_player_server.py` | 3 | 88% | PlayerAgent MCP server |
-| **TOTAL** | **182** | **85%** | **Comprehensive coverage** |
+| **TOTAL** | **199** | **85%** | **Comprehensive coverage** |
 
 ### Test Examples
 
@@ -913,6 +1051,31 @@ def test_game_invitation_validation():
     )
     assert invitation.message_type == "GAME_INVITATION"
     assert invitation.protocol == "league.v2"
+
+# tests/unit/test_sdk/test_cleanup.py
+@pytest.mark.asyncio
+async def test_cleanup_old_logs_deletes_old_files(temp_data_dir):
+    """Verify cleanup deletes rotated logs older than retention period."""
+    logs_dir = temp_data_dir / "logs" / "agents"
+
+    # Create old rotated log (60 days old)
+    old_log = logs_dir / "P01.log.jsonl.1"
+    old_log.write_text("old log data")
+    old_time = datetime.now(timezone.utc) - timedelta(days=60)
+    os.utime(old_log, (old_time.timestamp(), old_time.timestamp()))
+
+    # Create active log (should not be deleted)
+    active_log = logs_dir / "P01.log.jsonl"
+    active_log.write_text("active log data")
+
+    # Run cleanup
+    stats = await cleanup_old_logs(retention_days=30, log_dir=logs_dir)
+
+    # Old rotated log should be deleted
+    assert not old_log.exists()
+    # Active log should be preserved
+    assert active_log.exists()
+    assert stats.files_deleted == 1
 ```
 
 ---
@@ -1022,7 +1185,7 @@ See `.github/workflows/test.yml` for full pipeline configuration.
 #### Build Status
 
 - **Python Versions:** 3.10, 3.11
-- **Test Coverage:** 85.23% (182 tests passing)
+- **Test Coverage:** 85% (199 tests passing)
 - **Quality Gates:** All passing ✅
 
 ### Contributing Guidelines
@@ -1156,6 +1319,61 @@ pytest tests/ --timeout=300
 pytest -m "not slow"
 ```
 
+#### 8. Data Retention / Cleanup Issues
+
+**Issue 8.1:** Cleanup script fails with "Permission denied"
+
+**Cause:** Insufficient permissions on archive directory.
+
+**Solution:**
+```bash
+# Create archive directory with proper permissions
+mkdir -p SHARED/archive/{logs,matches,players,leagues}
+chmod -R 755 SHARED/archive
+```
+
+**Issue 8.2:** Old logs not being deleted
+
+**Cause:** Data retention is disabled in config.
+
+**Solution:**
+```bash
+# Check if retention is enabled
+python3 -c "
+from league_sdk.config_loader import load_system_config
+config = load_system_config('SHARED/config/system.json')
+print(f\"Retention enabled: {config.data_retention.enabled}\")
+"
+
+# Enable in system.json if needed
+# Set "data_retention.enabled": true
+```
+
+**Issue 8.3:** Cleanup deletes in-progress matches
+
+**Cause:** This should NEVER happen - safety checks prevent this.
+
+**Solution:**
+```bash
+# Verify safety checks are working
+pytest tests/unit/test_sdk/test_cleanup.py::test_archive_old_matches_skips_in_progress -v
+
+# If test fails, report bug immediately
+```
+
+**Issue 8.4:** Archive files too large
+
+**Cause:** Gzip compression not enabled.
+
+**Solution:**
+```bash
+# Verify compression is enabled in system.json
+# "data_retention.archive_compression": "gzip"
+
+# Manually compress existing archives
+find SHARED/archive -type f ! -name "*.gz" -exec gzip {} \;
+```
+
 ### Debug Mode
 
 Enable debug logging:
@@ -1282,7 +1500,7 @@ Example: 4 players = 6 matches across 3 rounds
 
 | Gate | Status | Criteria |
 |------|--------|----------|
-| **QG-1: Foundation** | ✅ Passed | SDK operational, 85% coverage, 182 tests passing |
+| **QG-1: Foundation** | ✅ Passed | SDK operational, 85% coverage, 199 tests passing |
 | **QG-2: Player Agent** | ⏸ Ready | Player implements 3 tools, registration working |
 | **QG-3: Match Execution** | ☐ Pending | Referee conducts matches, timeouts enforced |
 | **QG-4: End-to-End** | ☐ Pending | Full 4-player league completes successfully |
@@ -1362,6 +1580,7 @@ parity_choice = strategy.choose(history_repo.get_recent_matches(10))
 | **Even/Odd Game Rules** | `doc/game_rules/even_odd.md` | Game specification and examples |
 | **Round-Robin Algorithm** | `doc/algorithms/round_robin.md` | Scheduling algorithm with examples |
 | **Error Handling Strategy** | `doc/error_handling_strategy.md` | Error classification and retry logic |
+| **Data Retention Policy** | `doc/data_retention_policy.md` | Data lifecycle & cleanup specification (22KB) ✅ |
 | **Implementation Logs** | `doc/prompt_log/*.md` | Mission implementation prompts |
 | **Contributing Guide** | `CONTRIBUTING.md` | Code style, workflow, and quality standards |
 | **Quality Workflow** | `doc/guides/HOW_QUALITY_WORKS.md` | How quality checks work locally and on CI/CD |
@@ -1534,6 +1753,7 @@ INFO:     Uvicorn running on http://localhost:8101 (Press CTRL+C to quit)
 Name                                 Stmts   Miss  Cover
 --------------------------------------------------------
 SHARED/league_sdk/__init__.py            6      0   100%
+SHARED/league_sdk/cleanup.py            95     10    90%
 SHARED/league_sdk/config_loader.py      73      7    90%
 SHARED/league_sdk/config_models.py     101      1    99%
 SHARED/league_sdk/logger.py             84      1    99%
@@ -1544,7 +1764,7 @@ agents/base/agent_base.py               93     16    83%
 agents/player_P01/handlers.py           46      4    91%
 agents/player_P01/server.py            160     20    88%
 --------------------------------------------------------
-TOTAL                                 1193    176    85%
+TOTAL                                 1288    186    85%
 ```
 
 ### Structured Log Entry (JSONL)

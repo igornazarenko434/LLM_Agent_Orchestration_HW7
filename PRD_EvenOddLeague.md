@@ -428,6 +428,68 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 
 ---
 
+### FR-017: Data Retention & Cleanup
+**Priority:** P1 (High)
+**Description:** System MUST implement automated data retention policies to manage storage, comply with data lifecycle requirements, and maintain system performance.
+
+**Acceptance Criteria:**
+- System implements configurable retention periods for all data types (logs, matches, player history, rounds)
+- Automated cleanup runs daily at scheduled time (2 AM UTC by default)
+- Old data is archived (compressed) before deletion
+- In-progress matches and active logs are NEVER deleted
+- Aggregate player statistics are preserved even when individual match records are pruned
+- Standings data is retained permanently (historical record)
+- Retention policies are configuration-driven (SHARED/config/system.json)
+- Manual cleanup script available for on-demand execution
+- All cleanup operations are logged with statistics (files deleted, MB freed)
+- Player data is archived on player unregistration/shutdown
+
+**Retention Periods (Configurable):**
+- Agent logs: 30 days (rotated logs only, active logs preserved)
+- Match data: 365 days (completed matches only)
+- Player history: 365 days (individual matches pruned, stats preserved)
+- League rounds: 365 days
+- Standings: Permanent
+
+**Cleanup Architecture:**
+- Cleanup functions in `league_sdk/cleanup.py` (async, non-blocking)
+- League Manager runs automated cleanup scheduler
+- Players archive own data on shutdown
+- Manual script: `SHARED/scripts/cleanup_data.py`
+- Archive location: `SHARED/archive/` (gzip compressed)
+
+**Data Protection:**
+- IN_PROGRESS matches never deleted (safety check)
+- Active log files never deleted (only rotated logs)
+- Aggregate stats always preserved (player history)
+- Atomic file operations prevent data corruption
+- Thread-safe cleanup (async/await, no race conditions)
+
+**Verification:**
+```bash
+# Verify retention config loaded
+python -c "from league_sdk.cleanup import get_retention_config; print(get_retention_config())"
+
+# Run manual cleanup (dry-run)
+python SHARED/scripts/cleanup_data.py --dry-run
+
+# Execute cleanup and verify results
+python SHARED/scripts/cleanup_data.py --execute --verbose
+
+# Verify unit tests pass
+pytest tests/unit/test_sdk/test_cleanup.py -v
+
+# Check cleanup is integrated in missions
+grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
+```
+
+**Related Documentation:**
+- Full policy specification: `doc/data_retention_policy.md`
+- Mission subsections: M7.4.5 (Player cleanup), M7.9.5 (LM initialization), M7.13.5 (Automated scheduler)
+- Configuration: `SHARED/config/system.json` → `data_retention` section
+
+---
+
 ## 5. NON-FUNCTIONAL REQUIREMENTS
 
 ### NFR-001: Performance - Response Time (ISO/IEC 25010: Performance Efficiency)
@@ -669,6 +731,66 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 
 ---
 
+### NFR-016: Data Lifecycle Management - Storage Efficiency (ISO/IEC 25010: Performance Efficiency)
+**Priority:** P1 (High)
+**Description:** System MUST implement automated data lifecycle management to optimize storage usage, maintain system performance, and comply with data retention requirements.
+
+**Acceptance Criteria:**
+- Automated cleanup runs without manual intervention
+- Cleanup operations are non-blocking (async)
+- Cleanup does not interfere with active operations
+- Storage usage is bounded (old data automatically archived/deleted)
+- Cleanup performance: <5 minutes for 10,000 files
+- Archive compression ratio: >80% (gzip)
+- Zero data loss for in-progress operations
+- Cleanup failures are logged and retried automatically
+
+**Data Lifecycle Stages:**
+1. **Active:** Currently in use (matches in progress, current logs)
+2. **Retention:** Completed but within retention period
+3. **Archive:** Older than retention period, compressed and moved to archive
+4. **Deletion:** Archived data older than archive retention period
+
+**Thread Safety Requirements:**
+- Cleanup runs in background asyncio task (non-blocking)
+- Uses async file I/O (no blocking operations)
+- Atomic file operations (temp file + rename pattern)
+- No race conditions with repository writes
+- Concurrent cleanup operations are safe (idempotent)
+
+**Performance Requirements:**
+- Cleanup startup time: <2 seconds
+- File processing rate: >100 files/second
+- Memory usage: <50 MB during cleanup
+- No impact on match execution (<1% CPU during cleanup)
+- Graceful degradation under high load
+
+**Monitoring & Observability:**
+- All cleanup operations logged (structured JSON logs)
+- Statistics tracked: files scanned, deleted, archived, MB freed
+- Errors logged with full stack traces
+- Cleanup duration tracked and logged
+- Archive directory size monitored
+
+**Verification:**
+```bash
+# Verify cleanup performance
+pytest tests/unit/test_sdk/test_cleanup.py -v --durations=10
+
+# Verify thread safety
+pytest tests/integration/test_concurrent_cleanup.py -v
+
+# Verify no data loss
+pytest tests/integration/test_cleanup_safety.py -v
+
+# Verify compression ratio
+python SHARED/scripts/cleanup_data.py --execute --type matches --verbose | grep "compression"
+```
+
+**Related Requirements:** FR-017 (Data Retention & Cleanup)
+
+---
+
 ## 6. TECHNICAL SPECIFICATIONS
 
 ### 6.1 Technology Stack
@@ -743,7 +865,146 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 │  - league/<id>/league.log.jsonl          │
 │  - agents/<agent_id>.log.jsonl           │
 └─────────────────────────────────────────┘
+                  ↓ Cleanup & Archive (Daily 2 AM UTC)
+┌─────────────────────────────────────────┐
+│        archive/ (Compressed Storage)     │
+│  - logs/<agent_id>.log.jsonl.gz          │
+│  - matches/<match_id>.json.gz            │
+│  - players/<id>/history_shutdown.json.gz │
+│  - leagues/<id>/rounds_archive.json.gz   │
+└─────────────────────────────────────────┘
 ```
+
+#### 6.2.3 Data Retention Architecture
+
+**Overview:**
+The system implements automated data lifecycle management to optimize storage, maintain performance, and comply with retention policies.
+
+**Components:**
+
+1. **Cleanup Module** (`league_sdk/cleanup.py`)
+   - 6 async cleanup functions (non-blocking)
+   - Configuration-driven retention periods
+   - Archive-before-delete strategy
+   - Thread-safe operations (atomic writes)
+   - Comprehensive error handling
+
+2. **Manual Cleanup Script** (`SHARED/scripts/cleanup_data.py`)
+   - CLI tool for on-demand cleanup
+   - Dry-run mode for preview
+   - Type-specific cleanup (logs, matches, history, rounds)
+   - Custom retention period override
+   - Verbose statistics output
+
+3. **Automated Cleanup Scheduler** (League Manager)
+   - Runs daily at 2 AM UTC
+   - Background asyncio task (non-blocking)
+   - Graceful cancellation on shutdown
+   - Retry on failure (1-hour backoff)
+   - Logs all operations with statistics
+
+**Data Flow:**
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ 1. Data Creation                                         │
+│    Match completes → MatchRepository.save()              │
+│    Player plays → PlayerHistoryRepository.append()       │
+│    Agent logs → RotatingFileHandler.emit()               │
+└────────────────────┬─────────────────────────────────────┘
+                     ↓
+┌──────────────────────────────────────────────────────────┐
+│ 2. Retention Period (Configurable)                       │
+│    Logs: 30 days | Matches: 365 days | Standings: ∞     │
+│    Data remains in SHARED/data/ during this period       │
+└────────────────────┬─────────────────────────────────────┘
+                     ↓
+┌──────────────────────────────────────────────────────────┐
+│ 3. Cleanup Detection (Daily 2 AM UTC)                    │
+│    League Manager cleanup scheduler runs                 │
+│    Scans all data directories                            │
+│    Checks timestamps against retention config            │
+│    Identifies old data for archival/deletion             │
+└────────────────────┬─────────────────────────────────────┘
+                     ↓
+┌──────────────────────────────────────────────────────────┐
+│ 4. Archive (Compression)                                 │
+│    Old data compressed with gzip (~80% reduction)        │
+│    Moved to SHARED/archive/ with .gz extension           │
+│    Original file deleted after successful archive        │
+│    Archive operations logged with statistics             │
+└────────────────────┬─────────────────────────────────────┘
+                     ↓
+┌──────────────────────────────────────────────────────────┐
+│ 5. Long-Term Retention                                   │
+│    Archives retained for extended period (5 years)       │
+│    Can be retrieved if needed (decompress .gz)           │
+│    Eventually deleted per archive retention policy       │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Safety Guarantees:**
+
+| Data Type | Protection Mechanism | Rationale |
+|-----------|---------------------|-----------|
+| **IN_PROGRESS Matches** | Status check before delete | Prevents data loss during active matches |
+| **Active Logs** | Filename pattern check (`.log.jsonl`) | Only rotated logs deleted (`.log.jsonl.1`, etc.) |
+| **Player Stats** | Stats object preserved | Historical aggregate data never deleted |
+| **Standings** | Retention = "permanent" | League champions recorded forever |
+| **All Files** | Atomic operations | Temp file + rename prevents corruption |
+
+**Configuration Management:**
+
+```json
+// SHARED/config/system.json
+{
+  "data_retention": {
+    "enabled": true,                    // Master switch
+    "logs_retention_days": 30,          // Rotated logs only
+    "match_data_retention_days": 365,   // Completed matches only
+    "player_history_retention_days": 365, // Individual matches pruned
+    "rounds_retention_days": 365,       // Old rounds removed
+    "standings_retention": "permanent", // Never deleted
+    "cleanup_schedule_cron": "0 2 * * *", // Daily 2 AM UTC
+    "archive_enabled": true,            // Archive before delete
+    "archive_path": "SHARED/archive/",  // Configurable location
+    "archive_compression": "gzip"       // Compression algorithm
+  }
+}
+```
+
+**Integration Points:**
+
+1. **League SDK Modules:**
+   - `logger.py` → Creates rotated logs (cleanup removes old rotations)
+   - `repositories.py` → Atomic writes (cleanup safe concurrent access)
+   - `cleanup.py` → Orchestrates all cleanup operations
+
+2. **Agent Integration:**
+   - **Player Agent:** Archives player history on shutdown (M7.4.5)
+   - **League Manager:** Runs automated cleanup scheduler (M7.13.5)
+   - **League Manager:** Initializes retention on startup (M7.9.5)
+   - **Referees:** No integration needed (stateless)
+
+3. **Thread Safety:**
+   - Cleanup runs in background asyncio task
+   - Repositories use atomic writes (temp + rename)
+   - No shared mutable state
+   - No blocking operations (all async)
+
+**Monitoring & Observability:**
+
+- All cleanup operations logged to `logs/league/<id>/league.log.jsonl`
+- Statistics tracked: files scanned, deleted, archived, bytes freed
+- Errors logged with full stack traces
+- Cleanup duration tracked
+- Manual verification: `grep "cleanup" logs/league/*/league.log.jsonl`
+
+**Related Documentation:**
+- Full specification: `doc/data_retention_policy.md` (22KB)
+- Functional requirement: FR-017
+- Non-functional requirement: NFR-016
+- Mission subsections: M7.4.5, M7.9.5, M7.13.5
 
 ### 6.3 Protocol Specification
 
@@ -1947,6 +2208,7 @@ echo "Data restored from: $1"
 | **Homework Requirements** | `HW7_Instructions_section6_11.pdf` | Grading rubric and requirements (Sections 6-11) |
 | **API Documentation** | `/doc/api_reference.md` | MCP tool definitions and examples |
 | **Configuration Guide** | `/doc/configuration.md` | Guide to config file structure and options |
+| **Data Retention Policy** | `/doc/data_retention_policy.md` | Data lifecycle, cleanup procedures, and retention specifications |
 
 ### 15.2 Technical References
 
@@ -2025,6 +2287,19 @@ LLM_Agent_Orchestration_HW7/
 │   │   │       └── league.log.jsonl
 │   │   └── agents/
 │   │       └── <agent_id>.log.jsonl
+│   ├── archive/                     # Archived data (compressed storage)
+│   │   ├── logs/
+│   │   │   └── <agent_id>.log.jsonl.gz
+│   │   ├── matches/
+│   │   │   └── <match_id>.json.gz
+│   │   ├── players/
+│   │   │   └── <player_id>/
+│   │   │       └── history_shutdown.json.gz
+│   │   └── leagues/
+│   │       └── <league_id>/
+│   │           └── rounds_archive.json.gz
+│   ├── scripts/                     # Utility scripts
+│   │   └── cleanup_data.py          # Manual data retention cleanup
 │   └── league_sdk/                  # Shared Python SDK
 │       ├── __init__.py
 │       ├── config_loader.py         # Config file loading and validation
@@ -2032,6 +2307,9 @@ LLM_Agent_Orchestration_HW7/
 │       ├── protocol.py              # Message envelope validation
 │       ├── repositories.py          # Data access layer
 │       ├── logger.py                # Structured JSON logging
+│       ├── retry.py                 # Retry policy and circuit breaker
+│       ├── queue_processor.py       # Sequential queue processing (thread-safe)
+│       ├── cleanup.py               # Data retention and cleanup utilities
 │       └── utils.py                 # Helper functions
 ├── agents/                          # Agent implementations
 │   ├── league_manager/
@@ -2065,11 +2343,19 @@ LLM_Agent_Orchestration_HW7/
 │   │   ├── messages/
 │   │   ├── config/
 │   │   └── data/
+│   ├── unit/
+│   │   ├── test_sdk/
+│   │   │   ├── test_cleanup.py      # Data retention tests (17 tests)
+│   │   │   ├── test_protocol.py
+│   │   │   ├── test_repositories.py
+│   │   │   └── test_logger.py
+│   │   └── test_agents/
 │   └── conftest.py                  # Pytest configuration
 ├── doc/                             # Documentation
 │   ├── api_reference.md
 │   ├── configuration.md
 │   ├── architecture.md
+│   ├── data_retention_policy.md     # Data lifecycle and cleanup specification
 │   └── developer_guide.md
 ├── scripts/                         # Operational scripts
 │   ├── start_league.sh
@@ -2095,6 +2381,9 @@ LLM_Agent_Orchestration_HW7/
 | **league_sdk/protocol.py** | Message envelope validation | `validate_envelope()`, `MessageEnvelope` (Pydantic model) | pydantic, datetime |
 | **league_sdk/repositories.py** | File-based data access | `StandingsRepository`, `MatchRepository`, `PlayerHistoryRepository` | json, pathlib |
 | **league_sdk/logger.py** | Structured JSON logging | `setup_logger()`, `log_message()` | logging, json |
+| **league_sdk/retry.py** | Retry policy & circuit breaker | `retry_with_backoff()`, `CircuitBreaker`, `call_with_retry()` | asyncio, time |
+| **league_sdk/queue_processor.py** | Thread-safe queue processing | `SequentialQueueProcessor` | asyncio, queue |
+| **league_sdk/cleanup.py** | Data retention & cleanup | `cleanup_old_logs()`, `archive_old_matches()`, `run_full_cleanup()`, `CleanupStats` | asyncio, gzip, pathlib |
 | **league_manager/scheduler.py** | Round-robin scheduling | `create_round_robin_schedule()`, `assign_referees()` | itertools, math |
 | **league_manager/standings.py** | Standings calculation | `update_standings()`, `calculate_points()`, `sort_standings()` | repositories |
 | **referee/match_conductor.py** | Match orchestration | `conduct_match()`, `invite_players()`, `collect_choices()` | requests, protocol |

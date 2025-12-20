@@ -57,6 +57,8 @@ SHARED/logs/league/*
 !SHARED/logs/league/.gitkeep
 SHARED/logs/system/*
 !SHARED/logs/system/.gitkeep
+SHARED/archive/*
+!SHARED/archive/.gitkeep
 
 # Environment Variables & Secrets
 .env

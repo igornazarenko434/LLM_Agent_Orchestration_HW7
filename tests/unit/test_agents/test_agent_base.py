@@ -59,10 +59,11 @@ def test_start_and_stop(monkeypatch):
     assert dummy_server.should_exit is True
 
 
-def test_register_invokes_call_with_retry(monkeypatch):
+@pytest.mark.asyncio
+async def test_register_invokes_call_with_retry(monkeypatch):
     captured = {}
 
-    def fake_call(endpoint, method, params, timeout, logger, circuit_breaker=None):
+    async def fake_call(endpoint, method, params, timeout, logger, circuit_breaker=None):
         captured.update(
             {
                 "endpoint": endpoint,
@@ -84,7 +85,7 @@ def test_register_invokes_call_with_retry(monkeypatch):
         "game_types": ["even_odd"],
         "contact_endpoint": "http://localhost:8101/mcp",
     }
-    response = agent.register(metadata=meta)
+    response = await agent.register(metadata=meta)
 
     assert response == {"ok": True}
     assert captured["method"] == "LEAGUE_REGISTER_REQUEST"

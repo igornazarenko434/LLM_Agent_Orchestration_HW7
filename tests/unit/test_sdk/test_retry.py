@@ -15,7 +15,6 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-import requests
 from league_sdk.protocol import ErrorCode
 from league_sdk.retry import (
     CircuitBreaker,
@@ -173,55 +172,62 @@ class TestRetryWithBackoff:
 
 @pytest.mark.unit
 class TestCircuitBreaker:
-    """Test CircuitBreaker state logic."""
+    """Test CircuitBreaker state logic (async)."""
 
-    def test_initial_state_is_closed(self):
+    @pytest.mark.asyncio
+    async def test_initial_state_is_closed(self):
         cb = CircuitBreaker()
         assert cb.state == "CLOSED"
 
-    def test_record_success_resets_failures(self):
+    @pytest.mark.asyncio
+    async def test_record_success_resets_failures(self):
         cb = CircuitBreaker(failure_threshold=2)
-        cb.record_failure()
+        await cb.record_failure()
         assert cb.failures == 1
 
-        cb.record_success()
+        await cb.record_success()
         assert cb.failures == 0
         assert cb.state == "CLOSED"
 
-    def test_circuit_opens_after_threshold_failures(self):
+    @pytest.mark.asyncio
+    async def test_circuit_opens_after_threshold_failures(self):
         cb = CircuitBreaker(failure_threshold=2)
-        cb.record_failure()
+        await cb.record_failure()
         assert cb.state == "CLOSED"
 
-        cb.record_failure()
+        await cb.record_failure()
         assert cb.state == "OPEN"
 
-    def test_circuit_transitions_to_half_open_after_timeout(self):
+    @pytest.mark.asyncio
+    async def test_circuit_transitions_to_half_open_after_timeout(self):
         cb = CircuitBreaker(failure_threshold=1, reset_timeout=0.1)
-        cb.record_failure()
+        await cb.record_failure()
         assert cb.state == "OPEN"
 
         # Force elapsed time
         cb.last_failure_time = cb.last_failure_time - timedelta(seconds=0.2)
-        assert cb.can_execute() is True
+        assert await cb.can_execute() is True
         assert cb.state == "HALF_OPEN"
 
-    def test_half_open_success_closes_circuit(self):
+    @pytest.mark.asyncio
+    async def test_half_open_success_closes_circuit(self):
         cb = CircuitBreaker(failure_threshold=1, reset_timeout=0.01)
         cb.state = "HALF_OPEN"
         cb.failures = 1
-        cb.record_success()
+        await cb.record_success()
         assert cb.state == "CLOSED"
         assert cb.failures == 0
 
-    def test_half_open_failure_reopens_circuit(self):
+    @pytest.mark.asyncio
+    async def test_half_open_failure_reopens_circuit(self):
         cb = CircuitBreaker(failure_threshold=1, reset_timeout=0.01)
         cb.state = "HALF_OPEN"
         cb.failures = 0
-        cb.record_failure()
+        await cb.record_failure()
         assert cb.state == "OPEN"
 
-    def test_get_state_returns_complete_info(self):
+    @pytest.mark.asyncio
+    async def test_get_state_returns_complete_info(self):
         cb = CircuitBreaker()
         info = cb.get_state()
         assert "state" in info
@@ -231,40 +237,73 @@ class TestCircuitBreaker:
 
 @pytest.mark.unit
 class TestCallWithRetry:
-    """Test the functional wrapper call_with_retry."""
+    """Test the functional wrapper call_with_retry (async)."""
 
-    def test_successful_request_first_attempt(self):
+    @pytest.mark.asyncio
+    async def test_successful_request_first_attempt(self):
         mock_resp = Mock()
         mock_resp.json.return_value = {"ok": True}
         mock_resp.raise_for_status.return_value = None
-        with patch("requests.post", return_value=mock_resp) as post:
-            res = call_with_retry("http://localhost", "method", {"a": 1})
-        post.assert_called_once()
+
+        async def mock_post(*args, **kwargs):
+            return mock_resp
+
+        with patch("httpx.AsyncClient.post", side_effect=mock_post):
+            res = await call_with_retry("http://localhost", "method", {"a": 1})
         assert res == {"ok": True}
 
-    def test_retry_on_timeout(self):
+    @pytest.mark.asyncio
+    async def test_retry_on_timeout(self):
+        import httpx
+
         mock_resp = Mock()
         mock_resp.json.return_value = {"ok": True}
         mock_resp.raise_for_status.return_value = None
-        with patch("requests.post", side_effect=[requests.Timeout, mock_resp]) as post:
-            res = call_with_retry("http://localhost", "method", {"a": 1})
-        assert res == {"ok": True}
-        assert post.call_count == 2
 
-    def test_retry_on_connection_error(self):
+        call_count = {"count": 0}
+
+        async def mock_post(*args, **kwargs):
+            call_count["count"] += 1
+            if call_count["count"] == 1:
+                raise httpx.TimeoutException("Timeout")
+            return mock_resp
+
+        with patch("httpx.AsyncClient.post", side_effect=mock_post):
+            res = await call_with_retry("http://localhost", "method", {"a": 1})
+        assert res == {"ok": True}
+        assert call_count["count"] == 2
+
+    @pytest.mark.asyncio
+    async def test_retry_on_connection_error(self):
+        import httpx
+
         mock_resp = Mock()
         mock_resp.json.return_value = {"ok": True}
         mock_resp.raise_for_status.return_value = None
-        with patch("requests.post", side_effect=[requests.ConnectionError, mock_resp]) as post:
-            res = call_with_retry("http://localhost", "method", {"a": 1})
-        assert res == {"ok": True}
-        assert post.call_count == 2
 
-    def test_max_retries_returns_error_dict(self):
+        call_count = {"count": 0}
+
+        async def mock_post(*args, **kwargs):
+            call_count["count"] += 1
+            if call_count["count"] == 1:
+                raise httpx.ConnectError("Connection failed")
+            return mock_resp
+
+        with patch("httpx.AsyncClient.post", side_effect=mock_post):
+            res = await call_with_retry("http://localhost", "method", {"a": 1})
+        assert res == {"ok": True}
+        assert call_count["count"] == 2
+
+    @pytest.mark.asyncio
+    async def test_max_retries_returns_error_dict(self):
         """Test that exhausting retries returns a structured error dict."""
-        with patch("requests.post", side_effect=requests.ConnectionError("fail")) as post:
-            res = call_with_retry("http://localhost", "method", {"a": 1})
-        assert post.call_count == RetryConfig.MAX_RETRIES
+        import httpx
+
+        async def mock_post(*args, **kwargs):
+            raise httpx.ConnectError("Connection failed")
+
+        with patch("httpx.AsyncClient.post", side_effect=mock_post):
+            res = await call_with_retry("http://localhost", "method", {"a": 1})
         assert res["error"]["error_code"] == "E015"
 
     def test_circuit_breaker_integration(self):

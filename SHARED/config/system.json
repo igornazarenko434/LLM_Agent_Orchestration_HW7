@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "system_id": "league_system_prod",
   "protocol_version": "league.v2",
-  "last_updated": "2025-01-15T00:00:00Z",
+  "last_updated": "2025-12-20T00:00:00Z",
   "timeouts": {
     "registration_sec": 10,
     "game_join_ack_sec": 5,
@@ -44,5 +44,29 @@
     "format": "json",
     "max_file_size_mb": 100,
     "backup_count": 5
+  },
+  "data_retention": {
+    "enabled": true,
+    "logs_retention_days": 30,
+    "match_data_retention_days": 365,
+    "player_history_retention_days": 365,
+    "rounds_retention_days": 365,
+    "standings_retention": "permanent",
+    "cleanup_schedule_cron": "0 2 * * *",
+    "archive_enabled": true,
+    "archive_path": "SHARED/archive/",
+    "archive_compression": "gzip",
+    "archive_retention_days": {
+      "logs": 180,
+      "matches": 1825,
+      "player_history": 1825,
+      "rounds": 1825
+    },
+    "alerts": {
+      "enabled": true,
+      "disk_usage_warning_percent": 80,
+      "disk_usage_critical_percent": 90,
+      "cleanup_failure_threshold": 3
+    }
   }
 }
