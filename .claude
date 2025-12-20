@@ -1,1027 +1,414 @@
-# .claude - Even/Odd League Multi-Agent System
-# Project Context & Session State for Claude Code
-# Version: 1.0.0
-# Last Updated: 2025-12-15
+# Even/Odd League - Project Context
 
-================================================================================
-SECTION 1: PROJECT OVERVIEW
-================================================================================
+**Last Updated:** 2025-12-20
+**Project Status:** 45% Complete (33/74 missions)
+**Current Phase:** Foundation Complete → Agent Implementation Phase
 
-PROJECT NAME: Even/Odd League Multi-Agent System
+---
 
-PROJECT TYPE: HYBRID (Backend API + CLI + Multi-Agent Orchestration)
+## Quick Status Overview
 
-VISION:
-Production-ready multi-agent orchestration system demonstrating AI agent
-coordination via Model Context Protocol (MCP). Implements a competitive
-gaming league where autonomous agents (players) compete in Even/Odd games,
-orchestrated by referee agents and managed by a centralized league manager.
+**✅ WORKING & TESTED:**
+- SDK Infrastructure (protocol, config, logging, retry, repositories, cleanup)
+- Player Agent P01 (MCP server, 3 tools, registration)
+- Data Retention System (automated cleanup, archival, manual scripts)
+- Quality Infrastructure (pre-commit, CI/CD, 209 tests @ 85.47% coverage)
+- Configuration Layer (system, agents, leagues, games)
 
-TARGET GRADE: 90-100
+**🚧 IN PROGRESS:**
+- None currently
 
-CURRENT STATUS:
-- Phase: Initial kickoff
-- Missions Completed: 0 / 47
-- Quality Gates Passed: 0 / 5
-- Test Coverage: 0%
-- Overall Progress: 0%
+**☐ NEXT PRIORITIES:**
+1. Referee Agent (M7.5-M7.8) - Match conductor, timeout enforcement, game logic
+2. League Manager (M7.9-M7.14) - Registration, scheduling, standings
+3. Integration Tests (M4.2) - Multi-agent workflows
 
-KEY FEATURES:
-1. Multi-agent coordination via JSON-RPC 2.0 over HTTP
-2. MCP protocol (league.v2) for tool calling and message exchange
-3. Three agent types: League Manager, Referee, Player
-4. Round-robin tournament scheduling
-5. Real-time standings calculation and broadcasting
-6. Comprehensive error handling (18 error codes)
-7. Structured JSONL logging for all agents
-8. Protocol compliance testing (18 message types)
-9. Load testing capability (50 concurrent matches)
-10. Production-ready with ≥85% test coverage
+---
 
-AGENT ARCHITECTURE:
-- 1x League Manager (Port 8000) - Orchestrator
-  * Manages player/referee registration
-  * Generates round-robin schedules
-  * Calculates and broadcasts standings
-  * Announces rounds and league completion
+## Architecture Overview
 
-- 2x Referee Agents (Ports 8001-8002) - Match Conductors
-  * Conduct matches: invitation → choices → result
-  * Enforce timeouts (5s join, 30s choice)
-  * Implement Even/Odd game logic
-  * Report results to League Manager
-
-- 4x Player Agents (Ports 8101-8104) - Game Participants
-  * Register with League Manager
-  * Accept game invitations
-  * Make parity choices (even/odd)
-  * Receive match results and standings updates
-
-PROTOCOL: league.v2 (JSON-RPC 2.0 over HTTP)
-- 18 message types
-- 18 error codes
-- 6 mandatory envelope fields per message
-- Auth token-based security
-
-GAME RULES (Even/Odd):
-- Each player chooses "even" or "odd"
-- Referee draws random number (1-10)
-- Player whose choice matches parity wins
-- Both same parity = Draw
-- Scoring: Win=3pts, Draw=1pt, Loss=0pts
-
-TOURNAMENT FORMAT:
-- Round-robin (all players face each other once)
-- For n players: n*(n-1)/2 matches
-- Example: 4 players = 6 matches in 3 rounds
-- Champion = highest points (tiebreaker: most wins)
-
-================================================================================
-SECTION 2: ARCHITECTURE & TECH STACK
-================================================================================
-
-TECHNOLOGY STACK:
-- Language: Python 3.11+ (minimum 3.9)
-- Web Framework: FastAPI (≥0.100)
-- ASGI Server: Uvicorn
-- Data Validation: Pydantic (≥2.0)
-- HTTP Client: requests library
-- Testing: pytest with pytest-cov (≥85% coverage target)
-- Code Quality: flake8, mypy (strict mode)
-- Logging: Structured JSON Lines (JSONL) format
-- Configuration: JSON files with Pydantic validation
-- Data Storage: File-based JSON with atomic writes
-
-PACKAGE STRUCTURE:
+### System Design
 ```
-/Users/igornazarenko/PycharmProjects/LLM_Agent_Orchestration_HW7/
+┌─────────────────────────────────────────────┐
+│         MULTI-AGENT SYSTEM                  │
+│                                             │
+│  League Manager ←→ Referees ←→ Players     │
+│      (LM01)         (2 refs)    (4 agents) │
+└─────────────────────────────────────────────┘
+         ↓ All communicate via ↓
+┌─────────────────────────────────────────────┐
+│    JSON-RPC 2.0 over HTTP (league.v2)      │
+│    Port ranges: LM=8000, Ref=8001-8002,    │
+│                 Players=8101-8104           │
+└─────────────────────────────────────────────┘
+         ↓ Built on ↓
+┌─────────────────────────────────────────────┐
+│         SHARED SDK (league_sdk)             │
+│  • Protocol (18 message types, 18 errors)  │
+│  • Config (4 layers: system, agents, etc)  │
+│  • Logging (JSONL structured)              │
+│  • Retry (exponential backoff + circuit)   │
+│  • Repositories (atomic file ops)          │
+│  • Cleanup (6 async functions)             │
+└─────────────────────────────────────────────┘
+```
+
+### Protocol
+- **Spec:** league.v2 (JSON-RPC 2.0 over HTTP)
+- **Auth:** 32-char tokens per conversation
+- **Messages:** 18 types (GAME_INVITATION, CHOOSE_PARITY_CALL, etc.)
+- **Errors:** 18 error codes (E001-E018) with retry classification
+- **Timeouts:** 5s (join), 10s (registration), 30s (parity choice)
+
+### Data Architecture (4 Layers)
+```
+SHARED/
+├── config/          # Static JSON configs (versioned)
+├── data/            # Runtime data (git-ignored)
+├── logs/            # JSONL logs, rotated (git-ignored)
+└── archive/         # Gzipped old data (git-ignored)
+```
+
+---
+
+## Key Implementation Details
+
+### Completed Components
+
+**1. SDK (SHARED/league_sdk/)**
+- protocol.py (893 lines) - All message types, validation
+- config_models.py (458 lines) - Pydantic schemas
+- config_loader.py (156 lines) - Load with env overrides
+- logger.py (403 lines) - Structured JSONL logging
+- retry.py (514 lines) - Retry + circuit breaker
+- repositories.py (485 lines) - 4 repos (standings, matches, history, rounds)
+- cleanup.py (258 lines) - 6 async cleanup functions
+- queue_processor.py (59 lines) - Thread-safe message queue
+
+**2. Player Agent (agents/player_P01/)**
+- server.py (177 lines) - MCP server, JSON-RPC dispatch
+- handlers.py (132 lines) - 3 tool handlers:
+  - GAME_INVITATION → GAME_JOIN_ACK
+  - CHOOSE_PARITY_CALL → CHOOSE_PARITY_RESPONSE
+  - MATCH_RESULT_REPORT → ack/log
+- **Status:** ✅ Working, registered, tested
+- **Ports:** P01=8101, P02=8102, P03=8103, P04=8104
+
+**3. Data Retention System**
+- doc/data_retention_policy.md (22KB) - Complete spec
+- SHARED/scripts/cleanup_data.py (273 lines) - Manual CLI tool
+- **Retention:** Logs 30d, Matches 365d, Standings permanent
+- **Strategy:** Archive → Gzip (80% reduction) → Delete
+- **Safety:** IN_PROGRESS matches never deleted, active logs preserved
+- **Schedule:** Daily 2 AM UTC (via League Manager)
+
+**4. Configuration**
+- system.json - Global settings (timeouts, retry, data_retention)
+- agents_config.json - 7 agents (LM, 2 refs, 4 players)
+- league_2025_even_odd.json - League rules, scoring
+- games_registry.json - Even/Odd game definition
+- **Env Overrides:** 15+ settings via .env
+
+**5. Quality Infrastructure**
+- **Tests:** 209 passing (85.47% coverage)
+  - test_protocol_models.py (60 tests)
+  - test_logger.py (35 tests)
+  - test_retry.py (34 tests)
+  - test_repositories.py (33 tests)
+  - test_cleanup.py (17 tests)
+  - test_config_models.py (16 tests)
+  - Player/agent tests (14 tests)
+- **CI/CD:** GitHub Actions (black, isort, flake8, mypy, pytest)
+- **Pre-commit:** 10 hooks enforced
+- **Python:** 3.10, 3.11 tested (3.10+ supported)
+
+---
+
+## Critical Design Decisions
+
+### 1. Async/Await Pattern
+- All cleanup operations use async/await (non-blocking)
+- Player handlers can be sync or async (auto-detected)
+- asyncio.wait_for() for timeout enforcement
+- **Python 3.10 Fix:** Catch both TimeoutError and asyncio.TimeoutError
+
+### 2. Atomic File Operations
+- Pattern: Write to .tmp → rename to actual file
+- Ensures data integrity even if process crashes
+- Used in all repositories (standings, matches, history, rounds)
+
+### 3. Thread Safety
+- Sequential message processing via queue_processor.py
+- No shared mutable state between agents
+- Each agent has its own logger, config, state
+- Cleanup runs in background asyncio task (safe)
+
+### 4. Configuration-Driven
+- All retention periods, timeouts, ports in system.json
+- No hardcoded values in business logic
+- Easy to adjust without code changes
+
+### 5. Structured Logging
+- Format: JSON Lines (JSONL) - one JSON object per line
+- Rotation: 100MB files, 5 backups
+- Organization: Separate dirs for agents, league, system
+- Fields: timestamp, level, agent_id, event_type, conversation_id
+
+---
+
+## Project Structure (Key Locations)
+
+```
+LLM_Agent_Orchestration_HW7/
+├── .claude                      # THIS FILE - Project context
+├── PRD_EvenOddLeague.md        # Requirements (102KB, 17 sections)
+├── Missions_EvenOddLeague.md   # 74 missions, DoD, verify commands
+├── PROGRESS_TRACKER.md         # Status, 33/74 complete (45%)
+├── README.md                   # Usage guide, architecture
+│
 ├── SHARED/
-│   ├── league_sdk/                # Shared SDK package
-│   │   ├── __init__.py
-│   │   ├── setup.py               # pip install -e support
-│   │   ├── protocol.py            # 18 message type models
-│   │   ├── config_models.py       # Pydantic config models
-│   │   ├── config_loader.py       # Configuration loading
-│   │   ├── repositories.py        # Data access layer
-│   │   ├── logger.py              # Structured JSONL logging
-│   │   ├── retry.py               # Exponential backoff
-│   │   └── utils.py               # Common utilities
-│   ├── config/
-│   │   ├── system.json            # Global system settings
-│   │   ├── agents/
-│   │   │   └── agents_config.json # 7 agent registry
-│   │   ├── leagues/
-│   │   │   └── league_2025_even_odd.json
-│   │   ├── games/
-│   │   │   └── games_registry.json
-│   │   └── defaults/
-│   │       ├── referee.json
-│   │       └── player.json
-│   ├── data/                      # Runtime data storage
-│   │   ├── leagues/
-│   │   │   └── league_2025_even_odd/
-│   │   │       ├── standings.json
-│   │   │       ├── rounds.json
-│   │   │       └── matches/
-│   │   └── players/
-│   │       └── {player_id}/
-│   │           └── history.json
-│   └── logs/                      # Structured JSONL logs
-│       └── agents/
-│           ├── league_manager.log.jsonl
-│           ├── REF01.log.jsonl
-│           ├── REF02.log.jsonl
-│           ├── P01.log.jsonl
-│           ├── P02.log.jsonl
-│           ├── P03.log.jsonl
-│           └── P04.log.jsonl
+│   ├── league_sdk/             # SDK (pip install -e)
+│   ├── config/                 # JSON configs (4 types)
+│   ├── data/                   # Runtime (git-ignored)
+│   ├── logs/                   # JSONL logs (git-ignored)
+│   ├── archive/                # Gzipped archives (git-ignored)
+│   └── scripts/
+│       └── cleanup_data.py     # Manual cleanup tool
+│
 ├── agents/
 │   ├── base/
-│   │   └── agent_base.py          # BaseAgent class
-│   ├── league_manager/
-│   │   ├── main.py
-│   │   ├── server.py              # FastAPI MCP server
-│   │   ├── registration.py        # Player/referee registration
-│   │   ├── scheduler.py           # Round-robin scheduling
-│   │   ├── standings.py           # Standings calculation
-│   │   └── orchestrator.py        # League orchestration
-│   ├── referee_REF01/
-│   │   ├── main.py
-│   │   ├── server.py              # FastAPI MCP server
-│   │   ├── match_conductor.py     # 7-step match flow
-│   │   ├── timeout_enforcer.py    # Timeout management
-│   │   └── game_logic.py          # Even/Odd logic
-│   ├── referee_REF02/             # (Same structure)
-│   ├── player_P01/
-│   │   ├── main.py
-│   │   ├── server.py              # FastAPI MCP server
-│   │   ├── tools.py               # 3 mandatory tools
-│   │   ├── registration.py        # Registration logic
-│   │   └── strategy.py            # Choice strategy
-│   ├── player_P02/                # (Same structure)
-│   ├── player_P03/                # (Same structure)
-│   └── player_P04/                # (Same structure)
-├── tests/
-│   ├── conftest.py                # Shared fixtures
-│   ├── unit/
-│   │   ├── test_sdk/              # SDK unit tests
-│   │   ├── test_player_agent/     # Player unit tests
-│   │   ├── test_referee_agent/    # Referee unit tests
-│   │   └── test_league_manager/   # Manager unit tests
-│   ├── integration/
-│   │   ├── test_player_registration.py
-│   │   ├── test_match_flow.py
-│   │   ├── test_timeout_enforcement.py
-│   │   ├── test_standings_update.py
-│   │   └── test_concurrent_matches.py
-│   ├── e2e/
-│   │   ├── test_4_player_league.py
-│   │   ├── test_standings_accuracy.py
-│   │   ├── test_graceful_shutdown.py
-│   │   └── test_network_failure_recovery.py
-│   ├── protocol_compliance/
-│   │   ├── test_message_types.py   # 18 message types
-│   │   ├── test_envelope_fields.py
-│   │   ├── test_timestamp_format.py
-│   │   ├── test_sender_format.py
-│   │   └── test_auth_token_presence.py
-│   ├── load/
-│   │   ├── test_concurrent_matches.py
-│   │   ├── test_response_times.py
-│   │   └── test_1000_player_registration.py
-│   └── fixtures/
-│       └── mock_agents.py
+│   │   └── agent_base.py       # BaseAgent class (shared)
+│   ├── player_P01/             # ✅ WORKING
+│   │   ├── server.py
+│   │   ├── handlers.py
+│   │   └── main.py
+│   ├── player_P02-P04/         # Reuse P01 implementation
+│   ├── referee_REF01/          # ☐ TODO: M7.5-M7.8
+│   ├── referee_REF02/          # ☐ TODO
+│   └── league_manager/         # ☐ TODO: M7.9-M7.14
+│
+├── tests/                      # 209 tests, 85.47% coverage
+│   ├── unit/test_sdk/
+│   ├── unit/test_agents/
+│   └── integration/
+│
 ├── doc/
-│   ├── research_notes/
-│   │   └── mcp_protocol.md
-│   ├── game_rules/
-│   │   └── even_odd.md
-│   ├── algorithms/
-│   │   └── round_robin.md
-│   ├── error_handling_strategy.md
-│   ├── architecture.md
-│   ├── configuration.md
-│   ├── api_reference.md
-│   ├── developer_guide.md
-│   └── testing_guide.md
-├── scripts/
-│   ├── start_league.sh            # Launch all agents
-│   ├── stop_league.sh             # Graceful shutdown
-│   ├── check_health.sh            # Health check endpoints
-│   ├── backup_data.sh
-│   ├── restore_data.sh
-│   ├── verify_all_evidence.py
-│   ├── create_deployment_package.py
-│   └── run_manual_validation.py
-├── requirements.txt               # Python dependencies
-├── pytest.ini                     # Pytest configuration
-├── .gitignore
-├── README.md                      # Quick start guide
-├── PRD_EvenOddLeague.md          # Product requirements
-├── Missions_EvenOddLeague.md     # 47 missions
-├── PROGRESS_TRACKER.md           # Mission tracking
-└── .claude                        # This file
-
+│   ├── data_retention_policy.md
+│   ├── game_rules/even_odd.md
+│   ├── algorithms/round_robin.md
+│   └── research_notes/mcp_protocol.md
+│
+└── .github/workflows/
+    └── test.yml                # CI/CD quality gates
 ```
 
-MCP SERVER ARCHITECTURE:
-Each agent exposes an MCP server on its designated port:
-- Endpoint: POST /mcp
-- Protocol: JSON-RPC 2.0
-- Transport: HTTP
-- Request format:
-  {
-    "jsonrpc": "2.0",
-    "method": "tool_name",
-    "params": { ... message envelope ... },
-    "id": "request_id"
-  }
-- Response format:
-  {
-    "jsonrpc": "2.0",
-    "result": { ... response data ... },
-    "id": "request_id"
-  }
-  OR
-  {
-    "jsonrpc": "2.0",
-    "error": {"code": -32000, "message": "Error description"},
-    "id": "request_id"
-  }
+---
+
+## Next Steps (Priority Order)
+
+### Immediate: Referee Agent (M7.5-M7.8) - 10.5 hours
+**Priority:** P0 (Critical for QG-2)
+**Blocks:** Integration tests, end-to-end workflows
+
+1. **M7.5:** Match Conductor (5h)
+   - Invite both players (GAME_INVITATION)
+   - Wait for acks with timeout
+   - Handle player no-shows (E007)
+
+2. **M7.6:** Timeout Enforcement (2h)
+   - Track deadlines per message type
+   - Cancel slow operations
+   - Return E001 (timeout) errors
+
+3. **M7.7:** Even/Odd Game Logic (2h)
+   - Request parity choices from players
+   - Draw random number (1-10)
+   - Determine winner: choice matches parity
+   - Handle draws (both choose same)
+
+4. **M7.8:** Registration & Setup (1.5h)
+   - Register with League Manager
+   - Receive auth token
+   - Store configuration
+   - Health check endpoint
+
+**Files to Create:**
+- agents/referee_REF01/server.py (~400 lines)
+- agents/referee_REF01/match_conductor.py (~250 lines)
+- agents/referee_REF01/game_logic.py (~150 lines)
+- agents/referee_REF01/handlers.py (~100 lines)
+- tests/unit/test_referee.py (~300 lines)
+
+### After Referee: League Manager (M7.9-M7.14) - 16 hours
+**Priority:** P0 (Critical for QG-4)
+
+1. Player registration (accept/reject)
+2. Round-robin scheduling (n*(n-1)/2 matches)
+3. Assign referees to matches
+4. Update standings after each match
+5. Track league state (REGISTRATION → IN_PROGRESS → COMPLETED)
+6. Persist rounds, standings, player roster
+
+### Then: Integration Tests (M4.2) - 4 hours
+- Multi-agent workflows
+- Full match lifecycle
+- Error recovery scenarios
+- Concurrent match handling
+
+---
+
+## Common Tasks & Commands
+
+### Development
+```bash
+# Install SDK (editable mode)
+pip install -e SHARED/league_sdk
 
-MESSAGE ENVELOPE (6 Mandatory Fields):
-All messages must include:
-1. protocol: "league.v2" (literal)
-2. message_type: One of 18 types (e.g., "GAME_INVITATION")
-3. sender: "{agent_type}:{agent_id}" (e.g., "referee:REF01")
-4. timestamp: ISO 8601 UTC format (e.g., "2025-12-15T10:30:00Z")
-5. conversation_id: UUID for message correlation
-6. auth_token: 32+ character random token (post-registration only)
-
-18 MESSAGE TYPES:
-1. REFEREE_REGISTER_REQUEST
-2. REFEREE_REGISTER_RESPONSE
-3. LEAGUE_REGISTER_REQUEST
-4. LEAGUE_REGISTER_RESPONSE
-5. GAME_INVITATION
-6. GAME_JOIN_ACK
-7. CHOOSE_PARITY_CALL
-8. CHOOSE_PARITY_RESPONSE
-9. GAME_OVER
-10. MATCH_RESULT_REPORT
-11. ROUND_ANNOUNCEMENT
-12. ROUND_COMPLETED
-13. LEAGUE_STANDINGS_UPDATE
-14. LEAGUE_COMPLETED
-15. LEAGUE_ERROR
-16. GAME_ERROR
-17. SYSTEM_SHUTDOWN
-18. HEARTBEAT
-
-18 ERROR CODES:
-E001: Timeout - Player did not respond within allowed time
-E002: Invalid message format
-E003: Missing required fields
-E004: Authentication failed
-E005: Player not registered
-E006: Referee not registered
-E007: Invalid game state
-E008: Duplicate registration
-E009: League not found
-E010: Match not found
-E011: Invalid parity choice
-E012: Network error
-E013: Internal server error
-E014: Configuration error
-E015: Database error
-E016: Resource unavailable
-E017: Unauthorized action
-E018: Rate limit exceeded
-
-================================================================================
-SECTION 3: CONFIGURATION & ENVIRONMENT
-================================================================================
-
-ENVIRONMENT VARIABLES (.env):
-Not currently used. All configuration via JSON files.
-
-CONFIGURATION FILES:
-
-1. system.json - Global system settings
-{
-  "schema_version": "1.0.0",
-  "protocol_version": "league.v2",
-  "timeouts": {
-    "move_timeout_sec": 30,
-    "generic_response_timeout_sec": 10,
-    "game_join_ack_timeout_sec": 5
-  },
-  "retry_policy": {
-    "max_retries": 3,
-    "backoff_strategy": "exponential"
-  },
-  "network": {
-    "base_host": "localhost",
-    "manager_port": 8000,
-    "referee_port_range": [8001, 8002],
-    "player_port_range": [8101, 8104]
-  }
-}
-
-2. agents_config.json - Agent registry
-{
-  "league_manager": {
-    "agent_id": "MANAGER",
-    "endpoint": "http://localhost:8000/mcp",
-    "active": true
-  },
-  "referees": [
-    {
-      "agent_id": "REF01",
-      "endpoint": "http://localhost:8001/mcp",
-      "game_types": ["even_odd"],
-      "max_concurrent_matches": 5,
-      "active": true
-    },
-    {
-      "agent_id": "REF02",
-      "endpoint": "http://localhost:8002/mcp",
-      "game_types": ["even_odd"],
-      "max_concurrent_matches": 5,
-      "active": true
-    }
-  ],
-  "players": [
-    {"agent_id": "P01", "endpoint": "http://localhost:8101/mcp", ...},
-    {"agent_id": "P02", "endpoint": "http://localhost:8102/mcp", ...},
-    {"agent_id": "P03", "endpoint": "http://localhost:8103/mcp", ...},
-    {"agent_id": "P04", "endpoint": "http://localhost:8104/mcp", ...}
-  ]
-}
-
-3. league_2025_even_odd.json - League settings
-{
-  "league_id": "league_2025_even_odd",
-  "game_type": "even_odd",
-  "scoring": {
-    "win_points": 3,
-    "draw_points": 1,
-    "loss_points": 0,
-    "technical_loss_points": 0
-  },
-  "participants": {
-    "min_players": 2,
-    "max_players": 10000
-  },
-  "status": "ACTIVE"
-}
-
-4. games_registry.json - Game type definitions
-{
-  "games": [
-    {
-      "game_type": "even_odd",
-      "display_name": "Even/Odd Game",
-      "rules_module": "games.even_odd",
-      "max_round_time_sec": 60,
-      "supports_draw": true
-    }
-  ]
-}
-
-PORT ALLOCATIONS:
-- 8000: League Manager MCP server
-- 8001: Referee REF01 MCP server
-- 8002: Referee REF02 MCP server
-- 8101: Player P01 MCP server
-- 8102: Player P02 MCP server
-- 8103: Player P03 MCP server
-- 8104: Player P04 MCP server
-
-================================================================================
-SECTION 4: INSTALLATION & USAGE
-================================================================================
-
-PREREQUISITES:
-- Python 3.11+ (minimum 3.9)
-- pip package manager
-- 8GB RAM minimum
-- Ports 8000-8002, 8101-8104 available
-
-INSTALLATION STEPS:
-
-1. Clone/navigate to project directory:
-   cd /Users/igornazarenko/PycharmProjects/LLM_Agent_Orchestration_HW7
-
-2. Create virtual environment:
-   python3 -m venv venv
-   source venv/bin/activate
-
-3. Install dependencies:
-   pip install -r requirements.txt
-
-4. Install shared SDK in editable mode:
-   cd SHARED/league_sdk
-   pip install -e .
-   cd ../..
-
-5. Verify installation:
-   python -c "import league_sdk; print('SDK OK')"
-   pytest --version
-
-STARTING THE LEAGUE:
-
-Option 1: Using operational script (when implemented)
-   ./scripts/start_league.sh
-
-Option 2: Manual startup (in separate terminals)
-   # Terminal 1: League Manager
-   python agents/league_manager/main.py --league-id=league_2025_even_odd
-
-   # Terminal 2-3: Referees
-   python agents/referee_REF01/main.py --referee-id=REF01
-   python agents/referee_REF02/main.py --referee-id=REF02
-
-   # Terminal 4-7: Players
-   python agents/player_P01/main.py --player-id=P01
-   python agents/player_P02/main.py --player-id=P02
-   python agents/player_P03/main.py --player-id=P03
-   python agents/player_P04/main.py --player-id=P04
-
-STOPPING THE LEAGUE:
-   ./scripts/stop_league.sh
-   OR send SIGTERM to all agent processes
-
-RUNNING TESTS:
-   # All tests
-   pytest tests/ -v
-
-   # Unit tests only
-   pytest tests/unit/ -v
-
-   # Integration tests
-   pytest tests/integration/ -v
-
-   # E2E tests
-   pytest tests/e2e/ -v
-
-   # With coverage
-   pytest tests/ --cov=agents --cov=SHARED/league_sdk --cov-report=html
-
-   # Protocol compliance
-   pytest tests/protocol_compliance/ -v
-
-   # Load tests
-   pytest tests/load/test_concurrent_matches.py --concurrent=50
-
-CHECKING CODE QUALITY:
-   flake8 agents/ SHARED/league_sdk/
-   mypy agents/ SHARED/league_sdk/ --strict
-
-VIEWING LOGS:
-   # All logs are in JSONL format
-   cat SHARED/logs/agents/P01.log.jsonl | jq .
-   cat SHARED/logs/agents/league_manager.log.jsonl | jq .
-
-================================================================================
-SECTION 5: MISSION PROGRESS & STATUS
-================================================================================
-
-OVERALL PROGRESS:
-- Total Missions: 47
-- Completed: 0
-- In Progress: 0
-- Not Started: 47
-- Percentage: 0%
-
-QUALITY GATES:
-- QG-1 (Foundation): Not Passed
-- QG-2 (Player Agent): Not Passed
-- QG-3 (Match Execution): Not Passed
-- QG-4 (End-to-End): Not Passed
-- QG-5 (Production Readiness): Not Passed
-
-COMPLETED MISSIONS:
-(None yet)
-
-IN PROGRESS MISSIONS:
-(None yet)
-
-NEXT MISSIONS TO START:
-1. M0.1 - Environment Setup (1h) - P0
-2. M0.2 - Project Structure Creation (30m) - P0
-3. M0.3 - Dependency Installation (30m) - P0
-
-CRITICAL PATH STATUS:
-M0.1 → M0.2 → M0.3 → M2.0 → M2.1 → QG-1 → M7.1 → M7.3 → QG-2 →
-M7.5 → QG-3 → M7.9 → M7.10 → M7.11 → M7.12 → M7.13 → M7.14 →
-QG-4 → M8.x → M9.0 → QG-5 → M9.1 → M9.2 → M9.3
-
-Current Position: M0.1 (Start of critical path)
-Estimated Time to Completion: 59 hours on critical path
-
-BLOCKED MISSIONS:
-(None - M0.1 has no dependencies)
-
-AT-RISK MISSIONS:
-(None identified yet)
-
-PHASE COMPLETION STATUS:
-- M0 (Kickoff): 0 / 3 (0%)
-- M1 (PRD): 0 / 2 (0%)
-- M2 (Setup): 0 / 6 (0%)
-- M3 (Config): 0 / 5 (0%)
-- M4 (Testing): 0 / 6 (0%)
-- M5 (Research): 0 / 4 (0%)
-- M6 (UX): 0 / 4 (0%)
-- M7 (Agents): 0 / 14 (0%)
-- M8 (Docs): 0 / 5 (0%)
-- M9 (Submission): 0 / 3 (0%)
-
-================================================================================
-SECTION 6: KEY DEPENDENCIES & INTEGRATION POINTS
-================================================================================
-
-EXTERNAL DEPENDENCIES (requirements.txt):
-fastapi>=0.100.0
-uvicorn[standard]>=0.23.0
-pydantic>=2.0.0
-requests>=2.31.0
-pytest>=7.4.0
-pytest-cov>=4.1.0
-pytest-timeout>=2.1.0
-pytest-asyncio>=0.21.0
-flake8>=6.0.0
-mypy>=1.4.0
-pydocstyle>=6.3.0
-jq>=1.6  # For log validation (system package)
-
-INTERNAL DEPENDENCIES:
-- league_sdk package (SHARED/league_sdk/)
-  * Must be installed in editable mode: pip install -e SHARED/league_sdk
-  * All agents depend on this package
-  * Protocol models shared across all agents
-  * Configuration loading shared across all agents
-  * Logging utilities shared across all agents
-
-AGENT INTEGRATION POINTS:
-
-1. Player → League Manager
-   - Tool: register_player (on League Manager)
-   - Message: LEAGUE_REGISTER_REQUEST
-   - Response: LEAGUE_REGISTER_RESPONSE (with player_id, auth_token)
-
-2. Referee → League Manager
-   - Tool: register_referee (on League Manager)
-   - Message: REFEREE_REGISTER_REQUEST
-   - Response: REFEREE_REGISTER_RESPONSE (with referee_id, auth_token)
-
-3. Referee → Player (Match Invitation)
-   - Tool: handle_game_invitation (on Player)
-   - Message: GAME_INVITATION
-   - Response: GAME_JOIN_ACK
-   - Timeout: 5 seconds
-
-4. Referee → Player (Choice Request)
-   - Tool: choose_parity (on Player)
-   - Message: CHOOSE_PARITY_CALL
-   - Response: CHOOSE_PARITY_RESPONSE (with choice: "even" or "odd")
-   - Timeout: 30 seconds
-
-5. Referee → Player (Result Notification)
-   - Tool: notify_match_result (on Player)
-   - Message: GAME_OVER
-   - Response: Acknowledgment
-
-6. Referee → League Manager (Result Reporting)
-   - Tool: report_match_result (on League Manager)
-   - Message: MATCH_RESULT_REPORT
-   - Response: Acknowledgment
-
-7. League Manager → All Players (Standings Broadcast)
-   - Tool: (No tool, push notification)
-   - Message: LEAGUE_STANDINGS_UPDATE
-   - Trigger: After each match result received
-
-8. League Manager → All Players (Round Announcement)
-   - Tool: (No tool, push notification)
-   - Message: ROUND_ANNOUNCEMENT
-   - Trigger: Before each round starts
-
-9. League Manager → All Players (League Completion)
-   - Tool: (No tool, push notification)
-   - Message: LEAGUE_COMPLETED
-   - Trigger: All matches finished
-
-DATA FLOW:
-1. Config files → Config loader → Agent initialization
-2. Player registration → League Manager → player_id + auth_token storage
-3. Referee registration → League Manager → referee_id + auth_token storage
-4. League start → Scheduler → rounds.json
-5. Match assignment → Referee → Match execution
-6. Match result → League Manager → standings.json update
-7. Standings update → Broadcast to all players
-8. All operations → JSONL logs
-
-FILE DEPENDENCIES:
-- SHARED/config/system.json (required for all agents)
-- SHARED/config/agents/agents_config.json (required for agent discovery)
-- SHARED/config/leagues/league_2025_even_odd.json (required for League Manager)
-- SHARED/config/games/games_registry.json (required for Referee)
-
-================================================================================
-SECTION 7: KNOWN ISSUES & DEVIATIONS
-================================================================================
-
-KNOWN ISSUES:
-(None - project just starting)
-
-DEVIATIONS FROM PRD:
-(None - PRD not yet created)
-
-WORKAROUNDS IMPLEMENTED:
-(None yet)
-
-TECHNICAL DEBT:
-(None yet)
-
-FUTURE ENHANCEMENTS:
-(To be documented as project progresses)
-
-NOTES FOR NEXT SESSION:
-- Project is at initial kickoff stage
-- First 3 missions (M0.1-M0.3) should be completed first
-- Focus on establishing foundation before agent implementation
-- Pay attention to Quality Gates - cannot proceed without passing
-
-================================================================================
-SECTION 8: GRADING CHECKLIST (0/100 CURRENT SCORE)
-================================================================================
-
-RUBRIC BREAKDOWN (Target: 90-100):
-
-[0/25] 1. PROJECT DOCUMENTATION
-  [ ] PRD document complete (17+ sections)
-  [ ] Missions document complete (47 missions) ✓ (Already created)
-  [ ] Evidence matrix (35+ entries)
-  [ ] Installation matrix (10+ steps)
-  [ ] KPIs with verification (12+)
-  [ ] Functional requirements (16+)
-  [ ] Non-functional requirements (15+)
-  [ ] Architecture Decision Records (12+)
-
-[0/20] 2. RESEARCH & ANALYSIS
-  [ ] MCP protocol research documented
-  [ ] Even/Odd game rules documented
-  [ ] Round-robin algorithm documented
-  [ ] Error handling strategy documented
-  [ ] Protocol design documented
-  [ ] Integration patterns documented
-
-[0/15] 3. README & DOCUMENTATION
-  [ ] README.md with quick start guide
-  [ ] Architecture documentation (diagrams)
-  [ ] Configuration guide
-  [ ] Developer guide
-  [ ] Testing guide
-  [ ] API reference documentation
-
-[0/12] 4. STRUCTURE & CODE QUALITY
-  [ ] Directory structure correct (SHARED, agents, tests, doc, scripts)
-  [ ] Shared SDK package structure
-  [ ] Code quality: flake8 passes with 0 errors
-  [ ] Code quality: mypy passes in strict mode
-  [ ] No TODO/FIXME in production code
-  [ ] Docstrings for all public APIs (Google/NumPy style)
-  [ ] Agent base class implemented
-  [ ] All 7 agents implemented
-
-[0/10] 5. TESTING & QA
-  [ ] Test coverage ≥85% overall
-  [ ] Unit tests pass (100+ tests expected)
-  [ ] Integration tests pass (30+ tests expected)
-  [ ] E2E tests pass (5+ tests expected)
-  [ ] Protocol compliance tests pass (18/18 message types)
-  [ ] Load tests pass (50 concurrent matches)
-  [ ] All error codes tested (18/18)
-
-[0/8] 6. CONFIGURATION & SECURITY
-  [ ] system.json created and validated
-  [ ] agents_config.json created (7 agents defined)
-  [ ] league config created
-  [ ] game registry created
-  [ ] Auth tokens implemented (32+ character random)
-  [ ] Configuration validation working
-  [ ] Secure token generation
-
-[0/10] 7. ARCHITECTURE & DESIGN + UI/UX & POLISH
-  [ ] MCP server endpoints working (7 agents)
-  [ ] JSON-RPC 2.0 protocol implemented correctly
-  [ ] CLI argument parsing for all agents
-  [ ] Operational scripts (start/stop/health/backup/restore)
-  [ ] Graceful shutdown handling
-  [ ] Professional logging output
-  [ ] Error messages are clear and actionable
-
-EVIDENCE COLLECTION STATUS:
-- Evidence items verified: 0 / 35+
-- Evidence report generated: No
-- Screenshots/outputs captured: No
-
-QUALITY METRICS:
-- Lines of code: 0
-- Test cases: 0
-- Code coverage: 0%
-- Documentation pages: 1 (Missions only)
-- Configuration files: 0
-- Agents implemented: 0 / 7
-
-SUBMISSION READINESS:
-- [ ] All missions completed (0/47)
-- [ ] All quality gates passed (0/5)
-- [ ] PRD complete
-- [ ] README complete
-- [ ] Evidence report generated
-- [ ] Deployment package created
-- [ ] Final testing passed
-
-================================================================================
-SECTION 9: QUICK REFERENCE COMMANDS
-================================================================================
-
-ENVIRONMENT SETUP:
-# Create venv
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install SDK
-cd SHARED/league_sdk && pip install -e . && cd ../..
-
-# Verify installation
-python -c "import league_sdk; print('SDK OK')"
-
-STARTING AGENTS:
-# League Manager
-python agents/league_manager/main.py --league-id=league_2025_even_odd --port=8000
-
-# Referee
-python agents/referee_REF01/main.py --referee-id=REF01 --port=8001
-
-# Player
-python agents/player_P01/main.py --player-id=P01 --port=8101
-
-TESTING:
 # Run all tests
-pytest tests/ -v
+PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ -v
 
 # Run with coverage
-pytest tests/ --cov=agents --cov=SHARED/league_sdk --cov-report=html
+PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ \
+  --cov=SHARED/league_sdk --cov=agents --cov-fail-under=85
 
-# Run specific test category
-pytest tests/unit/ -v
-pytest tests/integration/ -v
-pytest tests/e2e/ -v
-pytest tests/protocol_compliance/ -v
+# Run specific test file
+PYTHONPATH=SHARED:$PYTHONPATH pytest tests/unit/test_sdk/test_cleanup.py -v
 
-# Run load tests
-pytest tests/load/test_concurrent_matches.py --concurrent=50 -v
+# Start player agent
+cd agents/player_P01
+PYTHONPATH=../../SHARED:$PYTHONPATH python main.py
+```
 
-CODE QUALITY:
-# Flake8
-flake8 agents/ SHARED/league_sdk/ --count
+### Quality Checks
+```bash
+# Format code
+black agents SHARED tests
 
-# MyPy
-mypy agents/ SHARED/league_sdk/ --strict
+# Sort imports
+isort agents SHARED tests
 
-# Docstring style
-pydocstyle agents/ SHARED/league_sdk/ --count
+# Lint
+flake8 agents SHARED tests
 
-LOG ANALYSIS:
-# View logs (requires jq)
-cat SHARED/logs/agents/P01.log.jsonl | jq .
-cat SHARED/logs/agents/league_manager.log.jsonl | jq .
+# Type check
+mypy agents SHARED --config-file=mypy.ini
 
-# Filter logs by level
-cat SHARED/logs/agents/P01.log.jsonl | jq 'select(.level=="ERROR")'
+# All pre-commit hooks
+pre-commit run --all-files
+```
 
-# Filter logs by event type
-cat SHARED/logs/agents/P01.log.jsonl | jq 'select(.event_type=="MATCH_RESULT")'
+### Data Retention
+```bash
+# Manual cleanup (dry-run)
+python SHARED/scripts/cleanup_data.py --dry-run
 
-HEALTH CHECKS:
-# Check if agent is running
-curl -X POST http://localhost:8101/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"ping","params":{},"id":1}'
+# Execute cleanup
+python SHARED/scripts/cleanup_data.py --execute
 
-# Check all agents
-./scripts/check_health.sh
+# Cleanup specific type
+python SHARED/scripts/cleanup_data.py --execute --type logs
+```
 
-DATA MANAGEMENT:
-# Backup data and logs
-./scripts/backup_data.sh
+### Git Workflow
+```bash
+# Commit with conventional commits
+git commit -m "feat: description"    # New feature
+git commit -m "fix: description"     # Bug fix
+git commit -m "docs: description"    # Documentation
 
-# Restore from backup
-./scripts/restore_data.sh
+# Push (triggers CI/CD)
+git push origin main
 
-# Clear all data (fresh start)
-rm -rf SHARED/data/leagues/*
-rm -rf SHARED/data/players/*
-rm -rf SHARED/logs/agents/*
+# View recent workflow runs
+gh run list --limit 5
+```
 
-MISSION TRACKING:
-# Check mission progress
-python scripts/check_mission_progress.py --status
+---
 
-# Verify specific mission
-python scripts/verify_mission.py --mission=M7.3
+## Mission Tracking
 
-# Generate progress report
-python scripts/generate_progress_report.py --output=progress.html
+### Completed Missions (33/74 = 45%)
 
-DEPLOYMENT:
-# Create deployment package
-python scripts/create_deployment_package.py --output=LLM_Agent_Orchestration_HW7.tar.gz
+**M0: Kickoff (3/3)** ✅
+**M1: Requirements (5/5)** ✅
+**M2: Setup & Architecture (6/7)** ✅
+**M3: Configuration (7/7)** ✅
+**M4: Testing (2/6)** 🚧
+**M5: Research (4/4)** ✅
+**M6: UX/DevEx (4/9)** 🚧
+**M7: Agent Implementation (2/18)** 🚧
+**M8: Documentation (0/9)** ☐
+**M9: Submission (0/4)** ☐
 
-# Verify deployment package
-tar -tzf LLM_Agent_Orchestration_HW7.tar.gz | head -20
+---
 
-# Test deployment package
-mkdir test_extract && tar -xzf LLM_Agent_Orchestration_HW7.tar.gz -C test_extract
+## Quality Metrics
 
-QUALITY GATE VERIFICATION:
-# QG-1: Foundation Quality Gate
-pytest tests/unit/test_sdk/ -v && \
-flake8 SHARED/league_sdk/ && \
-python -c "from league_sdk import protocol; print('SDK OK')"
+| Metric | Current | Target | Status |
+|--------|---------|--------|--------|
+| Missions Complete | 33/74 | 74 | 45% |
+| Test Coverage | 85.47% | ≥85% | ✅ |
+| Tests Passing | 209/209 | 100% | ✅ |
+| Protocol Messages | 18/18 | 18 | ✅ |
+| Error Codes | 18/18 | 18 | ✅ |
+| Agents Complete | 1/7 | 7 | 14% |
+| Python Support | 3.10, 3.11 | 3.10+ | ✅ |
 
-# QG-2: Player Agent Quality Gate
-pytest tests/unit/test_player_agent/ --cov=agents/player_P01 --cov-report=term && \
-pytest tests/integration/test_player_registration.py -v
+---
 
-# QG-3: Match Execution Quality Gate
-pytest tests/integration/test_match_flow.py -v && \
-pytest tests/integration/test_timeout_enforcement.py -v
+## Important Conventions
 
-# QG-4: End-to-End Quality Gate
-pytest tests/e2e/test_4_player_league.py -v && \
-python tests/e2e/verify_standings_accuracy.py
+### Code Style
+- **Formatting:** Black (104 char line length)
+- **Imports:** isort (black profile)
+- **Type Hints:** Required for public APIs
+- **Docstrings:** Required for modules, classes, public functions
 
-# QG-5: Production Readiness Quality Gate
-pytest tests/ --cov=agents --cov=SHARED/league_sdk --cov-report=term | grep "TOTAL.*[8-9][5-9]%" && \
-pytest tests/protocol_compliance/ -v && \
-flake8 agents/ SHARED/league_sdk/ && \
-mypy agents/ SHARED/league_sdk/ --strict
+### Commit Messages
+- **Format:** Conventional Commits (feat:, fix:, docs:, etc.)
 
-TROUBLESHOOTING:
-# Port already in use
-lsof -ti:8000 | xargs kill -9
+### Testing
+- **Coverage:** Must maintain ≥85%
+- **Markers:** @pytest.mark.unit, @pytest.mark.integration
+- **Naming:** test_<function>_<scenario>_<expected>
 
-# Check if all ports are free
-netstat -an | grep -E "800[0-2]|810[1-4]"
+---
 
-# Validate JSON config files
-jq . SHARED/config/system.json
-jq . SHARED/config/agents/agents_config.json
+## Quick Reference
 
-# Check Python version
-python3 --version
+### Port Assignments
+- League Manager: 8000
+- Referee 01: 8001
+- Referee 02: 8002
+- Players: 8101-8104
 
-# List installed packages
-pip list | grep -E "fastapi|uvicorn|pydantic|pytest"
+### Timeout Values
+- Registration: 10s
+- Game join ack: 5s
+- Parity choice: 30s
 
-================================================================================
-SECTION 10: LLM PROMPT CONTEXT FOR RESUMPTION
-================================================================================
+### Retention Periods
+- Logs: 30 days
+- Matches: 365 days
+- Player history: 365 days
+- Standings: Permanent
 
-CONTEXT FOR NEXT SESSION:
+### Error Codes (Retryable)
+E001, E005, E006, E009, E014, E015, E016
 
-You are resuming work on the Even/Odd League Multi-Agent System project.
+---
 
-PROJECT STATUS:
-- This is a NEW project at the initial kickoff stage
-- 0 out of 47 missions have been completed
-- No code has been written yet
-- Missions document has been created (Missions_EvenOddLeague.md)
-- Progress tracker has been created (PROGRESS_TRACKER.md)
-- This .claude file has been created
+## Session Start Checklist
 
-IMMEDIATE NEXT STEPS:
-1. Start with M0.1 (Environment Setup)
-   - Verify Python 3.9+ installed
-   - Create virtual environment
-   - Verify port availability (8000-8002, 8101-8104)
+1. **Context:** Read this .claude file
+2. **Status:** 45% complete, next: Referee Agent (M7.5-M7.8)
+3. **Environment:** source venv/bin/activate
+4. **Tests:** pytest tests/ --co -q (should show 209 items)
+5. **Git:** git status (should be clean)
+6. **CI/CD:** gh run list --limit 1 (should show passing)
 
-2. Then proceed to M0.2 (Project Structure Creation)
-   - Create SHARED/ directory with subdirectories
-   - Create agents/ directory for 7 agents
-   - Create tests/ directory structure
-   - Create doc/ and scripts/ directories
-   - Create .gitignore
+---
 
-3. Then M0.3 (Dependency Installation)
-   - Create requirements.txt
-   - Install all packages
-   - Verify imports work
-
-WORKING DIRECTORY:
-/Users/igornazarenko/PycharmProjects/LLM_Agent_Orchestration_HW7
-
-KEY FILES TO REFERENCE:
-- Missions_EvenOddLeague.md - Complete mission definitions (47 missions)
-- PROGRESS_TRACKER.md - Mission tracking and progress
-- .claude - This file (project context)
-
-IMPORTANT REMINDERS:
-1. Follow missions in SEQUENTIAL order respecting dependencies
-2. Must pass Quality Gates before proceeding to dependent missions
-3. Run self-verify command after EACH mission completion
-4. Document evidence for grading
-5. Update PROGRESS_TRACKER.md after each mission
-6. Target grade is 90-100 - aim for excellence
-7. Test coverage must be ≥85%
-8. All 18 message types must be implemented
-9. All 18 error codes must be tested
-10. Protocol compliance is mandatory (league.v2)
-
-CRITICAL PATH AWARENESS:
-You are currently at the START of the critical path:
-M0.1 → M0.2 → M0.3 → M2.0 → M2.1 → QG-1 → ...
-
-The critical path has an estimated 59 hours of work.
-Stay focused on critical path missions (P0 priority) first.
-
-QUALITY STANDARDS:
-- Code must pass flake8 with 0 errors
-- Code must pass mypy in strict mode
-- All public functions must have docstrings (Google/NumPy style)
-- No TODO or FIXME in production code
-- All tests must pass
-- Test coverage ≥85%
-
-TESTING PHILOSOPHY:
-- Unit tests for all SDK modules and agent components
-- Integration tests for agent interactions
-- E2E tests for full league flow
-- Protocol compliance tests for all 18 message types
-- Load tests for scalability (50 concurrent matches)
-
-AGENT IMPLEMENTATION ORDER:
-1. Shared SDK (M2.x) - Foundation
-2. Player Agent (M7.2-M7.4) - Simplest agent
-3. Referee Agent (M7.5-M7.8) - Match conductor
-4. League Manager (M7.9-M7.13) - Orchestrator
-5. Full Integration (M7.14) - Bring it all together
-
-DOCUMENTATION ORDER:
-1. Research & Protocol Design (M5.x) - Early to inform implementation
-2. Code Documentation (M8.1) - As code is written
-3. Architecture & Guides (M8.2-M8.5) - Near completion
-
-IF RESUMING AFTER PARTIAL PROGRESS:
-1. Check PROGRESS_TRACKER.md for current status
-2. Review last completed mission's evidence
-3. Verify last mission's self-verify command passes
-4. Continue with next mission in dependency order
-
-IF BLOCKED OR STUCK:
-1. Review mission's Definition of Done
-2. Check Dependencies section - ensure all prerequisite missions complete
-3. Run self-verify command to see specific failures
-4. Review Expected Evidence section
-5. Consult relevant doc/ files for guidance
-
-COMMUNICATION STYLE:
-- Be precise and technical
-- Reference mission IDs (e.g., M7.3)
-- Quote exact error messages
-- Provide self-verify commands
-- Document all changes
-
-SUCCESS CRITERIA FOR THIS PROJECT:
-✓ All 47 missions completed
-✓ All 5 Quality Gates passed
-✓ Test coverage ≥85%
-✓ All protocol compliance tests pass (18/18)
-✓ All error codes tested (18/18)
-✓ Code quality checks pass (flake8, mypy)
-✓ Documentation complete (8 documents)
-✓ 4-player league runs successfully end-to-end
-✓ Load test passes (50 concurrent matches)
-✓ Final grade: 90-100
-
-REMEMBER:
-This is a production-ready system. Code quality, testing, and documentation
-are not optional extras - they are core requirements. Every mission has
-explicit quality standards. Meet them.
-
-Good luck! Start with M0.1 when ready.
-
-================================================================================
-END OF .claude FILE
-================================================================================
-Last Updated: 2025-12-15
-Version: 1.0.0
-Status: Project Kickoff - Ready to Begin M0.1
+**Version:** 1.0.0
+**Last Mission Completed:** M3.7 (Data Retention Policy)
+**Next Mission:** M7.5 (Referee Agent - Match Conductor)
