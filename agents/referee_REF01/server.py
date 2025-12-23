@@ -236,23 +236,17 @@ class RefereeAgent(BaseAgent):
                 referee_meta=referee_meta,
             )
 
-            payload = {
-                "jsonrpc": "2.0",
-                "method": "REFEREE_REGISTER_REQUEST",
-                "params": registration_request.model_dump(),
-                "id": 1,
-            }
-
             self.std_logger.info(f"Registering with League Manager at {lm_endpoint}")
             log_message_sent(self.std_logger, registration_request.model_dump())
 
             # Send registration request with retry (M7.8: retry on failure)
+            # Using async call_with_retry with new signature (M7.9.1)
             response = await call_with_retry(
-                lm_endpoint,
-                payload,
-                logger=self.std_logger,
-                max_retries=3,
+                endpoint=lm_endpoint,
+                method="REFEREE_REGISTER_REQUEST",
+                params=registration_request.model_dump(),
                 timeout=timeout,
+                logger=self.std_logger,
             )
 
             log_message_received(self.std_logger, response)

@@ -747,16 +747,14 @@ class MatchConductor:
         if not endpoint:
             raise ValueError(f"Player {player_id} not found in agents config")
 
-        payload = {"jsonrpc": "2.0", "method": method, "params": params, "id": 1}
-
-        # Use async call_with_retry with system.json retry policy (no hardcoding!)
+        # Use async call_with_retry with new signature (M7.9.1)
+        # Retry config loaded from system.json by call_with_retry
         response = await call_with_retry(
-            endpoint,
-            payload,
+            endpoint=endpoint,
+            method=method,
+            params=params,
+            timeout=30,  # TODO: Get from system config
             logger=self.std_logger,
-            max_retries=self.max_retries,
-            initial_delay=self.initial_delay,
-            max_delay=self.max_delay,
         )
 
         return response
@@ -805,21 +803,15 @@ class MatchConductor:
             },
         )
 
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "MATCH_RESULT_REPORT",
-            "params": match_result_report.model_dump(),
-            "id": 1,
-        }
-
         try:
             # Send to League Manager with timeout from system.json
+            # Using async call_with_retry with new signature (M7.9.1)
             response = await call_with_retry(
-                self.league_manager_endpoint,
-                payload,
-                logger=self.std_logger,
-                max_retries=self.max_retries,
+                endpoint=self.league_manager_endpoint,
+                method="MATCH_RESULT_REPORT",
+                params=match_result_report.model_dump(),
                 timeout=self.timeout_match_result,
+                logger=self.std_logger,
             )
 
             log_message_sent(self.std_logger, match_result_report.model_dump())

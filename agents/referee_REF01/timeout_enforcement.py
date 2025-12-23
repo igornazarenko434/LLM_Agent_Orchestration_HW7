@@ -287,21 +287,15 @@ class TimeoutEnforcer:
         )
 
         # Send GAME_ERROR to player
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "GAME_ERROR",
-            "params": game_error.model_dump(),
-            "id": 1,
-        }
-
         try:
-            # Use call_with_retry but with max_retries=1 (don't retry GAME_ERROR sending)
+            # Send GAME_ERROR notification with async call_with_retry (M7.9.1)
+            # Uses retry config from system.json
             await call_with_retry(
-                player_endpoint,
-                payload,
-                logger=self.std_logger,
-                max_retries=1,
+                endpoint=player_endpoint,
+                method="GAME_ERROR",
+                params=game_error.model_dump(),
                 timeout=5,  # Short timeout for error notification
+                logger=self.std_logger,
             )
 
             log_message_sent(self.std_logger, game_error.model_dump())
