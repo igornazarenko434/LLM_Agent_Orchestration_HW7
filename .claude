@@ -1,7 +1,7 @@
 # Even/Odd League - Project Context
 
-**Last Updated:** 2025-12-20
-**Project Status:** 45% Complete (33/74 missions)
+**Last Updated:** 2025-12-23
+**Project Status:** 50% Complete (37/74 missions)
 **Current Phase:** Foundation Complete → Agent Implementation Phase
 
 ---
@@ -11,17 +11,19 @@
 **✅ WORKING & TESTED:**
 - SDK Infrastructure (protocol, config, logging, retry, repositories, cleanup)
 - Player Agent P01 (MCP server, 3 tools, registration)
+- **Referee Agent REF01 (Match conductor, timeout enforcement, game logic, registration)** ✨ NEW
 - Data Retention System (automated cleanup, archival, manual scripts)
-- Quality Infrastructure (pre-commit, CI/CD, 209 tests @ 85.47% coverage)
+- Quality Infrastructure (pre-commit, CI/CD, 256 tests @ 76% coverage)
 - Configuration Layer (system, agents, leagues, games)
 
 **🚧 IN PROGRESS:**
 - None currently
 
 **☐ NEXT PRIORITIES:**
-1. Referee Agent (M7.5-M7.8) - Match conductor, timeout enforcement, game logic
-2. League Manager (M7.9-M7.14) - Registration, scheduling, standings
-3. Integration Tests (M4.2) - Multi-agent workflows
+1. **M7.9.1:** Async HTTP Client Migration (CRITICAL - 2-3h) - Replace requests with httpx
+2. **M7.9:** League Manager Registration (3h) - Accept player/referee registrations
+3. **M7.10-M7.14:** League Manager Core (13h) - Scheduling, standings, orchestration
+4. Integration Tests (M4.2) - Multi-agent workflows
 
 ---
 
@@ -94,7 +96,17 @@ SHARED/
 - **Status:** ✅ Working, registered, tested
 - **Ports:** P01=8101, P02=8102, P03=8103, P04=8104
 
-**3. Data Retention System**
+**3. Referee Agent (agents/referee_REF01/)** ✨ NEW
+- server.py (364 lines) - MCP server, registration, START_MATCH handler
+- match_conductor.py (173 lines) - Complete 6-step + post-match protocol
+- game_logic.py (173 lines) - Even/Odd winner determination, cryptographic RNG
+- timeout_enforcement.py (55 lines) - GAME_ERROR (E001) sending, exponential backoff
+- **Status:** ✅ Working, all components tested (47 tests passing)
+- **Capabilities:** conduct_match, enforce_timeouts, determine_winner, report_results
+- **Coverage:** 98% (game_logic), 98% (timeout_enforcement), 40% (server)
+- **Port:** REF01=8001
+
+**4. Data Retention System**
 - doc/data_retention_policy.md (22KB) - Complete spec
 - SHARED/scripts/cleanup_data.py (273 lines) - Manual CLI tool
 - **Retention:** Logs 30d, Matches 365d, Standings permanent
@@ -102,21 +114,24 @@ SHARED/
 - **Safety:** IN_PROGRESS matches never deleted, active logs preserved
 - **Schedule:** Daily 2 AM UTC (via League Manager)
 
-**4. Configuration**
+**5. Configuration**
 - system.json - Global settings (timeouts, retry, data_retention)
 - agents_config.json - 7 agents (LM, 2 refs, 4 players)
 - league_2025_even_odd.json - League rules, scoring
 - games_registry.json - Even/Odd game definition
 - **Env Overrides:** 15+ settings via .env
 
-**5. Quality Infrastructure**
-- **Tests:** 209 passing (85.47% coverage)
+**6. Quality Infrastructure**
+- **Tests:** 256 passing (76% coverage)
   - test_protocol_models.py (60 tests)
   - test_logger.py (35 tests)
   - test_retry.py (34 tests)
   - test_repositories.py (33 tests)
+  - test_game_logic.py (22 tests) ✨ NEW
   - test_cleanup.py (17 tests)
   - test_config_models.py (16 tests)
+  - test_referee_server.py (13 tests) ✨ NEW
+  - test_timeout_enforcement.py (12 tests) ✨ NEW
   - Player/agent tests (14 tests)
 - **CI/CD:** GitHub Actions (black, isort, flake8, mypy, pytest)
 - **Pre-commit:** 10 hooks enforced
@@ -183,12 +198,18 @@ LLM_Agent_Orchestration_HW7/
 │   │   ├── handlers.py
 │   │   └── main.py
 │   ├── player_P02-P04/         # Reuse P01 implementation
-│   ├── referee_REF01/          # ☐ TODO: M7.5-M7.8
-│   ├── referee_REF02/          # ☐ TODO
+│   ├── referee_REF01/          # ✅ COMPLETED: M7.5-M7.8
+│   │   ├── server.py           # MCP server + registration
+│   │   ├── match_conductor.py  # 6-step + post-match protocol
+│   │   ├── game_logic.py       # Even/Odd winner determination
+│   │   ├── timeout_enforcement.py  # E001 errors + retry
+│   │   └── main.py
+│   ├── referee_REF02/          # ☐ TODO (can reuse REF01)
 │   └── league_manager/         # ☐ TODO: M7.9-M7.14
 │
-├── tests/                      # 209 tests, 85.47% coverage
+├── tests/                      # 256 tests, 76% coverage
 │   ├── unit/test_sdk/
+│   ├── unit/test_referee_agent/  # ✨ NEW (47 tests)
 │   ├── unit/test_agents/
 │   └── integration/
 │
@@ -206,48 +227,68 @@ LLM_Agent_Orchestration_HW7/
 
 ## Next Steps (Priority Order)
 
-### Immediate: Referee Agent (M7.5-M7.8) - 10.5 hours
-**Priority:** P0 (Critical for QG-2)
+### CRITICAL: Async HTTP Client Migration (M7.9.1) - 2-3 hours
+**Priority:** P0 (BLOCKING - Must complete before M7.9)
+**Reason:** Current synchronous `requests.post()` blocks event loop for 50+ concurrent matches
+
+**Tasks:**
+1. Install `httpx`: `pip install httpx`
+2. Update `league_sdk/retry.py::call_with_retry()` to async
+3. Update all callers to use `await call_with_retry(...)`
+4. Verify non-blocking: 50 concurrent matches in <60s (not 1500s)
+5. All 256 tests must still pass
+
+**Impact:** Without this, referee cannot handle concurrent matches without deadlock
+
+---
+
+### Immediate: League Manager Core (M7.9-M7.14) - 16 hours
+**Priority:** P0 (Critical for QG-4)
 **Blocks:** Integration tests, end-to-end workflows
 
-1. **M7.5:** Match Conductor (5h)
-   - Invite both players (GAME_INVITATION)
-   - Wait for acks with timeout
-   - Handle player no-shows (E007)
+**Completed:** ✅ M7.5-M7.8 Referee Agent (10.5h)
+- ✅ Match Conductor - Complete 6-step protocol
+- ✅ Timeout Enforcement - E001 errors + exponential backoff
+- ✅ Even/Odd Game Logic - Cryptographic RNG, winner determination
+- ✅ Registration & Setup - MCP server, state machine
 
-2. **M7.6:** Timeout Enforcement (2h)
-   - Track deadlines per message type
-   - Cancel slow operations
-   - Return E001 (timeout) errors
+**Files Created:**
+- ✅ agents/referee_REF01/server.py (364 lines)
+- ✅ agents/referee_REF01/match_conductor.py (173 lines)
+- ✅ agents/referee_REF01/game_logic.py (173 lines)
+- ✅ agents/referee_REF01/timeout_enforcement.py (55 lines)
+- ✅ tests/unit/test_referee_agent/ (47 tests, 3 files)
 
-3. **M7.7:** Even/Odd Game Logic (2h)
-   - Request parity choices from players
-   - Draw random number (1-10)
-   - Determine winner: choice matches parity
-   - Handle draws (both choose same)
+**League Manager Tasks:**
+1. **M7.9:** Registration Handler (3h)
+   - Accept player/referee registrations
+   - Generate agent IDs and auth tokens
+   - Validate duplicates (E017)
 
-4. **M7.8:** Registration & Setup (1.5h)
-   - Register with League Manager
-   - Receive auth token
-   - Store configuration
-   - Health check endpoint
+2. **M7.10:** Round-Robin Scheduler (3h)
+   - Generate n*(n-1)/2 matches
+   - Distribute across rounds
+   - Assign referees evenly
 
-**Files to Create:**
-- agents/referee_REF01/server.py (~400 lines)
-- agents/referee_REF01/match_conductor.py (~250 lines)
-- agents/referee_REF01/game_logic.py (~150 lines)
-- agents/referee_REF01/handlers.py (~100 lines)
-- tests/unit/test_referee.py (~300 lines)
+3. **M7.11:** Standings Calculator (3h)
+   - Update after each match (WIN=3, DRAW=1, LOSS=0)
+   - Sort by points, then wins
+   - Broadcast updates
 
-### After Referee: League Manager (M7.9-M7.14) - 16 hours
-**Priority:** P0 (Critical for QG-4)
+4. **M7.12:** Match Result Handler (2h)
+   - Receive MATCH_RESULT_REPORT from referees
+   - Update standings
+   - Track round completion
 
-1. Player registration (accept/reject)
-2. Round-robin scheduling (n*(n-1)/2 matches)
-3. Assign referees to matches
-4. Update standings after each match
-5. Track league state (REGISTRATION → IN_PROGRESS → COMPLETED)
-6. Persist rounds, standings, player roster
+5. **M7.13:** League Orchestration (3h)
+   - State: REGISTRATION → IN_PROGRESS → COMPLETED
+   - Round announcements (ROUND_ANNOUNCEMENT)
+   - League completion (LEAGUE_COMPLETED)
+
+6. **M7.14:** Full System Integration (2h)
+   - End-to-end: 4 players, 2 referees, LM
+   - 6 matches across 3 rounds
+   - Champion announcement
 
 ### Then: Integration Tests (M4.2) - 4 hours
 - Multi-agent workflows
@@ -327,7 +368,7 @@ gh run list --limit 5
 
 ## Mission Tracking
 
-### Completed Missions (33/74 = 45%)
+### Completed Missions (37/74 = 50%)
 
 **M0: Kickoff (3/3)** ✅
 **M1: Requirements (5/5)** ✅
@@ -336,7 +377,15 @@ gh run list --limit 5
 **M4: Testing (2/6)** 🚧
 **M5: Research (4/4)** ✅
 **M6: UX/DevEx (4/9)** 🚧
-**M7: Agent Implementation (2/18)** 🚧
+**M7: Agent Implementation (6/18)** 🚧
+  - ✅ M7.1: Agent Base Class
+  - ✅ M7.3: Player Agent (handlers + server)
+  - ✅ M7.5: Referee Match Conductor ✨ NEW
+  - ✅ M7.6: Referee Timeout Enforcement ✨ NEW
+  - ✅ M7.7: Even/Odd Game Logic ✨ NEW
+  - ✅ M7.8: Referee Registration ✨ NEW
+  - ☐ M7.9.1: Async HTTP Migration (NEXT - CRITICAL)
+  - ☐ M7.9-M7.14: League Manager
 **M8: Documentation (0/9)** ☐
 **M9: Submission (0/4)** ☐
 
@@ -346,12 +395,12 @@ gh run list --limit 5
 
 | Metric | Current | Target | Status |
 |--------|---------|--------|--------|
-| Missions Complete | 33/74 | 74 | 45% |
-| Test Coverage | 85.47% | ≥85% | ✅ |
-| Tests Passing | 209/209 | 100% | ✅ |
+| Missions Complete | 37/74 | 74 | 50% 🎉 |
+| Test Coverage | 76% | ≥85% | ⚠️ (will improve with LM tests) |
+| Tests Passing | 256/256 | 100% | ✅ |
 | Protocol Messages | 18/18 | 18 | ✅ |
 | Error Codes | 18/18 | 18 | ✅ |
-| Agents Complete | 1/7 | 7 | 14% |
+| Agents Complete | 2/7 | 7 | 29% (Player + Referee) |
 | Python Support | 3.10, 3.11 | 3.10+ | ✅ |
 
 ---
@@ -401,14 +450,14 @@ E001, E005, E006, E009, E014, E015, E016
 ## Session Start Checklist
 
 1. **Context:** Read this .claude file
-2. **Status:** 45% complete, next: Referee Agent (M7.5-M7.8)
+2. **Status:** 50% complete (🎉 HALFWAY!), next: M7.9.1 (Async HTTP - CRITICAL)
 3. **Environment:** source venv/bin/activate
-4. **Tests:** pytest tests/ --co -q (should show 209 items)
+4. **Tests:** pytest tests/ --co -q (should show 256 items)
 5. **Git:** git status (should be clean)
 6. **CI/CD:** gh run list --limit 1 (should show passing)
 
 ---
 
-**Version:** 1.0.0
-**Last Mission Completed:** M3.7 (Data Retention Policy)
-**Next Mission:** M7.5 (Referee Agent - Match Conductor)
+**Version:** 1.1.0
+**Last Mission Completed:** M7.8 (Referee Registration & Setup)
+**Next Mission:** M7.9.1 (Async HTTP Client Migration) - **CRITICAL PREREQUISITE**
