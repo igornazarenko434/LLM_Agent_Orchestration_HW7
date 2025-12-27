@@ -1422,7 +1422,7 @@ class LeagueManager(BaseAgent):
         """Handle debug get_standings tool."""
         try:
             params = rpc_request.params
-            log_message_received(self.std_logger, params)
+            log_message_received(self.std_logger, rpc_request.model_dump())
 
             allow_unauth = getattr(
                 self.system_config.security, "allow_start_league_without_auth", False
@@ -1458,7 +1458,7 @@ class LeagueManager(BaseAgent):
         """Handle debug get_league_status tool."""
         try:
             params = rpc_request.params
-            log_message_received(self.std_logger, params)
+            log_message_received(self.std_logger, rpc_request.model_dump())
 
             allow_unauth = getattr(
                 self.system_config.security, "allow_start_league_without_auth", False
@@ -1497,7 +1497,7 @@ class LeagueManager(BaseAgent):
         """Handle start_league tool to trigger league orchestration."""
         try:
             params = rpc_request.params
-            log_message_received(self.std_logger, params)
+            log_message_received(self.std_logger, rpc_request.model_dump())
 
             league_id = params.get("league_id")
             if league_id and league_id != self.league_id:

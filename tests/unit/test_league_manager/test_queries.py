@@ -100,3 +100,55 @@ async def test_start_league_tool_triggers_start(league_manager):
     response = await league_manager._handle_start_league(request)
     assert response.status_code == 200
     league_manager.start_league.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_league_status_tool(league_manager):
+    request = JSONRPCRequest(
+        id=4,
+        method="get_league_status",
+        params={
+            "protocol": "league.v2",
+            "sender": "referee:REF01",
+            "auth_token": "tok-ref",
+        },
+    )
+
+    response = await league_manager._handle_get_league_status(request)
+    assert response.status_code == 200
+    body = response.body.decode()
+    assert "get_league_status" in body
+
+
+@pytest.mark.asyncio
+async def test_get_league_status_missing_auth_returns_401(league_manager):
+    request = JSONRPCRequest(
+        id=5,
+        method="get_league_status",
+        params={
+            "protocol": "league.v2",
+            "sender": "referee:REF01",
+        },
+    )
+
+    response = await league_manager._handle_get_league_status(request)
+    assert response.status_code == 401
+    body = response.body.decode()
+    assert "Missing auth token" in body
+
+
+@pytest.mark.asyncio
+async def test_get_standings_missing_sender_returns_400(league_manager):
+    league_manager.system_config.security.allow_start_league_without_auth = False
+    request = JSONRPCRequest(
+        id=6,
+        method="get_standings",
+        params={
+            "protocol": "league.v2",
+        },
+    )
+
+    response = await league_manager._handle_get_standings(request)
+    assert response.status_code == 400
+    body = response.body.decode()
+    assert "Missing sender" in body

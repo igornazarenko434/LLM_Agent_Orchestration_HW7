@@ -1,9 +1,13 @@
 """
 League Manager entry point (Missions 7.9-7.12).
+
+Enhanced with comprehensive CLI argument parsing, accessibility support,
+and proper error handling (Mission M6.1 & M6.2).
 """
 
 import argparse
 import asyncio
+import os
 import signal
 import sys
 from pathlib import Path
@@ -26,46 +30,185 @@ def _default_league_id() -> str | None:
     return None
 
 
+def format_output(message: str, mode: str = "normal") -> str:
+    """
+    Format output for different accessibility modes.
+
+    Args:
+        message: The message to format
+        mode: Output mode - "normal", "plain", "json", "quiet"
+
+    Returns:
+        Formatted message string
+    """
+    if mode == "plain":
+        # Remove emojis and special characters for screen readers
+        import re
+
+        return re.sub(r"[^\w\s\-:.,/()\[\]]", "", message)
+    elif mode == "quiet":
+        # Only show errors/warnings
+        return ""
+    return message
+
+
 def parse_args():
-    """Parse command-line arguments."""
+    """
+    Parse command-line arguments for League Manager.
+
+    Priority Order:
+        1. CLI arguments (highest priority)
+        2. Environment variables
+        3. Config file values
+        4. Hardcoded defaults (lowest priority)
+
+    Exit Codes (aligned with doc/error_codes_reference.md):
+        0 - Success
+        1 - Configuration error
+        2 - Network/connection error
+        3 - Authentication error
+        4 - Runtime error
+    """
     system_config = load_system_config("SHARED/config/system.json")
     agents_config = load_agents_config("SHARED/config/agents/agents_config.json")
     lm_config = agents_config.get("league_manager", {})
     default_league_id = _default_league_id()
 
-    parser = argparse.ArgumentParser(description="League Manager for Even/Odd League")
+    parser = argparse.ArgumentParser(
+        prog="league_manager",
+        description="League Manager for Even/Odd League Multi-Agent System",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Show help
+  python -m agents.league_manager.main --help
+
+  # Start with custom league ID and port
+  python -m agents.league_manager.main --league-id league_2025_custom --port 8000
+
+  # Start in screen reader mode (accessibility)
+  python -m agents.league_manager.main --plain
+
+  # Start with verbose logging
+  python -m agents.league_manager.main --verbose --log-level DEBUG
+
+  # Start with custom host
+  python -m agents.league_manager.main --host 0.0.0.0 --port 8000
+
+Environment Variables:
+  LEAGUE_ID          Override default league ID
+  LM_PORT            Override default port
+  LOG_LEVEL          Override default log level
+
+Configuration Priority:
+  CLI args > Environment variables > Config files > Defaults
+
+Exit Codes:
+  0 - Success
+  1 - Configuration error (invalid arguments, missing config)
+  2 - Network error (port unavailable, connection failed)
+  3 - Authentication error (registration rejected)
+  4 - Runtime error (unexpected failure)
+
+For more information, see:
+  - doc/error_codes_reference.md
+  - SHARED/config/agents/agents_config.json
+
+Responsibilities:
+  - Accept referee and player registrations
+  - Maintain league standings and schedule
+  - Coordinate match lifecycle
+  - Provide centralized state management
+""",
+    )
+
+    # Core arguments
     parser.add_argument(
         "--league-id",
         type=str,
-        default=default_league_id,
-        required=default_league_id is None,
-        help="League ID (default: from config)",
+        default=os.getenv("LEAGUE_ID", default_league_id),
+        required=default_league_id is None and "LEAGUE_ID" not in os.environ,
+        help="League ID (default: %(default)s, env: LEAGUE_ID)",
     )
     parser.add_argument(
         "--host",
         type=str,
         default=system_config.network.host,
-        help="Host to bind to (default: from config)",
+        help="Host to bind to (default: %(default)s)",
     )
     parser.add_argument(
         "--port",
         type=int,
-        default=lm_config.get("port", system_config.network.league_manager_port),
-        help="Port to bind to (default: from config)",
+        default=int(
+            os.getenv(
+                "LM_PORT",
+                lm_config.get("port", system_config.network.league_manager_port),
+            )
+        ),
+        help="Port to bind to (default: %(default)s, env: LM_PORT)",
     )
     parser.add_argument(
         "--log-level",
         type=str,
-        default=system_config.logging.get("level", "INFO"),
+        default=os.getenv("LOG_LEVEL", system_config.logging.get("level", "INFO")),
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        help="Log level (default: INFO)",
+        help="Log level (default: %(default)s, env: LOG_LEVEL)",
     )
+
+    # Output control
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Enable verbose output (detailed logging and progress)",
+    )
+    parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Quiet mode (only show errors)",
+    )
+    parser.add_argument(
+        "--plain",
+        action="store_true",
+        help="Plain text output (no emojis, WCAG 2.1 compliant for screen readers)",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="JSON output format (machine-readable)",
+    )
+
+    # Config file
+    parser.add_argument(
+        "--config",
+        type=str,
+        help="Path to custom config file (overrides defaults)",
+    )
+
+    # Version
     parser.add_argument(
         "--version",
         action="version",
-        version="League Manager 1.0.0",
+        version="League Manager 1.0.0 (league.v2 protocol)",
     )
-    return parser.parse_args()
+
+    args = parser.parse_args()
+
+    # Validate mutually exclusive flags
+    if args.verbose and args.quiet:
+        parser.error("--verbose and --quiet are mutually exclusive")
+    if args.json and args.plain:
+        parser.error("--json and --plain are mutually exclusive")
+
+    # Validate port range
+    if not (1024 <= args.port <= 65535):
+        parser.error(
+            f"Port must be between 1024-65535, got: {args.port}\n"
+            f"  Suggested fix: Use --port <valid_port> (e.g., --port 8000)"
+        )
+
+    return args
 
 
 async def main():

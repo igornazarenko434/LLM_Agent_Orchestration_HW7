@@ -24,7 +24,7 @@ All agents must strictly adhere to these error codes.
 
 | Code | Name | Severity | Retryable | Description | Recovery / Action |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **E001** | TIMEOUT_ERROR | High | No | Response not received within timeout | Referee awards technical loss; Log incident |
+| **E001** | TIMEOUT_ERROR | High | **Yes** | Response not received within timeout | Retry with backoff (per user requirements); Technical loss if exhausted |
 | **E002** | INVALID_MESSAGE_FORMAT | Medium | No | JSON parsing or schema validation failed | Reject message; Sender must fix payload |
 | **E003** | AUTHENTICATION_FAILED | High | No | Invalid credentials or auth token | Reject; Sender must re-authenticate |
 | **E004** | AGENT_NOT_REGISTERED | High | No | Agent ID not found in registry | Reject; Sender must register first |
@@ -177,8 +177,8 @@ Sent by Referees regarding specific match incidents (timeouts, illegal moves).
 ## 8. Retry & Circuit Breaker (Implementation Notes)
 
 - Use `league_sdk.retry.retry_with_backoff` and `CircuitBreaker` for outbound HTTP calls.
-- **Retryable set** (per `ErrorCode.is_retryable` + `system.json`): `E005`, `E006`, `E009`, `E014`, `E015`, `E016`.
-- **Do NOT retry**: Auth (`E003`, `E012`), registration (`E004`, `E017`), protocol (`E011`), invalid input (`E002`, `E010`, `E018`), timeouts (`E001`), missing match/league (`E007`, `E008`).
+- **Retryable set** (per `retry.py` + `system.json`): `E001`, `E005`, `E006`, `E009`, `E014`, `E015`, `E016`.
+- **Do NOT retry**: Auth (`E003`, `E012`), registration (`E004`, `E017`), protocol (`E011`), invalid input (`E002`, `E010`, `E018`), missing match/league (`E007`, `E008`).
 - Retries capped at 3 with delays 2s/4s/8s. Log each attempt with attempt number.
 - Circuit breaker trips after 5 consecutive failures (open 60s); in open state, short-circuit with `E016` without network calls.
 
@@ -196,7 +196,7 @@ Sent by Referees regarding specific match incidents (timeouts, illegal moves).
 
 ## 10. Recovery Playbooks
 
-- **Timeout (E001)**: Declare technical loss for offending player, continue match flow, report via `MATCH_RESULT_REPORT`.
+- **Timeout (E001)**: Retry with backoff (max 3 attempts); if exhausted, declare technical loss for offending player, continue match flow, report via `MATCH_RESULT_REPORT`.
 - **Invalid move (E010)**: Mark technical loss, include violation in `GAME_OVER`.
 - **Auth failures (E003/E012)**: Stop processing; instruct re-registration if applicable.
 - **Service down (E016)**: Circuit breaker open; escalate health checks; optionally failover to alternate referee if configured.
@@ -207,9 +207,9 @@ Sent by Referees regarding specific match incidents (timeouts, illegal moves).
 ## 11. Compliance Checklist (M5.4)
 
 - Error codes E001–E018 implemented exactly as `SHARED/league_sdk/protocol.py`.
-- Retryable set matches `ErrorCode.is_retryable` and `system.json`.
+- Retryable set matches `retry.py.RETRYABLE_ERRORS` (E001, E005, E006, E009, E014, E015, E016) and `system.json`.
 - JSON-RPC error mapping uses numeric codes with `data.error_code` carrying league code.
-- Timeouts enforced per `system.json` (5s join, 30s parity, 10s generic); late responses yield `E001`.
+- Timeouts enforced per `system.json` (5s join, 30s parity, 10s generic); late responses yield `E001` with retry.
 - Technical loss rules applied for E001/E010; standings and reports updated accordingly.
 - Logging via JsonLogger with correlation IDs; tokens redacted.
 - Circuit breaker thresholds match `system.json` (failure_threshold=5, reset_timeout=60).

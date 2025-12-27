@@ -2,7 +2,7 @@
 Protocol compliance tests for auth_token presence.
 
 Tests that:
-1. PLAYER_REGISTRATION_REQUEST and REFEREE_REGISTER_REQUEST have NO auth_token
+1. LEAGUE_REGISTER_REQUEST and REFEREE_REGISTER_REQUEST have NO auth_token
 2. All other messages (post-registration) MUST have auth_token
 3. Auth tokens are validated for format and security
 """
@@ -10,12 +10,24 @@ Tests that:
 import pytest
 
 # Message type constants
-PLAYER_REGISTRATION_REQUEST = "PLAYER_REGISTRATION_REQUEST"
+LEAGUE_REGISTER_REQUEST = "LEAGUE_REGISTER_REQUEST"
 REFEREE_REGISTER_REQUEST = "REFEREE_REGISTER_REQUEST"
+LEAGUE_REGISTER_RESPONSE = "LEAGUE_REGISTER_RESPONSE"
+REFEREE_REGISTER_RESPONSE = "REFEREE_REGISTER_RESPONSE"
+ROUND_ANNOUNCEMENT = "ROUND_ANNOUNCEMENT"
+GAME_INVITATION = "GAME_INVITATION"
 GAME_JOIN_ACK = "GAME_JOIN_ACK"
-GAME_PARITY_CHOICE_ACK = "CHOOSE_PARITY_RESPONSE"
-START_MATCH = "START_MATCH"
-MATCH_START_ACK = "MATCH_START_ACK"
+CHOOSE_PARITY_CALL = "CHOOSE_PARITY_CALL"
+CHOOSE_PARITY_RESPONSE = "CHOOSE_PARITY_RESPONSE"
+GAME_OVER = "GAME_OVER"
+MATCH_RESULT_REPORT = "MATCH_RESULT_REPORT"
+LEAGUE_STANDINGS_UPDATE = "LEAGUE_STANDINGS_UPDATE"
+ROUND_COMPLETED = "ROUND_COMPLETED"
+LEAGUE_COMPLETED = "LEAGUE_COMPLETED"
+LEAGUE_QUERY = "LEAGUE_QUERY"
+LEAGUE_QUERY_RESPONSE = "LEAGUE_QUERY_RESPONSE"
+LEAGUE_ERROR = "LEAGUE_ERROR"
+GAME_ERROR = "GAME_ERROR"
 from league_sdk.utils import generate_auth_token  # noqa: E402
 
 
@@ -24,7 +36,7 @@ class TestAuthTokenPresence:
     """Test auth_token presence requirements for different message types."""
 
     def test_registration_request_no_auth_token(self):
-        """Test that PLAYER_REGISTRATION_REQUEST should not have auth_token."""
+        """Test that LEAGUE_REGISTER_REQUEST should not have auth_token."""
         # Registration requests are sent before auth_token is issued
         # So they should not include auth_token in params
 
@@ -39,7 +51,7 @@ class TestAuthTokenPresence:
         # Should NOT have auth_token
         assert (
             "auth_token" not in message_params
-        ), "PLAYER_REGISTRATION_REQUEST should not include auth_token"
+        ), "LEAGUE_REGISTER_REQUEST should not include auth_token"
 
     def test_referee_registration_no_auth_token(self):
         """Test that REFEREE_REGISTER_REQUEST should not have auth_token."""
@@ -58,10 +70,22 @@ class TestAuthTokenPresence:
         """Test that all post-registration messages require auth_token."""
         # Example post-registration message types
         post_reg_message_types = [
+            LEAGUE_REGISTER_RESPONSE,
+            REFEREE_REGISTER_RESPONSE,
+            ROUND_ANNOUNCEMENT,
+            GAME_INVITATION,
             GAME_JOIN_ACK,
-            GAME_PARITY_CHOICE_ACK,
-            START_MATCH,
-            MATCH_START_ACK,
+            CHOOSE_PARITY_CALL,
+            CHOOSE_PARITY_RESPONSE,
+            GAME_OVER,
+            MATCH_RESULT_REPORT,
+            LEAGUE_STANDINGS_UPDATE,
+            ROUND_COMPLETED,
+            LEAGUE_COMPLETED,
+            LEAGUE_QUERY,
+            LEAGUE_QUERY_RESPONSE,
+            LEAGUE_ERROR,
+            GAME_ERROR,
         ]
 
         for msg_type in post_reg_message_types:
@@ -166,10 +190,10 @@ class TestAuthTokenPresence:
         assert "auth_token" in message_params
         assert len(message_params["auth_token"]) >= 32
 
-    def test_start_match_includes_auth_token(self):
-        """Test that START_MATCH messages include auth_token."""
+    def test_game_over_includes_auth_token(self):
+        """Test that GAME_OVER messages include auth_token."""
         message_params = {
-            "sender": "league_manager:LM01",
+            "sender": "referee:REF01",
             "protocol": "league.v2",
             "auth_token": generate_auth_token(),  # Required
             "match_id": "M001",

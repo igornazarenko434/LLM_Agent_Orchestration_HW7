@@ -914,6 +914,7 @@ class MatchConductor:
                 "drawn_number": drawn_number,
                 "number_parity": number_parity,
                 "player_choices": parity_choices,
+                "opponent_id": player_b_id,
                 "points_awarded": self._points_for_status(player_a_status),
             },
         )
@@ -933,6 +934,7 @@ class MatchConductor:
                 "drawn_number": drawn_number,
                 "number_parity": number_parity,
                 "player_choices": parity_choices,
+                "opponent_id": player_a_id,
                 "points_awarded": self._points_for_status(player_b_status),
             },
         )
