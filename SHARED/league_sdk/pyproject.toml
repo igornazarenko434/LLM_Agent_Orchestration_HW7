@@ -26,10 +26,9 @@ dev = [
     "mypy>=1.0.0",
 ]
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["*"]
-exclude = ["tests*", "*.egg-info", "__pycache__", ".mypy_cache", ".pytest_cache"]
+[tool.setuptools]
+packages = ["league_sdk"]
+package-dir = {"league_sdk" = "."}
 
 [tool.setuptools.package-data]
 league_sdk = ["py.typed"]

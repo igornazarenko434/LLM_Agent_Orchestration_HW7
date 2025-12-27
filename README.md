@@ -402,11 +402,15 @@ LLM_Agent_Orchestration_HW7/          # 345 files (excluding venv/caches), ~27MB
 
 ### Key Directories
 
-- **[SHARED/league_sdk/](SHARED/league_sdk/)**: Installable Python package with protocol, config, logging, retry utilities
-- **[SHARED/config/](SHARED/config/)**: JSON configuration files validated by Pydantic models
-- **[agents/](agents/)**: Agent implementations (League Manager, Referees, Players)
-- **[tests/](tests/)**: Comprehensive test suite with pytest fixtures
-- **[doc/](doc/)**: Research notes, game rules, algorithms, implementation logs
+- **[SHARED/league_sdk/](SHARED/league_sdk/)**: Installable Python package (PEP 621 compliant) - protocol, config, logging, retry, repositories, cleanup utilities
+- **[SHARED/config/](SHARED/config/)**: JSON configuration files validated by Pydantic models (system, agents, leagues, games, defaults)
+- **[SHARED/data/](SHARED/data/)**: Runtime data storage (leagues, matches, players) - git-ignored
+- **[SHARED/logs/](SHARED/logs/)**: Structured JSONL logs (agents, league, system) - git-ignored
+- **[SHARED/archive/](SHARED/archive/)**: Compressed archived data (gzipped, 80% reduction) - git-ignored
+- **[agents/](agents/)**: Agent implementations (League Manager, 2 Referees, 4 Players) - 7 autonomous agents
+- **[tests/](tests/)**: Comprehensive test suite - 568 tests across 56 files (unit, integration, E2E, protocol, edge)
+- **[doc/](doc/)**: Complete documentation - configuration, developer, testing guides, research notes, architecture
+- **[scripts/](scripts/)**: 12 automation scripts for operations (start, stop, health check, backup, restore, analysis)
 
 ---
 
@@ -1372,88 +1376,312 @@ Match Invitation Flow:
 
 ## 🧪 Testing
 
-### Running Tests
+The Even/Odd League system includes a comprehensive test suite with **568 test functions** across **56 test files**, providing extensive coverage of all system components.
 
-#### All Tests
+### Quick Start
+
 ```bash
-PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ -v
+# Run all tests (from project root)
+PYTHONPATH=SHARED:$PYTHONPATH pytest
+
+# Run with verbose output
+PYTHONPATH=SHARED:$PYTHONPATH pytest -v
+
+# Run with coverage report
+PYTHONPATH=SHARED:$PYTHONPATH pytest --cov=agents --cov=SHARED/league_sdk --cov-report=html
+
+# Open coverage report
+open htmlcov/index.html
 ```
 
-#### Unit Tests Only
+**IMPORTANT:** Always set `PYTHONPATH=SHARED:$PYTHONPATH` when running tests to ensure correct module imports.
+
+---
+
+### Running Tests by Category
+
+The test suite uses **pytest markers** to categorize tests for flexible execution:
+
+#### Available Test Categories
+
+| Marker | Directory | Speed | Tests | Purpose |
+|--------|-----------|-------|-------|---------|
+| `unit` | `tests/unit/` | Fast (<1s) | ~350 | Component isolation with mocks |
+| `integration` | `tests/integration/` | Medium (1-5s) | ~120 | Component interaction workflows |
+| `e2e` | `tests/e2e/` | Slow (30-60s) | ~40 | Full system with real servers |
+| `protocol` | `tests/protocol_compliance/` | Fast (<1s) | ~40 | league.v2 protocol validation |
+| `edge` | `tests/edge_cases/` | Fast (<1s) | ~18 | Error handling & boundaries |
+| `slow` | Various | >5s | ~50 | Long-running tests |
+
+#### Run Tests by Marker
+
 ```bash
-PYTHONPATH=SHARED:$PYTHONPATH pytest tests/unit/ -v
-```
-
-#### Integration Tests Only
-```bash
-PYTHONPATH=SHARED:$PYTHONPATH pytest tests/integration/ -v
-```
-
-#### With Coverage Report
-```bash
-PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ \
-  --cov=SHARED/league_sdk \
-  --cov=agents \
-  --cov-report=term \
-  --cov-report=html
-```
-
-Open coverage report: `open htmlcov/index.html`
-
-#### Specific Test Markers
-```bash
-# Run only protocol tests
-pytest -m protocol
-
-# Run only unit tests
+# Unit tests only (fast feedback, ~2-5 seconds)
 pytest -m unit
 
-# Run only integration tests
+# Integration tests only (~10-20 seconds)
 pytest -m integration
 
-# Skip slow tests
+# E2E tests only (slow, ~30-60 seconds)
+pytest -m e2e
+
+# Protocol compliance tests
+pytest -m protocol
+
+# Edge case tests
+pytest -m edge
+
+# Skip slow tests (for quick iteration)
 pytest -m "not slow"
+
+# Skip E2E tests (everything except full system tests)
+pytest -m "not e2e"
+
+# Combine markers: unit OR integration
+pytest -m "unit or integration"
+```
+
+---
+
+### Running Specific Tests
+
+#### Run Single Test File
+```bash
+pytest tests/unit/test_sdk/test_retry.py
+```
+
+#### Run Specific Test Class
+```bash
+pytest tests/unit/test_referee_agent/test_game_logic.py::TestEvenOddGameLogic
+```
+
+#### Run Specific Test Function
+```bash
+pytest tests/unit/test_referee_agent/test_game_logic.py::TestEvenOddGameLogic::test_draw_random_number_in_range
+```
+
+#### Run Tests Matching Name Pattern
+```bash
+# Run all tests with "timeout" in the name
+pytest -k timeout
+
+# Run all tests with "registration" in the name
+pytest -k registration
+
+# Run tests NOT matching pattern
+pytest -k "not slow"
+```
+
+#### Run All Tests in a Directory
+```bash
+# All SDK tests
+pytest tests/unit/test_sdk/
+
+# All integration tests
+pytest tests/integration/
+
+# All E2E tests
+pytest tests/e2e/
+```
+
+---
+
+### Coverage Measurement
+
+#### Generate Terminal Report
+```bash
+# Basic coverage report
+pytest --cov=agents --cov=SHARED/league_sdk --cov-report=term
+```
+
+#### Generate Report with Missing Lines
+```bash
+# Shows which specific lines are not covered
+pytest --cov=agents --cov=SHARED/league_sdk --cov-report=term-missing
+```
+
+**Example output:**
+```
+Name                                  Stmts   Miss  Cover   Missing
+--------------------------------------------------------------------
+agents/league_manager/server.py         287     12    96%   145-147, 289
+SHARED/league_sdk/retry.py              312     18    94%   123-128, 267-273
+--------------------------------------------------------------------
+TOTAL                                  3166    168    95%
+```
+
+#### Generate HTML Coverage Report
+```bash
+# Detailed interactive HTML report
+pytest --cov=agents --cov=SHARED/league_sdk --cov-report=html
+
+# Open in browser
+open htmlcov/index.html
+```
+
+**HTML report features:**
+- Line-by-line coverage highlighting
+- Branch coverage visualization
+- Sortable coverage tables
+- Drill-down into individual files
+
+#### Coverage Goals
+- **Overall Target:** ≥85%
+- **Critical Paths:** ≥90% (retry logic, match conductor, registration)
+- **Protocol Models:** ≥95% (protocol.py, config_models.py)
+- **Current Coverage:** 85%+ (agents + SDK)
+
+---
+
+### Advanced Testing Commands
+
+#### Stop on First Failure
+```bash
+pytest -x
+```
+
+#### Show Local Variables on Failure
+```bash
+pytest -l
+```
+
+#### Drop into Debugger on Failure
+```bash
+pytest --pdb
+```
+
+#### Run with Print Statements Visible
+```bash
+pytest -s
+```
+
+#### Combine Options (Verbose, Stop on Fail, Show Locals)
+```bash
+pytest -vxl
+```
+
+#### Increase Timeout for Slow Tests
+```bash
+pytest --timeout=300
+```
+
+#### Run Tests in Parallel (Faster)
+```bash
+# Install pytest-xdist first: pip install pytest-xdist
+pytest -n auto  # Use all available CPU cores
+pytest -n 4     # Use 4 workers
 ```
 
 ### Test Structure
 
-| Test Suite | Tests | Coverage | Focus |
-|------------|-------|----------|-------|
-| `test_protocol_models.py` | 60 | 94% | Message validation, JSON-RPC |
-| `test_logger.py` | 35 | 99% | JSONL logging, rotation |
-| `test_retry.py` | 34 | 86% | Retry, circuit breaker |
-| `test_repositories.py` | 33 | 96% | Data persistence |
-| `test_cleanup.py` | 17 | 90% | Data retention & cleanup ✅ |
-| `test_config_models.py` | 16 | 99% | Config schemas |
-| `test_agent_base.py` | 6 | 83% | BaseAgent functionality |
-| `test_player_server.py` | 3 | 88% | PlayerAgent MCP server |
-| **TOTAL** | **209** | **85%** | **Comprehensive coverage** |
+#### By Category
+
+| Category | Tests | Files | Coverage | Focus |
+|----------|-------|-------|----------|-------|
+| **Unit Tests** | ~350 | 29 | 88% | SDK components, agent logic isolation |
+| **Integration Tests** | ~120 | 11 | 84% | Agent interactions, match flow |
+| **E2E Tests** | ~40 | 4 | 82% | Full system, multi-round leagues |
+| **Protocol Tests** | ~40 | 5 | 95% | league.v2 compliance, message validation |
+| **Edge Cases** | ~18 | 1 | 90% | Boundary conditions, error scenarios |
+| **TOTAL** | **568** | **56** | **85%** | **11,806 lines of test code** |
+
+#### Key Test Files (SDK)
+
+| Test File | Tests | Coverage | Focus |
+|-----------|-------|----------|-------|
+| `test_protocol_models.py` | 60 | 94% | 18 message types, JSON-RPC validation |
+| `test_logger.py` | 35 | 99% | JSONL logging, rotation, correlation IDs |
+| `test_retry.py` | 34 | 86% | Exponential backoff, circuit breaker |
+| `test_repositories.py` | 33 | 96% | Atomic writes, data persistence |
+| `test_cleanup.py` | 17 | 90% | Data retention, archival, compression |
+| `test_config_models.py` | 16 | 99% | Pydantic config schemas |
+| `test_config_loader.py` | 12 | 92% | Config loading, env overrides |
+| `test_queue_processor.py` | 8 | 88% | Thread-safe queue processing |
 
 ### Test Examples
 
-```python
-# tests/unit/test_sdk/test_protocol_models.py
-def test_game_invitation_validation():
-    """Verify GAME_INVITATION message structure."""
-    invitation = GameInvitation(
-        sender="referee:REF01",
-        timestamp="2025-01-15T10:00:00Z",
-        conversation_id="conv-123",
-        auth_token="token",
-        league_id="league_2025_even_odd",
-        match_id="R1M1",
-        game_type="even_odd",
-        player_id="P01",
-        opponent_id="P02",
-        opponent_endpoint="http://localhost:8102/mcp"
-    )
-    assert invitation.message_type == "GAME_INVITATION"
-    assert invitation.protocol == "league.v2"
+#### Example 1: Unit Test (Game Logic)
 
-# tests/unit/test_sdk/test_cleanup.py
+**File:** `tests/unit/test_referee_agent/test_game_logic.py`
+
+```python
+class TestEvenOddGameLogic:
+    @pytest.fixture
+    def game_logic(self):
+        """Create game logic instance."""
+        return EvenOddGameLogic()
+
+    def test_determine_winner_even_player_wins(self, game_logic):
+        """Test even player wins when number is even."""
+        result = game_logic.determine_winner(
+            player_a_choice="even",
+            player_b_choice="odd",
+            drawn_number=4  # Even number
+        )
+        assert result.winner_id == "player_a"
+        assert result.reason == "even parity matches drawn number 4"
+```
+
+#### Example 2: Integration Test (Match Flow)
+
+**File:** `tests/integration/test_match_flow.py`
+
+```python
 @pytest.mark.asyncio
-async def test_cleanup_old_logs_deletes_old_files(temp_data_dir):
-    """Verify cleanup deletes rotated logs older than retention period."""
+@pytest.mark.integration
+async def test_successful_match_flow_with_mocked_http(match_conductor):
+    """Test complete match workflow with mocked HTTP calls."""
+    match_id = "M001"
+    player_a_id = "P01"
+    player_b_id = "P02"
+
+    # Mock HTTP calls but test real match orchestration logic
+    async def mock_send_invitations(match_id, players):
+        return {player_a_id: True, player_b_id: True}
+
+    with patch.object(match_conductor, "_send_invitations", mock_send_invitations):
+        result = await match_conductor.conduct_match(
+            match_id=match_id,
+            round_id=1,
+            player_a_id=player_a_id,
+            player_b_id=player_b_id
+        )
+
+    assert result["state"] == "FINISHED"
+    assert result["winner_id"] in [player_a_id, player_b_id, "DRAW"]
+```
+
+#### Example 3: Protocol Compliance Test
+
+**File:** `tests/protocol_compliance/test_envelope_fields.py`
+
+```python
+@pytest.mark.protocol
+class TestEnvelopeFields:
+    def test_envelope_has_required_fields(self):
+        """Test message envelope contains all required fields per league.v2."""
+        envelope = MessageEnvelope(
+            conversation_id="conv-001",
+            message_type=LEAGUE_REGISTER_REQUEST,
+            sender="player:P01",
+            timestamp=generate_timestamp(),
+            protocol="league.v2"
+        )
+
+        assert envelope.conversation_id == "conv-001"
+        assert envelope.message_type == LEAGUE_REGISTER_REQUEST
+        assert envelope.sender == "player:P01"
+        assert envelope.protocol == "league.v2"
+```
+
+#### Example 4: Async Test with Cleanup
+
+**File:** `tests/unit/test_sdk/test_cleanup.py`
+
+```python
+@pytest.mark.asyncio
+async def test_cleanup_old_logs_preserves_active_logs(temp_data_dir):
+    """Verify cleanup preserves active logs, only deletes rotated old logs."""
     logs_dir = temp_data_dir / "logs" / "agents"
 
     # Create old rotated log (60 days old)
@@ -1462,19 +1690,55 @@ async def test_cleanup_old_logs_deletes_old_files(temp_data_dir):
     old_time = datetime.now(timezone.utc) - timedelta(days=60)
     os.utime(old_log, (old_time.timestamp(), old_time.timestamp()))
 
-    # Create active log (should not be deleted)
+    # Create active log (should NEVER be deleted)
     active_log = logs_dir / "P01.log.jsonl"
     active_log.write_text("active log data")
 
-    # Run cleanup
+    # Run cleanup with 30-day retention
     stats = await cleanup_old_logs(retention_days=30, log_dir=logs_dir)
 
-    # Old rotated log should be deleted
-    assert not old_log.exists()
-    # Active log should be preserved
-    assert active_log.exists()
+    # Verify: old rotated log deleted, active log preserved
+    assert not old_log.exists(), "Old rotated log should be deleted"
+    assert active_log.exists(), "Active log must be preserved"
     assert stats.files_deleted == 1
 ```
+
+---
+
+### Testing Philosophy
+
+The Even/Odd League follows the **test pyramid** approach:
+
+```
+        ▲
+       / \
+      /E2E\      ← Few (~40 tests) - Full system, slow, high confidence
+     /─────\
+    /Proto \    ← Some (~40 tests) - Protocol validation
+   /───────\
+  /Integrtn\   ← More (~120 tests) - Component interactions
+ /─────────\
+/   Unit    \  ← Many (~350 tests) - Fast, isolated, comprehensive
+└───────────┘
+```
+
+**Principles:**
+- ✅ **Fast feedback:** Unit tests run in milliseconds
+- ✅ **Isolated:** Use mocks to avoid dependencies
+- ✅ **Comprehensive:** Test edge cases and error paths
+- ✅ **Maintainable:** Clear test names, focused assertions
+- ✅ **Realistic:** E2E tests validate real-world scenarios
+
+---
+
+### For More Details
+
+See the **[Complete Testing Guide](doc/testing_guide.md)** for:
+- Detailed test writing patterns
+- Fixture best practices
+- Debugging test failures
+- CI/CD integration
+- Test infrastructure details
 
 ---
 
@@ -1489,7 +1753,7 @@ This project maintains production-ready code quality through automated tooling a
 | **black** | Code formatting (line length: 104) | `pyproject.toml` | ✅ Enforced |
 | **isort** | Import sorting (black profile) | `pyproject.toml` | ✅ Enforced |
 | **flake8** | Linting (PEP 8 compliance) | `.flake8` | ✅ Enforced |
-| **mypy** | Static type checking | `mypy.ini` | ✅ Enforced |
+| **mypy** | Static type checking | `pyproject.toml` | ✅ Enforced |
 | **pylint** | Advanced linting | `pyproject.toml` | ✅ Configured |
 | **pytest** | Testing with coverage (≥85%) | `pyproject.toml` | ✅ Enforced |
 
@@ -1551,7 +1815,7 @@ flake8 agents SHARED tests
 pylint agents SHARED
 
 # Type checking
-mypy agents SHARED --config-file=mypy.ini
+mypy agents SHARED
 
 # All pre-commit hooks
 pre-commit run --all-files
@@ -1583,7 +1847,7 @@ See `.github/workflows/test.yml` for full pipeline configuration.
 #### Build Status
 
 - **Python Versions:** 3.10, 3.11
-- **Test Coverage:** 85% (209 tests passing)
+- **Test Coverage:** 85% (568 tests passing)
 - **Quality Gates:** All passing ✅
 
 ### Contributing Guidelines
@@ -1621,23 +1885,175 @@ PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ --cov-fail-under=85
 
 ## 🛠️ Troubleshooting
 
-### Common Issues
+### Common Testing Issues
 
-#### 1. Tests Fail with `ModuleNotFoundError: No module named 'league_sdk'`
+#### 1. ImportError for SDK Modules
+
+**Symptom:**
+```
+ImportError: No module named 'SHARED.league_sdk'
+ModuleNotFoundError: No module named 'league_sdk'
+```
 
 **Cause:** SDK not installed or PYTHONPATH not set.
 
 **Solution:**
 ```bash
-# Option 1: Install SDK
+# Option 1: Install SDK in editable mode
 pip install -e SHARED/league_sdk
 
-# Option 2: Set PYTHONPATH
+# Option 2: Set PYTHONPATH when running tests
 export PYTHONPATH=SHARED:$PYTHONPATH
-pytest tests/ -v
+pytest
+
+# Or inline
+PYTHONPATH=SHARED:$PYTHONPATH pytest
+
+# Verify SDK import works
+python3 -c "from league_sdk import protocol; print('✅ SDK imported')"
 ```
 
-#### 2. Port Already in Use (Address already in use)
+#### 2. Async Test Not Running
+
+**Symptom:**
+```
+RuntimeWarning: coroutine 'test_async_function' was never awaited
+```
+
+**Cause:** Missing `@pytest.mark.asyncio` decorator.
+
+**Solution:**
+```python
+# Add decorator to async test functions
+@pytest.mark.asyncio
+async def test_async_function():
+    result = await some_async_function()
+    assert result is not None
+```
+
+#### 3. Fixture Not Found
+
+**Symptom:**
+```
+fixture 'my_fixture' not found
+```
+
+**Cause:** Fixture not in correct location or typo in fixture name.
+
+**Solution:**
+- Move fixture to `tests/conftest.py` (auto-discovered by all tests)
+- Or ensure fixture is in same file as test
+- Check for typos in fixture name
+- Verify fixture scope matches usage
+
+#### 4. Tests Pass Individually but Fail Together
+
+**Symptom:** `pytest test_a.py` passes, but `pytest test_a.py test_b.py` fails
+
+**Cause:** Tests sharing state (global variables, files, database).
+
+**Solution:**
+```python
+# Use fixtures to isolate test state
+@pytest.fixture
+def isolated_data_dir(tmp_path):
+    """Create isolated temp directory for each test."""
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    return data_dir
+
+def test_with_isolated_state(isolated_data_dir):
+    # Each test gets fresh directory
+    pass
+```
+
+#### 5. E2E Tests Hang or Never Complete
+
+**Symptom:** E2E tests never finish, appear frozen.
+
+**Cause:** Servers not starting, infinite loops, or async deadlocks.
+
+**Solution:**
+```bash
+# Add timeout to prevent hanging
+pytest -m e2e --timeout=60
+
+# Debug with verbose output
+pytest -m e2e -vvs --log-cli-level=DEBUG
+
+# Check for:
+# - Servers not starting (check ports)
+# - Infinite loops in match conductor
+# - Deadlocks in async code (missing await)
+```
+
+#### 6. Coverage Shows 0% or Incorrect Values
+
+**Symptom:** Coverage report shows 0% or unexpectedly low values.
+
+**Cause:** Source paths incorrect or coverage not measuring right files.
+
+**Solution:**
+```bash
+# Ensure correct source paths
+pytest --cov=agents --cov=SHARED/league_sdk
+
+# Check coverage configuration
+cat pyproject.toml | grep -A 10 "\[tool.pytest.ini_options\]"
+
+# Verify .coveragerc or pyproject.toml [tool.coverage.run] section
+# Should include: source = ["agents", "SHARED/league_sdk"]
+```
+
+#### 7. Tests Extremely Slow
+
+**Symptom:** Test suite takes minutes instead of seconds.
+
+**Cause:** Running E2E tests, blocking I/O, or synchronous operations.
+
+**Solution:**
+```bash
+# Skip slow tests
+pytest -m "not slow"
+
+# Skip E2E tests
+pytest -m "not e2e"
+
+# Run tests in parallel (requires pytest-xdist)
+pip install pytest-xdist
+pytest -n auto  # Use all CPU cores
+```
+
+#### 8. Timeout Errors in Tests
+
+**Symptom:**
+```
+FAILED tests/test_match.py::test_match_flow - Timeout >120.0s
+```
+
+**Cause:** Test operations taking too long.
+
+**Solution:**
+```bash
+# Increase global timeout
+pytest --timeout=300
+
+# Or set timeout per test
+@pytest.mark.timeout(60)
+def test_slow_operation():
+    pass
+
+# Disable timeout for specific test
+@pytest.mark.timeout(0)
+def test_no_timeout():
+    pass
+```
+
+---
+
+### Common Runtime Issues
+
+#### 9. Port Already in Use (Address already in use)
 
 **Cause:** Another process is using the required port.
 
@@ -1652,7 +2068,7 @@ kill -9 <PID>
 # Or change port in system.json
 ```
 
-#### 3. Config File Not Found
+#### 10. Config File Not Found
 
 **Cause:** Config files missing or wrong path.
 
@@ -1664,9 +2080,12 @@ ls -la SHARED/config/agents/agents_config.json
 
 # Check current working directory
 pwd  # Should be project root
+
+# Verify you're in the right directory
+ls SHARED/league_sdk/protocol.py  # Should exist
 ```
 
-#### 4. Import Error: `cannot import name 'JsonLogger'`
+#### 11. Import Error: `cannot import name 'JsonLogger'`
 
 **Cause:** SDK installation incomplete.
 
@@ -1676,13 +2095,21 @@ pwd  # Should be project root
 pip uninstall league-sdk -y
 pip install -e SHARED/league_sdk
 
-# Verify
-python3 -c "from league_sdk import JsonLogger; print('OK')"
+# Verify import works
+python3 -c "from league_sdk import JsonLogger; print('✅ OK')"
+
+# If still fails, check PYTHONPATH
+echo $PYTHONPATH  # Should include SHARED
 ```
 
-#### 5. Pydantic Validation Errors
+#### 12. Pydantic Validation Errors
 
-**Cause:** Config file doesn't match schema.
+**Symptom:**
+```
+pydantic.error_wrappers.ValidationError: 1 validation error for SystemConfig
+```
+
+**Cause:** Config file doesn't match Pydantic schema.
 
 **Solution:**
 ```bash
@@ -1692,32 +2119,29 @@ from league_sdk.config_loader import load_system_config
 config = load_system_config('SHARED/config/system.json')
 print('✅ Config valid')
 "
+
+# Check for common issues:
+# - Missing required fields
+# - Wrong data types (string vs int)
+# - Invalid enum values
 ```
 
-#### 6. Logs Not Being Created
+#### 13. Logs Not Being Created
 
 **Cause:** Log directories don't exist.
 
 **Solution:**
 ```bash
-# Create log directories
+# Create all required log directories
 mkdir -p SHARED/logs/{agents,league,system}
+mkdir -p SHARED/archive/{logs,matches,players,leagues}
+mkdir -p SHARED/data/{leagues,matches,players}
+
+# Verify directory structure
+ls -la SHARED/logs/
 ```
 
-#### 7. Timeout Errors in Tests
-
-**Cause:** Tests running too slowly.
-
-**Solution:**
-```bash
-# Increase pytest timeout
-pytest tests/ --timeout=300
-
-# Or skip slow tests
-pytest -m "not slow"
-```
-
-#### 8. Data Retention / Cleanup Issues
+#### 14. Data Retention / Cleanup Issues
 
 **Issue 8.1:** Cleanup script fails with "Permission denied"
 
@@ -1898,7 +2322,7 @@ Example: 4 players = 6 matches across 3 rounds
 
 | Gate | Status | Criteria |
 |------|--------|----------|
-| **QG-1: Foundation** | ✅ Passed | SDK operational, 85% coverage, 209 tests passing |
+| **QG-1: Foundation** | ✅ Passed | SDK operational, 85% coverage, 568 tests passing |
 | **QG-2: Player Agent** | ⏸ Ready | Player implements 3 tools, registration working |
 | **QG-3: Match Execution** | ☐ Pending | Referee conducts matches, timeouts enforced |
 | **QG-4: End-to-End** | ☐ Pending | Full 4-player league completes successfully |
