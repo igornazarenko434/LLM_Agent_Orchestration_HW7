@@ -17,15 +17,13 @@ async def test_cleanup_scheduler_startup_execution(tmp_path):
     - Verifies startup cleanup is triggered
     - Verifies cleanup stats are logged
     """
-    with patch("agents.league_manager.server.load_system_config") as mock_system_config, patch(
-        "agents.league_manager.server.load_agents_config"
-    ) as mock_agents_config, patch(
-        "agents.league_manager.server.load_league_config"
-    ) as mock_league_config, patch(
-        "agents.league_manager.server.get_retention_config"
-    ) as mock_retention, patch(
-        "agents.league_manager.server.run_full_cleanup", new_callable=AsyncMock
-    ) as mock_cleanup:
+    with (
+        patch("agents.league_manager.server.load_system_config") as mock_system_config,
+        patch("agents.league_manager.server.load_agents_config") as mock_agents_config,
+        patch("agents.league_manager.server.load_league_config") as mock_league_config,
+        patch("agents.league_manager.server.get_retention_config") as mock_retention,
+        patch("agents.league_manager.server.run_full_cleanup", new_callable=AsyncMock) as mock_cleanup,
+    ):
         # Mock configurations
         mock_system_config.return_value = MagicMock(
             network=MagicMock(max_connections=100, request_timeout_sec=10),
@@ -85,15 +83,13 @@ async def test_cleanup_scheduler_periodic_execution(tmp_path):
     - Verifies scheduled cleanup task is started
     - Verifies cleanup can be stopped gracefully
     """
-    with patch("agents.league_manager.server.load_system_config") as mock_system_config, patch(
-        "agents.league_manager.server.load_agents_config"
-    ) as mock_agents_config, patch(
-        "agents.league_manager.server.load_league_config"
-    ) as mock_league_config, patch(
-        "agents.league_manager.server.get_retention_config"
-    ) as mock_retention, patch(
-        "agents.league_manager.server.run_full_cleanup", new_callable=AsyncMock
-    ) as mock_cleanup:
+    with (
+        patch("agents.league_manager.server.load_system_config") as mock_system_config,
+        patch("agents.league_manager.server.load_agents_config") as mock_agents_config,
+        patch("agents.league_manager.server.load_league_config") as mock_league_config,
+        patch("agents.league_manager.server.get_retention_config") as mock_retention,
+        patch("agents.league_manager.server.run_full_cleanup", new_callable=AsyncMock) as mock_cleanup,
+    ):
         # Mock configurations
         mock_system_config.return_value = MagicMock(
             network=MagicMock(max_connections=100, request_timeout_sec=10),
@@ -153,15 +149,13 @@ async def test_cleanup_scheduler_disabled_when_retention_disabled(tmp_path):
     """
     Test that cleanup scheduler doesn't run when retention is disabled.
     """
-    with patch("agents.league_manager.server.load_system_config") as mock_system_config, patch(
-        "agents.league_manager.server.load_agents_config"
-    ) as mock_agents_config, patch(
-        "agents.league_manager.server.load_league_config"
-    ) as mock_league_config, patch(
-        "agents.league_manager.server.get_retention_config"
-    ) as mock_retention, patch(
-        "agents.league_manager.server.run_full_cleanup", new_callable=AsyncMock
-    ) as mock_cleanup:
+    with (
+        patch("agents.league_manager.server.load_system_config") as mock_system_config,
+        patch("agents.league_manager.server.load_agents_config") as mock_agents_config,
+        patch("agents.league_manager.server.load_league_config") as mock_league_config,
+        patch("agents.league_manager.server.get_retention_config") as mock_retention,
+        patch("agents.league_manager.server.run_full_cleanup", new_callable=AsyncMock) as mock_cleanup,
+    ):
         # Mock configurations with retention DISABLED
         mock_system_config.return_value = MagicMock(
             network=MagicMock(max_connections=100, request_timeout_sec=10),

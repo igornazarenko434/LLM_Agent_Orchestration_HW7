@@ -8,13 +8,12 @@ from agents.league_manager.server import LeagueManager
 
 @pytest.mark.asyncio
 async def test_league_orchestration_starts_rounds(tmp_path):
-    with patch("agents.league_manager.server.load_system_config") as mock_system_config, patch(
-        "agents.league_manager.server.load_agents_config"
-    ) as mock_agents_config, patch(
-        "agents.league_manager.server.load_league_config"
-    ) as mock_league_config, patch(
-        "agents.league_manager.server.get_retention_config"
-    ) as mock_retention:
+    with (
+        patch("agents.league_manager.server.load_system_config") as mock_system_config,
+        patch("agents.league_manager.server.load_agents_config") as mock_agents_config,
+        patch("agents.league_manager.server.load_league_config") as mock_league_config,
+        patch("agents.league_manager.server.get_retention_config") as mock_retention,
+    ):
         mock_system_config.return_value = MagicMock(
             network=MagicMock(max_connections=100, request_timeout_sec=10),
             timeouts=MagicMock(generic_sec=5),
@@ -63,15 +62,15 @@ async def test_full_league_flow_completion(tmp_path):
     - Drive round completion
     - Assert LEAGUE_COMPLETED with champion and standings
     """
-    with patch("agents.league_manager.server.load_system_config") as mock_system_config, patch(
-        "agents.league_manager.server.load_agents_config"
-    ) as mock_agents_config, patch(
-        "agents.league_manager.server.load_league_config"
-    ) as mock_league_config, patch(
-        "agents.league_manager.server.get_retention_config"
-    ) as mock_retention, patch(
-        "agents.league_manager.server.archive_old_matches", new_callable=AsyncMock
-    ) as mock_archive:
+    with (
+        patch("agents.league_manager.server.load_system_config") as mock_system_config,
+        patch("agents.league_manager.server.load_agents_config") as mock_agents_config,
+        patch("agents.league_manager.server.load_league_config") as mock_league_config,
+        patch("agents.league_manager.server.get_retention_config") as mock_retention,
+        patch(
+            "agents.league_manager.server.archive_old_matches", new_callable=AsyncMock
+        ) as mock_archive,
+    ):
         # Mock configurations
         mock_system_config.return_value = MagicMock(
             network=MagicMock(max_connections=100, request_timeout_sec=10),

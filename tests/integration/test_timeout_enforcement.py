@@ -25,9 +25,11 @@ class TestTimeoutEnforcement:
     @pytest.fixture
     def match_conductor(self):
         """Create a MatchConductor with short timeouts for testing."""
-        with patch("agents.referee_REF01.match_conductor.load_system_config") as mock_system, patch(
-            "agents.referee_REF01.match_conductor.load_agents_config"
-        ) as mock_agents, patch("agents.referee_REF01.match_conductor.load_json_file") as mock_league:
+        with (
+            patch("agents.referee_REF01.match_conductor.load_system_config") as mock_system,
+            patch("agents.referee_REF01.match_conductor.load_agents_config") as mock_agents,
+            patch("agents.referee_REF01.match_conductor.load_json_file") as mock_league,
+        ):
             # Mock system config with SHORT timeouts for testing
             mock_system.return_value = MagicMock(
                 timeouts=MagicMock(
@@ -87,9 +89,10 @@ class TestTimeoutEnforcement:
                 },
             }
 
-        with patch.object(
-            match_conductor, "_send_invitations", side_effect=mock_send_invitations
-        ), patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join):
+        with (
+            patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+            patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+        ):
             result = await match_conductor.conduct_match(
                 match_id, round_id, player_a_id, player_b_id, conversation_id, queue
             )
@@ -124,9 +127,10 @@ class TestTimeoutEnforcement:
                 player_b_id: None,  # Timeout
             }
 
-        with patch.object(
-            match_conductor, "_send_invitations", side_effect=mock_send_invitations
-        ), patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join):
+        with (
+            patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+            patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+        ):
             result = await match_conductor.conduct_match(
                 match_id, round_id, player_a_id, player_b_id, conversation_id, queue
             )
@@ -154,9 +158,10 @@ class TestTimeoutEnforcement:
             # Both players timeout
             return {player_a_id: None, player_b_id: None}
 
-        with patch.object(
-            match_conductor, "_send_invitations", side_effect=mock_send_invitations
-        ), patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join):
+        with (
+            patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+            patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+        ):
             result = await match_conductor.conduct_match(
                 match_id, round_id, player_a_id, player_b_id, conversation_id, queue
             )
@@ -212,14 +217,11 @@ class TestTimeoutEnforcement:
                 },
             }
 
-        with patch.object(
-            match_conductor, "_send_invitations", side_effect=mock_send_invitations
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join
-        ), patch.object(
-            match_conductor, "_send_parity_calls", side_effect=mock_send_parity
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices
+        with (
+            patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+            patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+            patch.object(match_conductor, "_send_parity_calls", side_effect=mock_send_parity),
+            patch.object(match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices),
         ):
             result = await match_conductor.conduct_match(
                 match_id, round_id, player_a_id, player_b_id, conversation_id, queue
@@ -272,14 +274,11 @@ class TestTimeoutEnforcement:
                 player_b_id: None,  # Timeout
             }
 
-        with patch.object(
-            match_conductor, "_send_invitations", side_effect=mock_send_invitations
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join
-        ), patch.object(
-            match_conductor, "_send_parity_calls", side_effect=mock_send_parity
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices
+        with (
+            patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+            patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+            patch.object(match_conductor, "_send_parity_calls", side_effect=mock_send_parity),
+            patch.object(match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices),
         ):
             result = await match_conductor.conduct_match(
                 match_id, round_id, player_a_id, player_b_id, conversation_id, queue
@@ -325,14 +324,11 @@ class TestTimeoutEnforcement:
             # Both players timeout
             return {player_a_id: None, player_b_id: None}
 
-        with patch.object(
-            match_conductor, "_send_invitations", side_effect=mock_send_invitations
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join
-        ), patch.object(
-            match_conductor, "_send_parity_calls", side_effect=mock_send_parity
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices
+        with (
+            patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+            patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+            patch.object(match_conductor, "_send_parity_calls", side_effect=mock_send_parity),
+            patch.object(match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices),
         ):
             result = await match_conductor.conduct_match(
                 match_id, round_id, player_a_id, player_b_id, conversation_id, queue
@@ -389,14 +385,11 @@ class TestTimeoutEnforcement:
                 player_b_id: None,  # Timeout
             }
 
-        with patch.object(
-            match_conductor, "_send_invitations", side_effect=mock_send_invitations
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join
-        ), patch.object(
-            match_conductor, "_send_parity_calls", side_effect=mock_send_parity
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices
+        with (
+            patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+            patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+            patch.object(match_conductor, "_send_parity_calls", side_effect=mock_send_parity),
+            patch.object(match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices),
         ):
             result = await match_conductor.conduct_match(
                 match_id, round_id, player_a_id, player_b_id, conversation_id, queue

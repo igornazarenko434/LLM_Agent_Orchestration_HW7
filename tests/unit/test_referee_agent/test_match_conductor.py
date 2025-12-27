@@ -14,13 +14,12 @@ def mock_logger():
 
 @pytest.fixture
 def match_conductor(mock_logger):
-    with patch("agents.referee_REF01.match_conductor.MatchRepository") as MockRepo, patch(
-        "agents.referee_REF01.match_conductor.load_system_config"
-    ) as mock_sys_conf, patch(
-        "agents.referee_REF01.match_conductor.load_agents_config"
-    ) as mock_agents_conf, patch(
-        "agents.referee_REF01.match_conductor.load_json_file"
-    ) as mock_league_conf:
+    with (
+        patch("agents.referee_REF01.match_conductor.MatchRepository") as MockRepo,
+        patch("agents.referee_REF01.match_conductor.load_system_config") as mock_sys_conf,
+        patch("agents.referee_REF01.match_conductor.load_agents_config") as mock_agents_conf,
+        patch("agents.referee_REF01.match_conductor.load_json_file") as mock_league_conf,
+    ):
         # Setup mocks
         mock_repo_instance = MockRepo.return_value
 
@@ -92,18 +91,13 @@ async def test_conduct_match_saves_result(match_conductor):
     conv_id = "conv-1"
     queue = asyncio.Queue()
 
-    with patch.object(
-        match_conductor, "_send_invitations", return_value={p1: True, p2: True}
-    ), patch.object(
-        match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: "ack"}
-    ), patch.object(
-        match_conductor, "_send_parity_calls"
-    ), patch.object(
-        match_conductor, "_wait_for_parity_choices", return_value={p1: "even", p2: "odd"}
-    ), patch.object(
-        match_conductor, "_send_game_over"
-    ), patch.object(
-        match_conductor, "_send_match_result_to_league_manager"
+    with (
+        patch.object(match_conductor, "_send_invitations", return_value={p1: True, p2: True}),
+        patch.object(match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: "ack"}),
+        patch.object(match_conductor, "_send_parity_calls"),
+        patch.object(match_conductor, "_wait_for_parity_choices", return_value={p1: "even", p2: "odd"}),
+        patch.object(match_conductor, "_send_game_over"),
+        patch.object(match_conductor, "_send_match_result_to_league_manager"),
     ):
         # Mock game logic to be deterministic
         match_conductor.game_logic.draw_random_number = MagicMock(return_value=2)  # Even
@@ -136,9 +130,10 @@ class TestMatchConductorTimeoutScenarios:
         conv_id = "conv-1"
         queue = asyncio.Queue()
 
-        with patch.object(
-            match_conductor, "_send_invitations", return_value={p1: True, p2: True}
-        ), patch.object(match_conductor, "_wait_for_join_acks", return_value={p1: None, p2: None}):
+        with (
+            patch.object(match_conductor, "_send_invitations", return_value={p1: True, p2: True}),
+            patch.object(match_conductor, "_wait_for_join_acks", return_value={p1: None, p2: None}),
+        ):
             result = await match_conductor.conduct_match(match_id, round_id, p1, p2, conv_id, queue)
 
             # Should return technical loss result
@@ -154,13 +149,13 @@ class TestMatchConductorTimeoutScenarios:
         conv_id = "conv-1"
         queue = asyncio.Queue()
 
-        with patch.object(
-            match_conductor, "_send_invitations", return_value={p1: True, p2: True}
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", return_value={p1: None, p2: "ack"}
-        ), patch.object(
-            match_conductor, "_finish_match_with_technical_loss", return_value={"winner": p2}
-        ) as mock_finish:
+        with (
+            patch.object(match_conductor, "_send_invitations", return_value={p1: True, p2: True}),
+            patch.object(match_conductor, "_wait_for_join_acks", return_value={p1: None, p2: "ack"}),
+            patch.object(
+                match_conductor, "_finish_match_with_technical_loss", return_value={"winner": p2}
+            ) as mock_finish,
+        ):
             # Mock game logic for technical loss
             match_conductor.game_logic.award_technical_loss = MagicMock(
                 return_value=(p2, "TECHNICAL_LOSS", "WIN")
@@ -180,13 +175,13 @@ class TestMatchConductorTimeoutScenarios:
         conv_id = "conv-1"
         queue = asyncio.Queue()
 
-        with patch.object(
-            match_conductor, "_send_invitations", return_value={p1: True, p2: True}
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: None}
-        ), patch.object(
-            match_conductor, "_finish_match_with_technical_loss", return_value={"winner": p1}
-        ) as mock_finish:
+        with (
+            patch.object(match_conductor, "_send_invitations", return_value={p1: True, p2: True}),
+            patch.object(match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: None}),
+            patch.object(
+                match_conductor, "_finish_match_with_technical_loss", return_value={"winner": p1}
+            ) as mock_finish,
+        ):
             match_conductor.game_logic.award_technical_loss = MagicMock(
                 return_value=(p1, "TECHNICAL_LOSS", "WIN")
             )
@@ -204,14 +199,13 @@ class TestMatchConductorTimeoutScenarios:
         conv_id = "conv-1"
         queue = asyncio.Queue()
 
-        with patch.object(
-            match_conductor, "_send_invitations", return_value={p1: True, p2: True}
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: "ack"}
-        ), patch.object(
-            match_conductor, "_send_parity_calls"
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", return_value={p1: None, p2: None}
+        with (
+            patch.object(match_conductor, "_send_invitations", return_value={p1: True, p2: True}),
+            patch.object(match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: "ack"}),
+            patch.object(match_conductor, "_send_parity_calls"),
+            patch.object(
+                match_conductor, "_wait_for_parity_choices", return_value={p1: None, p2: None}
+            ),
         ):
             result = await match_conductor.conduct_match(match_id, round_id, p1, p2, conv_id, queue)
 
@@ -227,17 +221,17 @@ class TestMatchConductorTimeoutScenarios:
         conv_id = "conv-1"
         queue = asyncio.Queue()
 
-        with patch.object(
-            match_conductor, "_send_invitations", return_value={p1: True, p2: True}
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: "ack"}
-        ), patch.object(
-            match_conductor, "_send_parity_calls"
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", return_value={p1: None, p2: "even"}
-        ), patch.object(
-            match_conductor, "_finish_match_with_technical_loss", return_value={"winner": p2}
-        ) as mock_finish:
+        with (
+            patch.object(match_conductor, "_send_invitations", return_value={p1: True, p2: True}),
+            patch.object(match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: "ack"}),
+            patch.object(match_conductor, "_send_parity_calls"),
+            patch.object(
+                match_conductor, "_wait_for_parity_choices", return_value={p1: None, p2: "even"}
+            ),
+            patch.object(
+                match_conductor, "_finish_match_with_technical_loss", return_value={"winner": p2}
+            ) as mock_finish,
+        ):
             match_conductor.game_logic.award_technical_loss = MagicMock(
                 return_value=(p2, "TECHNICAL_LOSS", "WIN")
             )
@@ -254,17 +248,17 @@ class TestMatchConductorTimeoutScenarios:
         conv_id = "conv-1"
         queue = asyncio.Queue()
 
-        with patch.object(
-            match_conductor, "_send_invitations", return_value={p1: True, p2: True}
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: "ack"}
-        ), patch.object(
-            match_conductor, "_send_parity_calls"
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", return_value={p1: "odd", p2: None}
-        ), patch.object(
-            match_conductor, "_finish_match_with_technical_loss", return_value={"winner": p1}
-        ) as mock_finish:
+        with (
+            patch.object(match_conductor, "_send_invitations", return_value={p1: True, p2: True}),
+            patch.object(match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: "ack"}),
+            patch.object(match_conductor, "_send_parity_calls"),
+            patch.object(
+                match_conductor, "_wait_for_parity_choices", return_value={p1: "odd", p2: None}
+            ),
+            patch.object(
+                match_conductor, "_finish_match_with_technical_loss", return_value={"winner": p1}
+            ) as mock_finish,
+        ):
             match_conductor.game_logic.award_technical_loss = MagicMock(
                 return_value=(p1, "TECHNICAL_LOSS", "WIN")
             )
@@ -285,14 +279,13 @@ class TestMatchConductorInvalidMoves:
         conv_id = "conv-1"
         queue = asyncio.Queue()
 
-        with patch.object(
-            match_conductor, "_send_invitations", return_value={p1: True, p2: True}
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: "ack"}
-        ), patch.object(
-            match_conductor, "_send_parity_calls"
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", return_value={p1: "invalid", p2: "even"}
+        with (
+            patch.object(match_conductor, "_send_invitations", return_value={p1: True, p2: True}),
+            patch.object(match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: "ack"}),
+            patch.object(match_conductor, "_send_parity_calls"),
+            patch.object(
+                match_conductor, "_wait_for_parity_choices", return_value={p1: "invalid", p2: "even"}
+            ),
         ):
             result = await match_conductor.conduct_match(match_id, round_id, p1, p2, conv_id, queue)
 
@@ -309,14 +302,13 @@ class TestMatchConductorInvalidMoves:
         conv_id = "conv-1"
         queue = asyncio.Queue()
 
-        with patch.object(
-            match_conductor, "_send_invitations", return_value={p1: True, p2: True}
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: "ack"}
-        ), patch.object(
-            match_conductor, "_send_parity_calls"
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", return_value={p1: "odd", p2: "INVALID"}
+        with (
+            patch.object(match_conductor, "_send_invitations", return_value={p1: True, p2: True}),
+            patch.object(match_conductor, "_wait_for_join_acks", return_value={p1: "ack", p2: "ack"}),
+            patch.object(match_conductor, "_send_parity_calls"),
+            patch.object(
+                match_conductor, "_wait_for_parity_choices", return_value={p1: "odd", p2: "INVALID"}
+            ),
         ):
             result = await match_conductor.conduct_match(match_id, round_id, p1, p2, conv_id, queue)
 

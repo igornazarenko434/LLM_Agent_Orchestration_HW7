@@ -19,9 +19,10 @@ def test_standings_sorting_tiebreaker(repo):
     """Test that standings sort by points (primary) and wins (tiebreaker)."""
 
     # We'll mock atomic_write to avoid actual file I/O
-    with patch("league_sdk.repositories.atomic_write") as mock_write, patch(
-        "league_sdk.repositories.StandingsRepository.load"
-    ) as mock_load:
+    with (
+        patch("league_sdk.repositories.atomic_write") as mock_write,
+        patch("league_sdk.repositories.StandingsRepository.load") as mock_load,
+    ):
         # Setup initial unordered state
         mock_load.return_value = {
             "standings": [
@@ -60,9 +61,11 @@ def test_standings_sorting_tiebreaker(repo):
 async def test_round_completion_broadcast():
     """Test that League Manager broadcasts ROUND_COMPLETED when all matches finish."""
 
-    with patch("agents.league_manager.server.load_system_config"), patch(
-        "agents.league_manager.server.load_agents_config"
-    ) as mock_agents_config, patch("agents.league_manager.server.load_league_config"):
+    with (
+        patch("agents.league_manager.server.load_system_config"),
+        patch("agents.league_manager.server.load_agents_config") as mock_agents_config,
+        patch("agents.league_manager.server.load_league_config"),
+    ):
         # Mock agents config to have players
         mock_agents_config.return_value = {
             "players": [

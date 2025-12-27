@@ -26,9 +26,11 @@ class TestConcurrentMatches:
     @pytest.fixture
     def match_conductor(self):
         """Create a MatchConductor instance with mocked configs."""
-        with patch("agents.referee_REF01.match_conductor.load_system_config") as mock_system, patch(
-            "agents.referee_REF01.match_conductor.load_agents_config"
-        ) as mock_agents, patch("agents.referee_REF01.match_conductor.load_json_file") as mock_league:
+        with (
+            patch("agents.referee_REF01.match_conductor.load_system_config") as mock_system,
+            patch("agents.referee_REF01.match_conductor.load_agents_config") as mock_agents,
+            patch("agents.referee_REF01.match_conductor.load_json_file") as mock_league,
+        ):
             # Mock system config
             mock_system.return_value = MagicMock(
                 timeouts=MagicMock(
@@ -107,18 +109,17 @@ class TestConcurrentMatches:
         async def mock_send_match_result(*args, **kwargs):
             await asyncio.sleep(0.01)
 
-        with patch.object(
-            match_conductor, "_send_invitations", side_effect=mock_send_invitations
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join
-        ), patch.object(
-            match_conductor, "_send_parity_calls", side_effect=mock_send_parity
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices
-        ), patch.object(
-            match_conductor, "_send_game_over", side_effect=mock_send_game_over
-        ), patch.object(
-            match_conductor, "_send_match_result_to_league_manager", side_effect=mock_send_match_result
+        with (
+            patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+            patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+            patch.object(match_conductor, "_send_parity_calls", side_effect=mock_send_parity),
+            patch.object(match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices),
+            patch.object(match_conductor, "_send_game_over", side_effect=mock_send_game_over),
+            patch.object(
+                match_conductor,
+                "_send_match_result_to_league_manager",
+                side_effect=mock_send_match_result,
+            ),
         ):
             # Launch 2 matches concurrently
             queue1 = asyncio.Queue()
@@ -191,18 +192,17 @@ class TestConcurrentMatches:
         async def mock_send_match_result(*args, **kwargs):
             await asyncio.sleep(0.005)
 
-        with patch.object(
-            match_conductor, "_send_invitations", side_effect=mock_send_invitations
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join
-        ), patch.object(
-            match_conductor, "_send_parity_calls", side_effect=mock_send_parity
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices
-        ), patch.object(
-            match_conductor, "_send_game_over", side_effect=mock_send_game_over
-        ), patch.object(
-            match_conductor, "_send_match_result_to_league_manager", side_effect=mock_send_match_result
+        with (
+            patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+            patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+            patch.object(match_conductor, "_send_parity_calls", side_effect=mock_send_parity),
+            patch.object(match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices),
+            patch.object(match_conductor, "_send_game_over", side_effect=mock_send_game_over),
+            patch.object(
+                match_conductor,
+                "_send_match_result_to_league_manager",
+                side_effect=mock_send_match_result,
+            ),
         ):
             # Launch 5 matches concurrently (reusing players for simplicity)
             tasks = []
@@ -264,18 +264,17 @@ class TestConcurrentMatches:
         async def mock_send_match_result(*args, **kwargs):
             await asyncio.sleep(0.01)
 
-        with patch.object(
-            match_conductor, "_send_invitations", side_effect=mock_send_invitations
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join
-        ), patch.object(
-            match_conductor, "_send_parity_calls", side_effect=mock_send_parity
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices
-        ), patch.object(
-            match_conductor, "_send_game_over", side_effect=mock_send_game_over
-        ), patch.object(
-            match_conductor, "_send_match_result_to_league_manager", side_effect=mock_send_match_result
+        with (
+            patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+            patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+            patch.object(match_conductor, "_send_parity_calls", side_effect=mock_send_parity),
+            patch.object(match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices),
+            patch.object(match_conductor, "_send_game_over", side_effect=mock_send_game_over),
+            patch.object(
+                match_conductor,
+                "_send_match_result_to_league_manager",
+                side_effect=mock_send_match_result,
+            ),
         ):
             queue1 = asyncio.Queue()
             queue2 = asyncio.Queue()
@@ -351,18 +350,17 @@ class TestConcurrentMatches:
             delay = 0.005
             await asyncio.sleep(delay)
 
-        with patch.object(
-            match_conductor, "_send_invitations", side_effect=mock_send_invitations
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join
-        ), patch.object(
-            match_conductor, "_send_parity_calls", side_effect=mock_send_parity
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices
-        ), patch.object(
-            match_conductor, "_send_game_over", side_effect=mock_send_game_over
-        ), patch.object(
-            match_conductor, "_send_match_result_to_league_manager", side_effect=mock_send_match_result
+        with (
+            patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+            patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+            patch.object(match_conductor, "_send_parity_calls", side_effect=mock_send_parity),
+            patch.object(match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices),
+            patch.object(match_conductor, "_send_game_over", side_effect=mock_send_game_over),
+            patch.object(
+                match_conductor,
+                "_send_match_result_to_league_manager",
+                side_effect=mock_send_match_result,
+            ),
         ):
             # Launch 10 matches with variable delays
             tasks = []

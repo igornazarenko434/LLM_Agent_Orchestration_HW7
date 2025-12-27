@@ -88,9 +88,10 @@ class TestRefereeIntegration:
         """Test successful registration initializes MatchConductor."""
         assert referee.match_conductor is None
 
-        with patch(
-            "agents.referee_REF01.server.call_with_retry", new_callable=AsyncMock
-        ) as mock_retry, patch("agents.referee_REF01.server.MatchConductor") as mock_conductor:
+        with (
+            patch("agents.referee_REF01.server.call_with_retry", new_callable=AsyncMock) as mock_retry,
+            patch("agents.referee_REF01.server.MatchConductor") as mock_conductor,
+        ):
             mock_retry.return_value = {
                 "result": {
                     "status": "ACCEPTED",

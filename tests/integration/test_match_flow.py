@@ -23,9 +23,11 @@ class TestMatchFlow:
     @pytest.fixture
     def mock_configs(self):
         """Mock all config loaders."""
-        with patch("agents.referee_REF01.match_conductor.load_system_config") as mock_system, patch(
-            "agents.referee_REF01.match_conductor.load_agents_config"
-        ) as mock_agents, patch("agents.referee_REF01.match_conductor.load_json_file") as mock_league:
+        with (
+            patch("agents.referee_REF01.match_conductor.load_system_config") as mock_system,
+            patch("agents.referee_REF01.match_conductor.load_agents_config") as mock_agents,
+            patch("agents.referee_REF01.match_conductor.load_json_file") as mock_league,
+        ):
             # Mock system config
             mock_system.return_value = MagicMock(
                 timeouts=MagicMock(
@@ -135,14 +137,11 @@ class TestMatchFlow:
                 player_b_id: "odd",
             }
 
-        with patch.object(
-            match_conductor, "_send_invitations", side_effect=mock_send_invitations
-        ), patch.object(
-            match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join
-        ), patch.object(
-            match_conductor, "_send_parity_calls", side_effect=mock_send_parity
-        ), patch.object(
-            match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices
+        with (
+            patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+            patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+            patch.object(match_conductor, "_send_parity_calls", side_effect=mock_send_parity),
+            patch.object(match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices),
         ):
             result = await match_conductor.conduct_match(
                 match_id, round_id, player_a_id, player_b_id, conversation_id, queue
@@ -255,20 +254,19 @@ class TestMatchFlow:
             async def mock_send_match_result(*args, **kwargs):
                 pass  # Mock sending result to league manager
 
-            with patch.object(
-                match_conductor, "_send_invitations", side_effect=mock_send_invitations
-            ), patch.object(
-                match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join
-            ), patch.object(
-                match_conductor, "_send_parity_calls", side_effect=mock_send_parity
-            ), patch.object(
-                match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices
-            ), patch.object(
-                match_conductor, "_send_game_over", side_effect=mock_send_game_over
-            ), patch.object(
-                match_conductor,
-                "_send_match_result_to_league_manager",
-                side_effect=mock_send_match_result,
+            with (
+                patch.object(match_conductor, "_send_invitations", side_effect=mock_send_invitations),
+                patch.object(match_conductor, "_wait_for_join_acks", side_effect=mock_wait_join),
+                patch.object(match_conductor, "_send_parity_calls", side_effect=mock_send_parity),
+                patch.object(
+                    match_conductor, "_wait_for_parity_choices", side_effect=mock_wait_choices
+                ),
+                patch.object(match_conductor, "_send_game_over", side_effect=mock_send_game_over),
+                patch.object(
+                    match_conductor,
+                    "_send_match_result_to_league_manager",
+                    side_effect=mock_send_match_result,
+                ),
             ):
                 result = await match_conductor.conduct_match(
                     match_id, round_id, player_a_id, player_b_id, conversation_id, queue

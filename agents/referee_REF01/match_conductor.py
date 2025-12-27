@@ -484,9 +484,11 @@ class MatchConductor:
         self.std_logger.info(
             f"Creating GAME_INVITATION with auth_token length: {auth_len}",
             extra={
-                "auth_token_preview": self.auth_token[:8] + "..."
-                if self.auth_token and len(self.auth_token) >= 8
-                else "EMPTY"
+                "auth_token_preview": (
+                    self.auth_token[:8] + "..."
+                    if self.auth_token and len(self.auth_token) >= 8
+                    else "EMPTY"
+                )
             },
         )
 
@@ -522,9 +524,9 @@ class MatchConductor:
             "GAME_INVITATION dumped data",
             extra={
                 "has_auth_token": bool(dumped.get("auth_token")),
-                "auth_token_length": len(dumped.get("auth_token", ""))
-                if dumped.get("auth_token")
-                else 0,
+                "auth_token_length": (
+                    len(dumped.get("auth_token", "")) if dumped.get("auth_token") else 0
+                ),
             },
         )
 

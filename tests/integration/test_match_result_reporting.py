@@ -14,17 +14,14 @@ from agents.league_manager.server import LeagueManager
 @pytest.mark.asyncio
 async def test_match_result_reporting_updates_standings_and_rounds(tmp_path):
     """Match result report is accepted, processed, and updates standings/rounds."""
-    with patch("agents.league_manager.server.load_system_config") as mock_system_config, patch(
-        "agents.league_manager.server.load_agents_config"
-    ) as mock_agents_config, patch(
-        "agents.league_manager.server.load_league_config"
-    ) as mock_league_config, patch(
-        "agents.league_manager.server.get_retention_config"
-    ) as mock_retention, patch(
-        "agents.league_manager.server.StandingsRepository"
-    ) as mock_standings_repo, patch(
-        "agents.league_manager.server.RoundsRepository"
-    ) as mock_rounds_repo:
+    with (
+        patch("agents.league_manager.server.load_system_config") as mock_system_config,
+        patch("agents.league_manager.server.load_agents_config") as mock_agents_config,
+        patch("agents.league_manager.server.load_league_config") as mock_league_config,
+        patch("agents.league_manager.server.get_retention_config") as mock_retention,
+        patch("agents.league_manager.server.StandingsRepository") as mock_standings_repo,
+        patch("agents.league_manager.server.RoundsRepository") as mock_rounds_repo,
+    ):
         mock_system_config.return_value = MagicMock(
             network=MagicMock(max_connections=100, request_timeout_sec=10),
             timeouts=MagicMock(generic_sec=5),

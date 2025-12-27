@@ -8,13 +8,12 @@ from agents.league_manager.server import LeagueManager
 
 @pytest.fixture
 def league_manager():
-    with patch("agents.league_manager.server.load_system_config") as mock_system_config, patch(
-        "agents.league_manager.server.load_agents_config"
-    ) as mock_agents_config, patch(
-        "agents.league_manager.server.load_league_config"
-    ) as mock_league_config, patch(
-        "agents.league_manager.server.get_retention_config"
-    ) as mock_retention:
+    with (
+        patch("agents.league_manager.server.load_system_config") as mock_system_config,
+        patch("agents.league_manager.server.load_agents_config") as mock_agents_config,
+        patch("agents.league_manager.server.load_league_config") as mock_league_config,
+        patch("agents.league_manager.server.get_retention_config") as mock_retention,
+    ):
         mock_system_config.return_value = MagicMock(
             network=MagicMock(request_timeout_sec=10),
             timeouts=MagicMock(generic_sec=5),

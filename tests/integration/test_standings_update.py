@@ -19,9 +19,11 @@ class TestStandingsUpdate:
     @pytest.fixture
     def league_manager(self):
         """Create a LeagueManager instance with mocked configs."""
-        with patch("agents.league_manager.server.load_system_config") as mock_system, patch(
-            "agents.league_manager.server.load_agents_config"
-        ) as mock_agents, patch("agents.league_manager.server.load_league_config") as mock_league:
+        with (
+            patch("agents.league_manager.server.load_system_config") as mock_system,
+            patch("agents.league_manager.server.load_agents_config") as mock_agents,
+            patch("agents.league_manager.server.load_league_config") as mock_league,
+        ):
             # Mock system config
             mock_system.return_value = MagicMock(
                 timeouts=MagicMock(

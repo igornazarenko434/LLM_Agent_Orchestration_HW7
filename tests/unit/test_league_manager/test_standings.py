@@ -10,11 +10,11 @@ from agents.league_manager.server import LeagueManager
 @pytest.fixture
 def league_manager():
     # Mock configs to avoid loading files
-    with patch("agents.league_manager.server.load_system_config") as mock_system_config, patch(
-        "agents.league_manager.server.load_agents_config"
-    ) as mock_agents_config, patch(
-        "agents.league_manager.server.load_league_config"
-    ) as mock_league_config:
+    with (
+        patch("agents.league_manager.server.load_system_config") as mock_system_config,
+        patch("agents.league_manager.server.load_agents_config") as mock_agents_config,
+        patch("agents.league_manager.server.load_league_config") as mock_league_config,
+    ):
         mock_system_config.return_value = MagicMock(
             network=MagicMock(max_connections=100, request_timeout_sec=10),
             timeouts=MagicMock(generic_sec=10),
