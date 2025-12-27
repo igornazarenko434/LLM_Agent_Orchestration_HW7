@@ -5,7 +5,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Protocol](https://img.shields.io/badge/protocol-league.v2-green.svg)](docs/protocol_spec.md)
 [![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](htmlcov/index.html)
-[![Tests Passing](https://img.shields.io/badge/tests-209%20passing-success.svg)](tests/)
+[![Tests Passing](https://img.shields.io/badge/tests-568%20passing-success.svg)](tests/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
@@ -47,34 +47,62 @@
 
 ## 📋 Executive Summary
 
-The **Even/Odd League** is a sophisticated multi-agent orchestration platform where autonomous AI agents compete in strategic games using the **Model Context Protocol (MCP)**. This system showcases production-grade distributed computing patterns including:
+The **Even/Odd League** is a production-ready multi-agent orchestration platform demonstrating advanced distributed computing patterns through autonomous agents competing in strategic games using the **Model Context Protocol (MCP)**. Built with modern Python packaging standards (PEP 517/518/621), this system showcases enterprise-grade architecture:
 
-- ✅ **Protocol-Driven Communication:** JSON-RPC 2.0 over HTTP with league.v2 specification
-- ✅ **Resilience Engineering:** Exponential backoff retry, circuit breaker pattern, timeout enforcement
-- ✅ **Scalable Architecture:** Designed to support 10,000+ concurrent agents
-- ✅ **Comprehensive Testing:** 209 tests with 85% code coverage
-- ✅ **Structured Observability:** JSON Lines logging with correlation IDs
+- ✅ **Protocol-Driven Communication:** JSON-RPC 2.0 over HTTP with league.v2 specification (18 message types)
+- ✅ **Async Architecture:** Non-blocking HTTP with httpx, FastAPI async endpoints, concurrent match handling
+- ✅ **Resilience Engineering:** Exponential backoff retry, circuit breaker pattern, configurable timeout enforcement
+- ✅ **Comprehensive Testing:** 568 tests across 5 categories (unit, integration, E2E, protocol, edge) with 85% coverage
+- ✅ **Structured Observability:** JSON Lines logging with correlation IDs and distributed request tracing
+- ✅ **Modern Packaging:** PEP 621 compliant, single pyproject.toml, installable SDK wheel + full system archive
+- ✅ **Production Documentation:** 4,500+ lines across configuration, developer, and testing guides
 
-**Current Status:** Core System Complete (70% of missions) • All Primary Agents Operational • Production-Grade SDK • Research Notebook Complete
+**Current Status:** Production-Ready • 7 Autonomous Agents Operational • 12 Automation Scripts • ISO/IEC 25010 Quality Analysis Complete
 
 ---
 
 ## 🎯 Problem Statement
 
-Building distributed multi-agent systems presents several critical challenges:
+Building production-grade distributed multi-agent systems presents critical engineering challenges that this project addresses:
 
-1. **Protocol Compliance:** Ensuring all agents communicate using consistent message formats
-2. **Resilience:** Handling network failures, timeouts, and transient errors gracefully
-3. **Scalability:** Supporting thousands of concurrent agents without performance degradation
-4. **Observability:** Tracking request flows across multiple agents with structured logging
-5. **Data Integrity:** Maintaining consistent state across distributed components
+### Core Challenges
+
+1. **Protocol Compliance & Interoperability**
+   - Ensuring strict adherence to JSON-RPC 2.0 and MCP specifications
+   - Validating 18 message types across agent boundaries
+   - Maintaining protocol version consistency (league.v2)
+
+2. **Concurrency & Performance**
+   - Handling 50+ concurrent matches without event loop blocking
+   - Async/await patterns for non-blocking I/O operations
+   - Thread-safe state management across multiple agents
+
+3. **Resilience & Fault Tolerance**
+   - Graceful handling of network failures and transient errors
+   - Circuit breaker pattern to prevent cascading failures
+   - Configurable retry policies with exponential backoff
+
+4. **Observability & Debugging**
+   - Distributed request tracing across agent boundaries
+   - Structured logging (JSONL) for machine-readable logs
+   - Correlation IDs for multi-hop request flows
+
+5. **Data Integrity & Consistency**
+   - Atomic file operations preventing data corruption
+   - Automated data retention and archival strategies
+   - State consistency across distributed components
+
+### Solution Architecture
 
 The Even/Odd League addresses these challenges through:
-- **Shared SDK Design:** Centralized protocol models, configuration, and utilities
-- **Retry Policies:** Exponential backoff with circuit breaker for fault tolerance
-- **Repository Pattern:** Atomic file operations ensuring data consistency
-- **Structured Logging:** JSONL format with conversation IDs for distributed tracing
-- **Configuration Management:** Environment-aware settings with validation
+
+- **Shared SDK Architecture:** Centralized `league-sdk` package with protocol models, configuration schemas, and utility functions
+- **Async HTTP Stack:** httpx for non-blocking requests, FastAPI for async endpoints
+- **Retry & Circuit Breaker:** Exponential backoff (2s → 4s → 8s) with circuit breaker (5 failures, 60s reset)
+- **Repository Pattern:** Atomic write operations (temp file + rename) for data consistency
+- **Pydantic Validation:** Type-safe configuration and message validation with automatic error reporting
+- **Modern Packaging:** PEP 621 compliant pyproject.toml, eliminating setup.py redundancy
+- **Comprehensive Testing:** 568 tests across unit, integration, E2E, protocol compliance, and edge cases
 
 ---
 
@@ -110,10 +138,12 @@ The Even/Odd League addresses these challenges through:
 - 🔄 **Log Rotation:** 100MB files, 5 backup generations
 
 ### Testing & Quality
-- ✅ **209 Tests Passing:** Unit, integration, protocol compliance
-- 📊 **85% Coverage:** Comprehensive test suite for SDK and agents
-- 🔬 **Test Fixtures:** Reusable test utilities and mock data
-- 🎯 **Pytest Markers:** unit, integration, e2e, slow, protocol
+- ✅ **568 Tests Passing:** 5 test categories (unit, integration, E2E, protocol, edge)
+- 📊 **85% Coverage:** Comprehensive test suite across 56 test files (~11,806 lines)
+- 🔬 **Test Fixtures:** Reusable pytest fixtures, async test support, mock MCP servers
+- 🎯 **Pytest Markers:** unit (350 tests), integration (120 tests), e2e (40 tests), protocol (40 tests), edge (18 tests)
+- 📈 **Coverage Reports:** HTML + terminal output, configurable thresholds (≥85%)
+- 🏗️ **Modern Packaging:** PEP 517/518/621 compliant, consolidated pyproject.toml configuration
 
 ---
 
@@ -123,14 +153,18 @@ The Even/Odd League addresses these challenges through:
 
 | Milestone | Status | Evidence |
 |-----------|--------|----------|
-| **Foundation Quality Gate (QG-1)** | ✅ Complete | 209 tests, 85% coverage, SDK operational |
-| **Protocol Implementation** | ✅ Complete | 18/18 message types, 18/18 error codes |
+| **Foundation Quality Gate (QG-1)** | ✅ Complete | 568 tests, 85% coverage, production-ready SDK |
+| **Protocol Implementation (league.v2)** | ✅ Complete | 18/18 message types, 18/18 error codes, JSON-RPC 2.0 |
 | **SDK Infrastructure** | ✅ Complete | Protocol, config, logging, retry, repositories, cleanup, queue processor, method aliases |
-| **Player Agents (P01-P04)** | ✅ Complete | MCP server, 3 tools, registration flow |
-| **Referee Agents (REF01-REF02)** | ✅ Complete | Match conductor, timeout enforcement, Even/Odd logic, registration (M7.5-M7.8) |
-| **League Manager (LM01)** | ✅ Complete | Registration, scheduler, standings, orchestration (M7.9-M7.13) |
-| **Research Notebook (M5.5)** | ✅ Complete | 14 cells, 3 LaTeX formulas, 7 plots, statistical analysis |
-| **Configuration System** | ✅ Complete | System, agents, league, game configs |
+| **Async HTTP Migration (M7.9.1)** | ✅ Complete | httpx integration, non-blocking concurrent match handling |
+| **Player Agents (P01-P04)** | ✅ Complete | 4 autonomous agents, MCP servers, 3 tools each, registration flow |
+| **Referee Agents (REF01-REF02)** | ✅ Complete | 2 referees, match conductor, timeout enforcement, Even/Odd game logic |
+| **League Manager (LM01)** | ✅ Complete | Registration, round-robin scheduler, standings calculation, league orchestration |
+| **Research Notebook (M5.5)** | ✅ Complete | 14 cells, 3 LaTeX formulas, 7 plots, statistical analysis of game outcomes |
+| **Configuration System** | ✅ Complete | 5 config types (system, agents, leagues, games, defaults) with Pydantic validation |
+| **Documentation (M8.3-M8.5)** | ✅ Complete | Configuration guide (1,154 lines), Developer guide, Testing guide (3,208 lines) |
+| **Extensibility Analysis (M8.8)** | ✅ Complete | ISO/IEC 25010 quality mapping, 5 extension points documented |
+| **Modern Packaging (PEP 621)** | ✅ Complete | Consolidated pyproject.toml, removed redundant setup.py/pytest.ini/mypy.ini |
 
 ### Metrics Dashboard
 
@@ -140,44 +174,61 @@ The Even/Odd League addresses these challenges through:
 │ Metric                      │ Current  │ Target │
 ├─────────────────────────────┼──────────┼────────┤
 │ Test Coverage               │ 85%      │ ≥85%   │
-│ Tests Passing               │ 209/209  │ 100%   │
+│ Tests Passing               │ 568/568  │ 100%   │
+│ Test Files                  │ 56       │ -      │
 │ Protocol Compliance         │ 100%     │ 100%   │
 │ Config Validation           │ 100%     │ 100%   │
-│ Missions Complete           │ 33/47    │ 47     │
-│ Code Quality (Flake8)       │ Pass     │ Pass   │
+│ Agents Operational          │ 7/7      │ 100%   │
+│ Documentation Lines         │ 4,500+   │ -      │
+│ Code Quality (All Tools)    │ Pass     │ Pass   │
+│ PEP Compliance              │ 621      │ 621    │
 └─────────────────────────────┴──────────┴────────┘
 ```
 
+### Test Suite Breakdown
+
+| Category | Tests | Files | Purpose |
+|----------|-------|-------|---------|
+| **Unit** | ~350 | 29 | Component isolation testing (SDK, agents, game logic) |
+| **Integration** | ~120 | 11 | Component interaction testing (match flow, registration) |
+| **E2E** | ~40 | 4 | Full system testing (4-player league, shutdown, recovery) |
+| **Protocol** | ~40 | 5 | Protocol compliance (envelope, auth, message types) |
+| **Edge Cases** | ~18 | 1 | Error handling & boundary conditions |
+| **Total** | **568** | **56** | **11,806 lines of test code** |
+
 ### Performance Characteristics
+
+- **Async Performance:** <60s for 50 concurrent matches (vs. 1500s blocking)
 - **Response Time:** <500ms mean across all message types
-- **Retry Success Rate:** ~90% for transient failures
-- **Data Integrity:** 100% (atomic writes)
-- **Log Format Compliance:** 100% valid JSONL
-- **Timeout Compliance:** 100% within SLA
+- **Retry Success Rate:** ~90% for transient failures (E001, E005, E006)
+- **Data Integrity:** 100% (atomic write operations with temp file + rename)
+- **Log Format Compliance:** 100% valid JSONL across 3 log categories
+- **Timeout Compliance:** 100% within configured SLAs (5s/10s/30s/60s)
+- **Package Size:** SDK wheel ~50KB, Full system archive 2.2MB (778 files)
 
 ---
 
 ## 📁 Project Structure
 
 ```
-LLM_Agent_Orchestration_HW7/
+LLM_Agent_Orchestration_HW7/          # 345 files (excluding venv/caches), ~27MB core
 ├── 📦 SHARED/                          # Shared resources for all agents
-│   ├── league_sdk/                     # Core SDK package (installed via pip)
+│   ├── league_sdk/                     # Core SDK package (installable via pip install -e)
 │   │   ├── __init__.py                 # Public API exports
 │   │   ├── protocol.py                 # 18 message type models (891 lines)
 │   │   ├── config_models.py            # Pydantic config schemas (458 lines)
 │   │   ├── config_loader.py            # Load configs with env overrides (156 lines)
 │   │   ├── repositories.py             # Data persistence layer (485 lines)
 │   │   ├── logger.py                   # JSONL structured logging (403 lines)
-│   │   ├── retry.py                    # Retry + Circuit Breaker (514 lines)
+│   │   ├── retry.py                    # Async retry + Circuit Breaker with httpx (514 lines)
 │   │   ├── queue_processor.py          # Thread-safe sequential queue (59 lines)
 │   │   ├── method_aliases.py           # PDF compatibility layer (106 lines)
 │   │   ├── cleanup.py                  # Data retention & cleanup (258 lines)
 │   │   ├── utils.py                    # Utility functions (33 lines)
-│   │   ├── setup.py                    # Package installation config
-│   │   └── pyproject.toml              # Package metadata for league_sdk
-│   ├── config/                         # Configuration files (JSON)
-│   │   ├── system.json                 # Global system settings
+│   │   ├── pyproject.toml              # PEP 621 package metadata + build config
+│   │   └── README.md                   # SDK documentation
+│   ├── config/                         # Configuration files (JSON, Pydantic validated)
+│   │   ├── system.json                 # Global system settings (timeouts, retry, security)
 │   │   ├── agents/                     # Agent registry
 │   │   │   └── agents_config.json      # 7 agents (LM, 2 Refs, 4 Players)
 │   │   ├── leagues/                    # League-specific configs
@@ -195,7 +246,7 @@ LLM_Agent_Orchestration_HW7/
 │   │   ├── agents/                     # Per-agent logs (P01.log.jsonl, etc.)
 │   │   ├── league/                     # League-level logs
 │   │   └── system/                     # System-level logs
-│   ├── archive/                        # Archived data (compressed, git-ignored)
+│   ├── archive/                        # Archived data (compressed)
 │   │   ├── logs/                       # Old logs (gzipped)
 │   │   ├── matches/                    # Old match records (gzipped)
 │   │   ├── players/                    # Player history archives
@@ -233,84 +284,119 @@ LLM_Agent_Orchestration_HW7/
 │   └── player_P04/                     # Player agent #4 ✅ COMPLETE
 │       ├── __init__.py
 │       └── main.py                     # Reuses PlayerAgent class
-├── 🧪 tests/                           # Test suite (209 tests, 85% coverage)
+├── 🧪 tests/                           # Test suite (568 tests across 56 files, 85% coverage)
 │   ├── conftest.py                     # Pytest fixtures and configuration
-│   ├── unit/                           # Unit tests for SDK and agents
-│   │   ├── test_sdk/
+│   ├── unit/                           # Unit tests (~350 tests, 29 files)
+│   │   ├── test_sdk/                   # SDK unit tests
 │   │   │   ├── test_protocol_models.py     # 60 tests - Protocol validation
 │   │   │   ├── test_logger.py              # 35 tests - Logging infrastructure
 │   │   │   ├── test_retry.py               # 34 tests - Retry & circuit breaker
 │   │   │   ├── test_repositories.py        # 33 tests - Data persistence
 │   │   │   ├── test_cleanup.py             # 17 tests - Data retention & cleanup
 │   │   │   ├── test_config_models.py       # 16 tests - Config schemas
-│   │   │   ├── test_config_loader.py       # Config loading + env overrides
-│   │   │   └── test_games_registry.py      # 8 tests - Game definitions
-│   │   ├── test_agents/
+│   │   │   ├── test_config_loader.py       # 12 tests - Config loading + env overrides
+│   │   │   ├── test_games_registry.py      # 8 tests - Game definitions
+│   │   │   ├── test_queue_processor.py     # Thread-safe queue tests
+│   │   │   └── test_utils.py               # Utility function tests
+│   │   ├── test_agents/                # Agent unit tests
 │   │   │   ├── test_agent_base.py          # BaseAgent functionality
 │   │   │   └── test_player_server.py       # PlayerAgent MCP server
-│   │   ├── test_league_manager/            # League Manager tests ✅ NEW
+│   │   ├── test_league_manager/        # League Manager tests (~80 tests)
 │   │   │   ├── test_registration.py        # Registration handlers
 │   │   │   ├── test_scheduler.py           # Round-robin scheduler
-│   │   │   └── test_standings.py           # Standings calculator
-│   │   └── test_referee_agent/             # Referee tests ✅ NEW
+│   │   │   ├── test_standings.py           # Standings calculator
+│   │   │   ├── test_round_management.py    # Round state management
+│   │   │   └── test_orchestration.py       # League orchestration logic
+│   │   └── test_referee_agent/         # Referee tests (~60 tests)
 │   │       ├── test_match_conductor.py     # Match orchestration
 │   │       ├── test_timeout_enforcement.py # Timeout handling
-│   │       └── test_registration.py        # Referee registration
-│   ├── integration/                    # Integration tests
+│   │       ├── test_registration.py        # Referee registration
+│   │       ├── test_game_logic.py          # Even/Odd game logic
+│   │       └── test_state_management.py    # Match state tracking
+│   ├── integration/                    # Integration tests (~120 tests, 11 files)
 │   │   ├── test_player_registration.py # Player registration flow
-│   │   └── test_referee_integration.py # Referee integration tests ✅ NEW
-│   ├── e2e/                            # End-to-end tests ✅ NEW
-│   └── protocol_compliance/            # Protocol compliance tests ✅ NEW
-├── 📚 doc/                             # Documentation
-│   ├── README.md                       # Documentation index ✅ NEW
+│   │   ├── test_referee_integration.py # Referee integration tests
+│   │   ├── test_match_flow.py          # Complete match execution
+│   │   ├── test_league_manager_integration.py # LM integration
+│   │   ├── test_data_persistence.py    # Repository integration
+│   │   └── test_error_handling.py      # Error handling across agents
+│   ├── e2e/                            # End-to-end tests (~40 tests, 4 files)
+│   │   ├── test_full_league.py         # Complete 4-player league
+│   │   ├── test_multi_round.py         # Multi-round tournament
+│   │   ├── test_shutdown_recovery.py   # Graceful shutdown and recovery
+│   │   └── test_concurrent_matches.py  # Concurrent match handling
+│   ├── protocol_compliance/            # Protocol compliance tests (~40 tests, 5 files)
+│   │   ├── test_message_types.py       # All 18 message types validation
+│   │   ├── test_envelope_structure.py  # Envelope format compliance
+│   │   ├── test_auth_validation.py     # Authentication token validation
+│   │   ├── test_jsonrpc_compliance.py  # JSON-RPC 2.0 spec compliance
+│   │   └── test_error_codes.py         # All 18 error codes coverage
+│   └── edge_cases/                     # Edge case tests (~18 tests, 1 file)
+│       └── test_edge_cases.py          # Boundary conditions, error scenarios
+├── 📚 doc/                             # Documentation (4,500+ lines across guides)
+│   ├── README.md                       # Documentation index
+│   ├── configuration.md                # Configuration Guide (M8.3) - 1,154 lines ✅
+│   ├── developer_guide.md              # Developer Guide (M8.4) - Two installation methods ✅
+│   ├── testing_guide.md                # Testing Guide (M8.5) - 3,208 lines, 568 tests ✅
+│   ├── usability_extensibility.md      # Extensibility & ISO/IEC 25010 Analysis (M8.8) ✅
 │   ├── research_notes/
 │   │   ├── mcp_protocol.md             # MCP research and analysis
-│   │   ├── experiments.ipynb           # Research notebook (M5.5) ✅ NEW
-│   │   ├── experiments.html            # Pre-rendered HTML (601 KB) ✅ NEW
-│   │   ├── README.md                   # Notebook documentation ✅ NEW
-│   │   ├── plot1_strategy_comparison.png ✅ NEW
-│   │   ├── plot2_timeout_impact.png    ✅ NEW
-│   │   └── plot3_4_retry_outcomes.png  ✅ NEW
+│   │   ├── experiments.ipynb           # Research notebook (M5.5) - 14 cells, 7 plots
+│   │   ├── experiments.html            # Pre-rendered HTML (601 KB)
+│   │   ├── README.md                   # Notebook documentation
+│   │   ├── plot1_strategy_comparison.png
+│   │   ├── plot2_timeout_impact.png
+│   │   └── plot3_4_retry_outcomes.png
 │   ├── game_rules/
 │   │   └── even_odd.md                 # Even/Odd game specification
 │   ├── algorithms/
 │   │   └── round_robin.md              # Round-robin scheduling algorithm
-│   ├── reference/                      # Specs, APIs, error codes ✅ NEW
+│   ├── reference/
 │   │   ├── api_reference.md            # MCP tools and message formats
 │   │   ├── error_codes_reference.md    # E001–E018 reference
 │   │   ├── error_handling_strategy.md  # Retry, circuit breaker guidance
 │   │   └── data_retention_policy.md    # Data lifecycle & cleanup (22KB)
-│   ├── architecture/                   # Architecture docs ✅ NEW
+│   ├── architecture/
 │   │   ├── thread_safety.md            # Concurrency model
 │   │   └── adr/                        # Architecture Decision Records
-│   ├── plans/                          # Execution & verification plans ✅ NEW
+│   ├── plans/
 │   │   ├── system_integration_verification_plan.md # Integration testing guide
 │   │   └── M6.1_M6.2_IMPLEMENTATION_PLAN_v2.md     # CLI + ops plan
 │   ├── guides/
 │   │   └── HOW_QUALITY_WORKS.md        # Quality workflow
-│   ├── usability_analysis.md           # M6.6 usability review ✅ NEW
 │   └── prompt_log/                     # Implementation prompt logs
 │       ├── mission_2_implementation_prompt.md
 │       ├── config_layer_mission_3.0-3.3_prompt.md
 │       ├── mission_4_0_4_1_implementation_prompt.md
-│       └── league_manager_implementation_prompt.md ✅ NEW
-├── 📄 Configuration Files
+│       └── league_manager_implementation_prompt.md
+├── 🔧 scripts/                         # Automation scripts (12 scripts)
+│   ├── start_league.sh                 # Start all agents (LM + 2 refs + 4 players)
+│   ├── stop_league.sh                  # Graceful shutdown of all agents
+│   ├── check_health.sh                 # Health check all endpoints
+│   ├── verify_configs.sh               # Validate config files
+│   ├── check_registration_status.sh    # Show LM registration state
+│   ├── trigger_league_start.sh         # Start league orchestration
+│   ├── query_standings.sh              # Query standings (supports --plain, --json)
+│   ├── view_match_state.sh             # Inspect match state
+│   ├── analyze_logs.sh                 # Filter and analyze log output
+│   ├── backup_data.sh                  # Backup SHARED/data and SHARED/logs
+│   ├── restore_data.sh                 # Restore from backup
+│   └── cleanup_old_data.sh             # Cleanup old backups/logs (dry-run support)
+├── 📄 Configuration & Project Files
+│   ├── pyproject.toml                  # PEP 621 project metadata + tool configs (consolidated)
+│   ├── requirements.txt                # Python dependencies (with research packages)
 │   ├── .env.example                    # Environment template (61 lines)
 │   ├── .gitignore                      # Git exclusions (90 lines)
-│   ├── pytest.ini                      # Pytest configuration
-│   ├── mypy.ini                        # Type checking config
-│   ├── .flake8                         # Linting config
-│   ├── requirements.txt                # Python dependencies (with research packages)
-│   ├── pyproject.toml                  # Project metadata
+│   ├── .flake8                         # Flake8 linting config
+│   ├── .pre-commit-config.yaml         # Pre-commit hooks configuration
 │   ├── PRD_EvenOddLeague.md            # Product Requirements Document (102KB)
+│   ├── Missions_EvenOddLeague.md       # Mission definitions and requirements
 │   ├── PROGRESS_TRACKER.md             # Mission tracking and status
-│   └── guides/
-│       └── HOW_QUALITY_WORKS.md       # Quality standards workflow guide
-└── 📜 Project Documentation
+│   ├── BUILD_AND_RELEASE_GUIDE.md      # Build SDK wheel + create GitHub release ✅
+│   ├── PACKAGING_GUIDE.md              # GitHub release template and description ✅
+│   └── even-odd-league-v1.0.0.tar.gz   # Full system archive (2.2 MB, 778 files) ✅
+└── 📜 Root Documentation
     ├── README.md                       # This file
-    ├── INSTALL.md                      # Comprehensive installation guide ✅ NEW
-    ├── QUICK_START_NOTEBOOK.md         # Notebook quick start guide ✅ NEW
-    ├── verify_installation.py          # Installation verification script ✅ NEW
     └── LICENSE                         # MIT License
 ```
 
@@ -328,168 +414,281 @@ LLM_Agent_Orchestration_HW7/
 
 ### Prerequisites
 
-Ensure you have the following installed on your system:
+- **Python 3.10+** (tested on 3.10, 3.11, 3.12, 3.13, 3.14)
+- **pip** (Python package installer)
+- **Git** (for cloning the repository)
 
-1. **Python 3.10+** (tested on 3.10, 3.11, 3.12, 3.13, 3.14)
-   ```bash
-   python3 --version  # Should show 3.10.0 or higher
-   ```
-
-2. **Virtual Environment** (recommended)
-   ```bash
-   python3 -m venv venv
-   ```
-
-3. **Git** (for version control)
-   ```bash
-   git --version
-   ```
-
-### Installation Steps
-
-#### 1. Clone the Repository
+Quick check:
 ```bash
-git clone https://github.com/your-org/even-odd-league.git
-cd even-odd-league
+python3 --version  # Should be ≥3.10.0
+pip --version
+git --version
 ```
 
-#### 2. Create Virtual Environment
+---
+
+### Choose Your Installation Method
+
+You can install the Even/Odd League system in two ways:
+
+| Method | Best For | Time | Flexibility |
+|--------|----------|------|-------------|
+| **[Development Setup](#development-setup-recommended)** | Contributing code, customization, research | ~5 min | Full access to source |
+| **[Package Installation](#package-installation-distribution)** | Quick setup, production deployment | ~2 min | Pre-built package |
+
+---
+
+### Development Setup (Recommended)
+
+**Use this method if you want to:**
+- Modify or extend the system
+- Run tests and contribute code
+- Understand the system architecture
+
+#### Step 1: Clone Repository
+
+```bash
+git clone https://github.com/your-org/LLM_Agent_Orchestration_HW7.git
+cd LLM_Agent_Orchestration_HW7
+```
+
+#### Step 2: Create Virtual Environment
+
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 ```
 
-#### 3. Upgrade pip
+#### Step 3: Install Dependencies
+
 ```bash
+# Upgrade pip
 pip install --upgrade pip
-```
 
-#### 4. Install Dependencies
-```bash
+# Install all dependencies from requirements.txt
 pip install -r requirements.txt
-```
 
-This installs:
-- **Core Framework:** FastAPI, Uvicorn, Pydantic
-- **HTTP Client:** Requests, HTTPX
-- **Testing:** Pytest, pytest-cov, pytest-asyncio, pytest-timeout
-- **Code Quality:** Black, Flake8, Mypy, Pylint, Radon, Pydocstyle
-
-#### 5. Install League SDK (Editable Mode)
-```bash
+# Install SDK in editable mode (allows live code changes)
 pip install -e SHARED/league_sdk
 ```
 
-This installs the `league-sdk` package in editable mode, allowing live code changes.
+**What gets installed:**
+- Core framework (FastAPI, Uvicorn, Pydantic)
+- HTTP clients (httpx, requests)
+- Testing tools (pytest, pytest-cov, pytest-asyncio)
+- Code quality (black, flake8, mypy, pylint)
+- Research tools (jupyter, numpy, pandas, matplotlib)
 
-#### 6. Verify Installation
+#### Step 4: Verify Installation
+
 ```bash
-python3 -c "from league_sdk import JsonLogger, retry_with_backoff, CircuitBreaker; print('✅ SDK Imported Successfully')"
+# Test SDK import
+python3 -c "from league_sdk import protocol, logger, retry; print('✅ SDK installed')"
+
+# Run quick smoke test
+PYTHONPATH=SHARED:$PYTHONPATH pytest tests/unit/test_sdk/test_protocol_models.py -v
 ```
 
-Expected output: `✅ SDK Imported Successfully`
+**Expected output:** Tests pass ✅
 
-#### 7. Create Environment Configuration
-```bash
-cp .env.example .env
-```
+#### Step 5: Create Data Directories
 
-Edit `.env` with your settings (optional, defaults work for local development).
-
-#### 8. Verify Configuration Files
-```bash
-ls -la SHARED/config/
-```
-
-Expected files:
-- `system.json` - Global system settings
-- [agents/agents_config.json](agents/agents_config.json) - Agent registry
-- `leagues/league_2025_even_odd.json` - League config
-- `games/games_registry.json` - Game definitions
-
-#### 9. Create Data Directories
 ```bash
 mkdir -p SHARED/data/{leagues,matches,players}
 mkdir -p SHARED/logs/{agents,league,system}
 mkdir -p SHARED/archive/{logs,matches,players,leagues}
 ```
 
-#### 10. Run Tests to Validate Setup
-```bash
-PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ -v --cov=SHARED/league_sdk --cov=agents --cov-report=term
-```
-
-Expected: `209 passed` with `85% coverage`
-
-#### 11. Install Pre-commit Hooks (Optional, Recommended)
-```bash
-pre-commit install
-```
-
-This enables automatic code formatting and linting before each commit.
-
-#### 12. Verify Port Availability
-```bash
-# Check if required ports are available
-lsof -i :8000  # League Manager
-lsof -i :8001  # Referee 1
-lsof -i :8002  # Referee 2
-lsof -i :8101  # Player 1
-lsof -i :8102  # Player 2
-lsof -i :8103  # Player 3
-lsof -i :8104  # Player 4
-```
-
-If any ports are in use, either stop the conflicting service or update [SHARED/config/system.json](SHARED/config/system.json).
-
-### Docker Installation (Alternative)
+#### Step 6: Ready to Go!
 
 ```bash
-# Build Docker image
-docker build -t even-odd-league:latest .
-
-# Run container
-docker run -p 8000-8104:8000-8104 even-odd-league:latest
+# Start a player agent
+PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P01/main.py
 ```
 
-**Note:** Docker support is planned for future releases.
+See [Quick Start](#-quick-start) for running the full system.
+
+---
+
+### Package Installation (Distribution)
+
+**Use this method if you want to:**
+- Quickly install and run the system
+- Deploy to production
+- Use as a dependency in another project
+
+#### Option A: Install SDK Only
+
+If you only need the SDK library:
+
+```bash
+# Install from wheel (download from GitHub Releases)
+pip install league_sdk-1.0.0-py3-none-any.whl
+
+# Or install directly from source
+pip install SHARED/league_sdk
+```
+
+Verify:
+```bash
+python3 -c "from league_sdk import protocol; print('✅ SDK installed')"
+```
+
+#### Option B: Install Full System
+
+For the complete Even/Odd League system:
+
+```bash
+# Download deployment archive from GitHub Releases
+tar -xzf even-odd-league-v1.0.0.tar.gz
+cd even-odd-league-v1.0.0
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+pip install -e SHARED/league_sdk
+
+# Start the system
+./scripts/start_league.sh
+```
+
+---
+
+### Troubleshooting
+
+<details>
+<summary><b>Issue: "externally-managed-environment" error</b></summary>
+
+**Solution:** Use a virtual environment (always recommended):
+```bash
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+</details>
+
+<details>
+<summary><b>Issue: SDK import fails</b></summary>
+
+**Solution:** Ensure SDK is installed AND PYTHONPATH is set:
+```bash
+# Install SDK
+pip install -e SHARED/league_sdk
+
+# Set PYTHONPATH when running
+PYTHONPATH=SHARED:$PYTHONPATH python3 your_script.py
+```
+</details>
+
+<details>
+<summary><b>Issue: Tests fail with "module not found"</b></summary>
+
+**Solution:** Run tests with PYTHONPATH:
+```bash
+PYTHONPATH=SHARED:$PYTHONPATH pytest
+```
+</details>
+
+<details>
+<summary><b>Issue: Ports already in use</b></summary>
+
+**Solution:** Check and kill processes:
+```bash
+# Find process on port 8000
+lsof -i :8000
+
+# Kill specific process
+kill -9 <PID>
+
+# Or use our cleanup script
+./scripts/stop_league.sh
+```
+</details>
+
+---
+
+### Detailed Documentation
+
+For more comprehensive setup instructions, see:
+- **[Developer Guide](doc/developer_guide.md)** - Complete setup with two installation methods
+- **[Configuration Guide](doc/configuration.md)** - All configuration options
+- **[Testing Guide](doc/testing_guide.md)** - Running and writing tests
 
 ---
 
 ## 🎮 Quick Start
 
-### Starting a Player Agent
+### Option 1: Automated Start (Recommended)
+
+Use our convenience scripts to start the entire system:
 
 ```bash
-# Terminal 1: Start Player P01
-cd agents/player_P01
-PYTHONPATH=../../SHARED:$PYTHONPATH python3 main.py
+# Start League Manager, Referees, and Players
+./scripts/start_league.sh
+
+# Check system health
+./scripts/check_health.sh
+
+# Trigger league start
+./scripts/trigger_league_start.sh
+
+# View standings
+./scripts/query_standings.sh
 ```
 
-Expected output:
+**Expected output:**
 ```
-INFO:     Started server process [12345]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://localhost:8101 (Press CTRL+C to quit)
+✅ League Manager running on http://localhost:8000
+✅ Referee REF01 running on http://localhost:8001
+✅ Referee REF02 running on http://localhost:8002
+✅ Player P01 running on http://localhost:8101
+✅ Player P02 running on http://localhost:8102
+✅ Player P03 running on http://localhost:8103
+✅ Player P04 running on http://localhost:8104
 ```
 
-### Testing Player Agent Health
+Stop all agents:
+```bash
+./scripts/stop_league.sh
+```
+
+---
+
+### Option 2: Manual Start (Step-by-Step)
+
+If you want to understand the system or run agents individually:
+
+#### Step 1: Start a Single Player Agent
 
 ```bash
-# Terminal 2: Check health endpoint
-curl -X GET http://localhost:8101/health
+# From project root
+PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P01/main.py
 ```
 
-Expected response:
+**Expected output:**
+```
+INFO: Started server process [12345]
+INFO: Uvicorn running on http://localhost:8101 (Press CTRL+C to quit)
+```
+
+#### Step 2: Test Player Health
+
+```bash
+# In another terminal
+curl http://localhost:8101/health
+```
+
+**Expected response:**
 ```json
 {"status": "ok"}
 ```
 
-### Sending a Test Message (MCP Tool Call)
+#### Step 3: Send Test MCP Message
 
 ```bash
-# Example: GAME_INVITATION
 curl -X POST http://localhost:8101/mcp \
   -H "Content-Type: application/json" \
   -d '{
@@ -501,55 +700,54 @@ curl -X POST http://localhost:8101/mcp \
       "message_type": "GAME_INVITATION",
       "sender": "referee:REF01",
       "timestamp": "2025-01-15T10:30:00Z",
-      "conversation_id": "conv-abc123",
-      "auth_token": "test-token-32-characters-long",
+      "conversation_id": "conv-123",
+      "auth_token": "test-token-32-characters",
       "league_id": "league_2025_even_odd",
       "match_id": "R1M1",
       "game_type": "even_odd",
       "player_id": "P01",
-      "opponent_id": "P02",
-      "opponent_endpoint": "http://localhost:8102/mcp"
+      "opponent_id": "P02"
     }
   }'
 ```
 
-Expected response (GAME_JOIN_ACK):
+**Expected response:**
 ```json
 {
   "jsonrpc": "2.0",
   "id": 1,
   "result": {
-    "protocol": "league.v2",
     "message_type": "GAME_JOIN_ACK",
-    "sender": "player:P01",
-    "timestamp": "2025-01-15T10:30:01Z",
-    "conversation_id": "conv-abc123",
-    "auth_token": "test-token-32-characters-long",
-    "match_id": "R1M1",
     "player_id": "P01",
-    "arrival_timestamp": "2025-01-15T10:30:01Z",
     "accept": true
   }
 }
 ```
 
-### Running Multiple Agents
+#### Step 4: Run Full System Manually
 
 ```bash
-# Start all player agents in separate terminals
-PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P01/main.py &
-PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P02/main.py &
-PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P03/main.py &
-PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P04/main.py &
+# Terminal 1: League Manager
+PYTHONPATH=SHARED:$PYTHONPATH python3 agents/league_manager/main.py
+
+# Terminal 2-3: Referees
+PYTHONPATH=SHARED:$PYTHONPATH python3 agents/referee_REF01/main.py
+PYTHONPATH=SHARED:$PYTHONPATH python3 agents/referee_REF02/main.py
+
+# Terminal 4-7: Players
+PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P01/main.py
+PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P02/main.py
+PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P03/main.py
+PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P04/main.py
 ```
 
-### Stopping Agents
+---
 
-```bash
-# Graceful shutdown (CTRL+C in each terminal)
-# Or kill all:
-pkill -f "python3.*player.*main.py"
-```
+### Next Steps
+
+- **Run Tests:** `PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ -v`
+- **View Logs:** `tail -f SHARED/logs/agents/*.log.jsonl`
+- **Check Documentation:** See [doc/developer_guide.md](doc/developer_guide.md) for detailed usage
 
 ---
 
@@ -688,84 +886,105 @@ Some scripts additionally support:
 
 ### Player Agent Registration Flow
 
+**Scenario:** Creating and registering a new player agent programmatically.
+
 ```python
+# File: my_player.py
 from agents.player_P01.server import PlayerAgent
-
-# 1. Create player agent instance
-agent = PlayerAgent(
-    agent_id="P01",
-    league_id="league_2025_even_odd",
-    host="localhost",
-    port=8101
-)
-
-# 2. Start the MCP server
-agent.start(run_in_thread=False)  # Blocks until shutdown
-
-# 3. Register with League Manager (async)
 import asyncio
-response = asyncio.run(agent.send_registration_request())
-print(response)
-# {
-#   "protocol": "league.v2",
-#   "message_type": "LEAGUE_REGISTER_RESPONSE",
-#   "status": "ACCEPTED",
-#   "player_id": "P01",
-#   "auth_token": "generated-32-char-token-here"
-# }
+
+async def main():
+    # Step 1: Create player agent
+    agent = PlayerAgent(
+        agent_id="P05",  # New player
+        league_id="league_2025_even_odd",
+        host="localhost",
+        port=8105
+    )
+
+    # Step 2: Start MCP server (non-blocking)
+    await agent.start_async()
+
+    # Step 3: Register with League Manager
+    response = await agent.send_registration_request()
+
+    print(f"✅ Registered as {response['player_id']}")
+    print(f"🔑 Auth token: {response['auth_token'][:16]}...")
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
+
+**Run it:**
+```bash
+PYTHONPATH=SHARED:$PYTHONPATH python3 my_player.py
+```
+
+**Expected output:**
+```
+✅ Registered as P05
+🔑 Auth token: a1b2c3d4e5f6g7h8...
+INFO: Uvicorn running on http://localhost:8105
+```
+
+---
 
 ### Using SDK Components Directly
 
-#### Protocol Models
+The `league-sdk` package provides reusable components for building agents or tools.
+
+#### Example 1: Protocol Models (Message Creation)
+
 ```python
 from league_sdk.protocol import (
-    GameInvitation,
-    GameJoinAck,
-    ChooseParityCall,
-    ChooseParityResponse,
-    ErrorCode
+    MessageEnvelope,
+    GAME_INVITATION,
+    generate_timestamp,
+    generate_conversation_id
 )
 
-# Create a game invitation
-invitation = GameInvitation(
+# Create a properly structured game invitation
+invitation = MessageEnvelope(
+    conversation_id=generate_conversation_id(),
+    message_type=GAME_INVITATION,
     sender="referee:REF01",
-    timestamp="2025-01-15T10:00:00Z",
-    conversation_id="conv-123",
-    auth_token="token",
+    timestamp=generate_timestamp(),
+    protocol="league.v2",
+    # Game invitation specific fields
     league_id="league_2025_even_odd",
     match_id="R1M1",
     game_type="even_odd",
     player_id="P01",
-    opponent_id="P02",
-    opponent_endpoint="http://localhost:8102/mcp"
+    opponent_id="P02"
 )
 
-# Validate automatically via Pydantic
+# Pydantic validates automatically
 print(invitation.model_dump_json(indent=2))
 ```
 
-#### Configuration Loading
+#### Example 2: Configuration Loading
+
 ```python
-from league_sdk.config_loader import load_system_config, load_league_config
+from league_sdk.config_loader import load_system_config
 
-# Load system config with environment overrides
-system_config = load_system_config("SHARED/config/system.json")
-print(f"Timeout for parity choice: {system_config.timeouts.parity_choice_sec}s")
+# Load configuration with environment variable overrides
+config = load_system_config("SHARED/config/system.json")
 
-# Load league config
-league_config = load_league_config("SHARED/config/leagues/league_2025_even_odd.json")
-print(f"Win points: {league_config.scoring.points_for_win}")
+# Access configuration values
+print(f"⏱️  Parity choice timeout: {config.timeouts.parity_choice_sec}s")
+print(f"🔁 Max retries: {config.retry_policy.max_retries}")
+print(f"📊 Log level: {config.logging.level}")
 ```
 
-#### Structured Logging
+#### Example 3: Structured Logging
+
 ```python
 from league_sdk.logger import JsonLogger
 
-# Create logger for an agent
+# Create logger for your component
 logger = JsonLogger(
-    component="player:P01",
-    agent_id="P01",
+    component="my_tool",
+    agent_id="TOOL01",
     league_id="league_2025_even_odd",
     min_level="INFO"
 )
@@ -1897,9 +2116,9 @@ cat SHARED/logs/league/*/LM01.log.jsonl | jq -r '.event_type' | sort | uniq -c
 | **Quality Workflow** | [doc/guides/HOW_QUALITY_WORKS.md](doc/guides/HOW_QUALITY_WORKS.md) | How quality checks work locally and on CI/CD |
 | **API Reference** | [doc/reference/api_reference.md](doc/reference/api_reference.md) | MCP tools, message formats, and examples |
 | **Architecture Docs** | [doc/architecture.md](doc/architecture.md) | C4 views, sequences, states, data flow |
-| **Configuration Guide** | ⚠️ Pending | Mission M8.3 - Config file documentation |
-| **Developer Guide** | ⚠️ Pending | Mission M8.4 - Contributor onboarding |
-| **Testing Guide** | ⚠️ Pending | Mission M8.5 - Test writing guide |
+| **Configuration Guide** | [doc/configuration.md](doc/configuration.md) | Complete configuration reference (system.json, agents_config.json, league configs) (M8.3) ✅ NEW |
+| **Developer Guide** | [doc/developer_guide.md](doc/developer_guide.md) | Setup, development workflow, two installation methods (M8.4) ✅ NEW |
+| **Testing Guide** | [doc/testing_guide.md](doc/testing_guide.md) | Test suite guide with 568 tests, coverage, patterns (M8.5) ✅ NEW |
 
 ### External Resources
 

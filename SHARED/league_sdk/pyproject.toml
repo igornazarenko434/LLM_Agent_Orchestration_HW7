@@ -14,6 +14,7 @@ authors = [
 dependencies = [
     "pydantic>=2.0.0",
     "requests>=2.28.0",
+    "httpx>=0.28.0",
     "python-dateutil>=2.8.0",
 ]
 
@@ -25,9 +26,10 @@ dev = [
     "mypy>=1.0.0",
 ]
 
-[tool.setuptools]
-packages = ["league_sdk"]
-package-dir = {"league_sdk" = "."}
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
+exclude = ["tests*", "*.egg-info", "__pycache__", ".mypy_cache", ".pytest_cache"]
 
 [tool.setuptools.package-data]
 league_sdk = ["py.typed"]
@@ -95,17 +97,5 @@ disable = [
 [tool.pylint.format]
 max-line-length = 104
 
-[tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "-ra -q --cov=league_sdk --cov-report=term-missing"
-testpaths = [
-    "../../tests/unit/test_sdk",
-]
-python_files = "test_*.py"
-python_classes = "Test*"
-python_functions = "test_*"
-markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
-    "slow: Slow running tests",
-]
+# Note: Test configuration is managed at project root level in /pyproject.toml
+# SDK tests are located at ../../tests/unit/test_sdk/

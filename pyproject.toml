@@ -143,7 +143,7 @@ max-line-length = 104
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q --cov=agents --cov=SHARED/league_sdk --cov-report=term-missing"
+addopts = "-ra -q --cov=agents --cov=SHARED/league_sdk --cov-report=term --cov-report=html --strict-markers"
 testpaths = [
     "tests",
 ]
@@ -151,8 +151,10 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
-    "e2e: End-to-end tests",
-    "slow: Slow running tests",
+    "unit: Unit tests for individual components",
+    "integration: Integration tests between components",
+    "e2e: End-to-end full system tests",
+    "slow: Tests that take longer to run",
+    "protocol: Protocol compliance tests",
+    "edge: Edge-case tests for error handling and boundary conditions",
 ]

@@ -6,7 +6,7 @@ multiple concurrent tasks update shared resources.
 """
 
 import asyncio
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
@@ -193,6 +193,51 @@ class TestSequentialQueueProcessor:
 
         with pytest.raises(RuntimeError, match="not started"):
             await processor.enqueue("item")
+
+    @pytest.mark.asyncio
+    async def test_start_when_running_logs_warning(self, caplog):
+        """Test start warns if processor already running."""
+        processor = SequentialQueueProcessor(Mock())
+        await processor.start()
+
+        with caplog.at_level("WARNING"):
+            await processor.start()
+
+        assert "Queue processor already running" in caplog.text
+        await processor.stop()
+
+    @pytest.mark.asyncio
+    async def test_stop_when_not_running_noop(self):
+        """Test stop is a no-op when processor not running."""
+        processor = SequentialQueueProcessor(Mock())
+        await processor.stop()
+        assert not processor.is_running()
+
+    @pytest.mark.asyncio
+    async def test_stop_timeout_logs_warning(self, caplog):
+        """Test stop logs warning when queue does not drain in time."""
+        wait_event = asyncio.Event()
+
+        async def process_item(_item):
+            await wait_event.wait()
+
+        processor = SequentialQueueProcessor(process_item)
+        await processor.start()
+        await processor.enqueue("item")
+
+        with caplog.at_level("WARNING"):
+            await processor.stop(timeout=0.01)
+
+        assert "Queue did not drain within" in caplog.text
+        wait_event.set()
+
+    @pytest.mark.asyncio
+    async def test_process_queue_timeout_path(self):
+        """Test queue timeout loop path when no items are enqueued."""
+        processor = SequentialQueueProcessor(Mock())
+        await processor.start()
+        await asyncio.sleep(0.6)
+        await processor.stop()
 
 
 @pytest.mark.unit
