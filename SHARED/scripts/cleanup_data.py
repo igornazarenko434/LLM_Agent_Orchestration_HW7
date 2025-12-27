@@ -22,7 +22,7 @@ Usage:
     # Verbose output
     python SHARED/scripts/cleanup_data.py --execute --verbose
 
-See: doc/data_retention_policy.md for full policy details
+See: doc/reference/data_retention_policy.md for full policy details
 """
 
 import argparse

@@ -19,7 +19,7 @@ Thread Safety:
 - Safe for concurrent execution (no shared state)
 - Use atomic file operations via repositories
 
-See: doc/data_retention_policy.md for full policy details
+See: doc/reference/data_retention_policy.md for full policy details
 """
 
 import asyncio
@@ -100,6 +100,7 @@ class CleanupStats:
     """Statistics from cleanup operations."""
 
     def __init__(self):
+        """Initialize counters for cleanup tracking."""
         self.files_scanned = 0
         self.files_deleted = 0
         self.files_archived = 0

@@ -766,8 +766,8 @@ export DATA_RETENTION_ARCHIVE_PATH=/mnt/archive
 ## 13. References
 
 **Related Documentation:**
-- `doc/architecture/thread_safety.md` - Thread-safe cleanup operations
-- `doc/error_handling_strategy.md` - Error handling in cleanup tasks
+- [../architecture/thread_safety.md](../architecture/thread_safety.md) - Thread-safe cleanup operations
+- [error_handling_strategy.md](error_handling_strategy.md) - Error handling in cleanup tasks
 - `SHARED/league_sdk/repositories.py` - Data access layer
 - `SHARED/league_sdk/logger.py` - Logging infrastructure
 

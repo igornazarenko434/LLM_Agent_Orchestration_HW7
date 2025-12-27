@@ -259,7 +259,7 @@
     - [x] Document how long data is kept (logs, matches, standings)
     - [x] Add to PRD Section on Data & Integrations
   - **Deliverables:**
-    - doc/data_retention_policy.md (22KB)
+    - doc/reference/data_retention_policy.md (22KB)
     - league_sdk/cleanup.py (258 lines, 6 async functions)
     - scripts/cleanup_data.py (273 lines, CLI tool)
     - tests/test_cleanup.py (17 tests, 90% coverage)
@@ -331,7 +331,7 @@
 - [x] **M5.4** Error Handling Strategy Design (1h) - P1
   - Status: ✅ **Completed** (2025-12-17)
   - Dependencies: M0.2
-  - Output: doc/error_handling_strategy.md
+  - Output: doc/reference/error_handling_strategy.md
 
 - [ ] **M5.5** Simulation & Research Notebook (2h) - P1
   - Status: ☐ **Not Started** (EXPANDED MISSION)
@@ -369,7 +369,7 @@
 - [ ] **M6.4** API Reference Documentation (2h) - P2
   - Status: ☐ Not Started
   - Dependencies: M2.x
-  - Output: doc/api_reference.md
+  - Output: doc/reference/api_reference.md
 
 - [ ] **M6.5** Screenshots & UX Documentation (2h) - P1
   - Status: ☐ **Not Started**

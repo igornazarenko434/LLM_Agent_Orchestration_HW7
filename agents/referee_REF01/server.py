@@ -17,8 +17,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from agents.base import BaseAgent
+from agents.referee_REF01.match_conductor import MatchConductor
 from fastapi import Request
 from fastapi.responses import JSONResponse
+
 from league_sdk.config_loader import load_agents_config, load_json_file, load_system_config
 from league_sdk.logger import log_error, log_message_received, log_message_sent
 from league_sdk.method_aliases import translate_pdf_method_to_message_type
@@ -32,9 +35,6 @@ from league_sdk.protocol import (
 )
 from league_sdk.repositories import MatchRepository
 from league_sdk.retry import call_with_retry
-
-from agents.base import BaseAgent
-from agents.referee_REF01.match_conductor import MatchConductor
 
 AGENTS_CONFIG_PATH = "SHARED/config/agents/agents_config.json"
 SYSTEM_CONFIG_PATH = "SHARED/config/system.json"
@@ -58,6 +58,14 @@ class RefereeAgent(BaseAgent):
         host: Optional[str] = None,
         port: Optional[int] = None,
     ) -> None:
+        """Initialize referee state, configs, and match conductor wiring.
+
+        Args:
+            agent_id: Referee agent identifier.
+            league_id: League identifier for match context.
+            host: Optional host override.
+            port: Optional port override.
+        """
         super().__init__(
             agent_id=agent_id,
             agent_type="referee",
@@ -1019,7 +1027,7 @@ class RefereeAgent(BaseAgent):
         )
 
     def _log_error(self, error: JSONRPCError, payload: Dict[str, Any]) -> None:
-        """Helper to log structured errors."""
+        """Log structured errors."""
         details = error.data if isinstance(error.data, dict) else {"details": error.data}
         details.update(
             {

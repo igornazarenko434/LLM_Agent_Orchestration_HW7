@@ -40,6 +40,12 @@ class RetryableError(Exception):
     """Base class for errors that should be retried."""
 
     def __init__(self, message: str, error_code: Optional[str] = None):
+        """Initialize a retryable error wrapper.
+
+        Args:
+            message: Human-readable error message.
+            error_code: Optional protocol error code.
+        """
         super().__init__(message)
         self.error_code = error_code
 
@@ -48,6 +54,12 @@ class NonRetryableError(Exception):
     """Base class for errors that should not be retried."""
 
     def __init__(self, message: str, error_code: Optional[str] = None):
+        """Initialize a non-retryable error wrapper.
+
+        Args:
+            message: Human-readable error message.
+            error_code: Optional protocol error code.
+        """
         super().__init__(message)
         self.error_code = error_code
 
@@ -56,6 +68,13 @@ class MaxRetriesExceededError(Exception):
     """Raised when maximum retry attempts are exceeded."""
 
     def __init__(self, message: str, retry_count: int, last_error: Exception):
+        """Initialize a max-retries error wrapper.
+
+        Args:
+            message: Human-readable error message.
+            retry_count: Total retry attempts performed.
+            last_error: Last raised exception.
+        """
         super().__init__(message)
         self.retry_count = retry_count
         self.last_error = last_error
@@ -260,7 +279,7 @@ def retry_with_backoff(
     track_retry_info: bool = False,
 ) -> Callable:
     """
-    Decorator for retrying functions with exponential backoff.
+    Apply exponential backoff retries to a function.
 
     Per assignment specification:
     - Max retries: 3 (configurable via system.json)

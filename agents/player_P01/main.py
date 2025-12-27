@@ -14,9 +14,9 @@ import signal
 import sys
 from pathlib import Path
 
-from league_sdk.config_loader import load_agents_config, load_json_file, load_system_config
-
 from agents.player_P01.server import PlayerAgent
+
+from league_sdk.config_loader import load_agents_config, load_json_file, load_system_config
 
 
 def _default_league_id() -> str | None:
@@ -100,16 +100,16 @@ Exit Codes:
   4   Runtime error (E015)
 
 Error Codes:
-  E001-E018 - See doc/error_codes_reference.md
+  E001-E018 - See doc/reference/error_codes_reference.md
   Retryable: E001, E005, E006, E009, E014, E015, E016
   Non-retryable: E002, E003, E004, E007, E008, E010, E011, E012, E013, E017, E018
 
 Documentation:
   README: README.md
-  API Reference: doc/api_reference.md
+  API Reference: doc/reference/api_reference.md
   Troubleshooting: doc/troubleshooting.md
-  Error Codes: doc/error_codes_reference.md (to be created in Phase 1.5)
-  System Integration: doc/system_integration_verification_plan.md
+  Error Codes: doc/reference/error_codes_reference.md (to be created in Phase 1.5)
+  System Integration: doc/plans/system_integration_verification_plan.md
         """,
     )
 
@@ -324,7 +324,7 @@ async def register_with_retry_background(
 
 
 async def main() -> None:
-    """Main entry point with enhanced CLI support."""
+    """Run the CLI entry point with enhanced support."""
     args = parse_args()
 
     # Set up logging level based on args
@@ -350,7 +350,10 @@ async def main() -> None:
         print(
             f"  2. Validate JSON files: python3 -m json.tool {config_base}/system.json", file=sys.stderr
         )
-        print("  3. See doc/error_codes_reference.md#e002-invalid_message_format", file=sys.stderr)
+        print(
+            "  3. See doc/reference/error_codes_reference.md#e002-invalid_message_format",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     player_record: dict = next(

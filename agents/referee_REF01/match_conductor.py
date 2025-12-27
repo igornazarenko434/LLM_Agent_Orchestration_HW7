@@ -12,6 +12,9 @@ from logging import Logger
 from pathlib import Path
 from typing import Any, Dict, Literal, Optional, Tuple
 
+from agents.referee_REF01.game_logic import EvenOddGameLogic
+from agents.referee_REF01.timeout_enforcement import TimeoutEnforcer
+
 from league_sdk.config_loader import load_agents_config, load_json_file, load_system_config
 from league_sdk.logger import log_error, log_message_received, log_message_sent
 from league_sdk.protocol import (
@@ -26,9 +29,6 @@ from league_sdk.protocol import (
 )
 from league_sdk.repositories import MatchRepository
 from league_sdk.retry import call_with_retry
-
-from agents.referee_REF01.game_logic import EvenOddGameLogic
-from agents.referee_REF01.timeout_enforcement import TimeoutEnforcer
 
 
 class MatchState(str, Enum):
@@ -575,10 +575,7 @@ class MatchConductor:
         transcript: list[Dict[str, Any]],
         message_queue: asyncio.Queue,
     ) -> Dict[str, Optional[GameJoinAck]]:
-        """
-        Wait for GAME_JOIN_ACK from both players with timeout enforcement (M7.6).
-        """
-
+        """Wait for GAME_JOIN_ACK from both players with timeout enforcement (M7.6)."""
         # We need to demultiplex messages from the single queue to specific players
         # Create futures for each player's response
         player_a_future: asyncio.Future[Optional[GameJoinAck]] = asyncio.Future()
@@ -765,10 +762,7 @@ class MatchConductor:
         transcript: list[Dict[str, Any]],
         message_queue: asyncio.Queue,
     ) -> Dict[str, Optional[Literal["even", "odd"]]]:
-        """
-        Wait for CHOOSE_PARITY_RESPONSE from both players with timeout enforcement (M7.6).
-        """
-
+        """Wait for CHOOSE_PARITY_RESPONSE from both players with timeout enforcement (M7.6)."""
         # We need to demultiplex messages from the single queue to specific players
         # Create futures for each player's response
         player_a_future: asyncio.Future[Optional[Literal["even", "odd"]]] = asyncio.Future()

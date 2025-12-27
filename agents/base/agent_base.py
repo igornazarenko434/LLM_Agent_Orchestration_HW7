@@ -20,6 +20,7 @@ from typing import Any, Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI
+
 from league_sdk.config_loader import load_system_config
 from league_sdk.config_models import SystemConfig
 from league_sdk.logger import JsonLogger, setup_logger
@@ -42,6 +43,17 @@ class BaseAgent:
         system_config_path: Path | str = DEFAULT_SYSTEM_CONFIG_PATH,
         log_level: Optional[str] = None,
     ) -> None:
+        """Initialize shared agent state, configuration, and logging.
+
+        Args:
+            agent_id: Unique agent identifier (e.g., LM01, REF01, P01).
+            agent_type: Agent type (league_manager, referee, player).
+            league_id: Optional league identifier.
+            host: Optional host override.
+            port: Optional port override.
+            system_config_path: Path to system configuration file.
+            log_level: Optional logging level override.
+        """
         self.agent_id = agent_id
         self.agent_type = agent_type
         self.sender = f"{agent_type}:{agent_id}"

@@ -321,9 +321,7 @@ class ScoringConfig(BaseModel):
 
 
 class ParticipantsConfig(BaseModel):
-    """
-    Configuration for league participants limits.
-    """
+    """Configuration for league participants limits."""
 
     min_players: int = Field(default=2, ge=2, description="Minimum number of players required")
 

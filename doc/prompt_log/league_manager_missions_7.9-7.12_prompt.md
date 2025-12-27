@@ -29,10 +29,10 @@ Implement missions in correct order:
 **Documentation Awareness:**
 Must read and follow:
 - PRD_EvenOddLeague.md (product requirements)
-- doc/architecture/thread_safety.md (async patterns, queue processors)
-- doc/error_handling_strategy.md (error codes, validation)
-- doc/data_retention_policy.md (retention initialization)
-- doc/research_notes/mcp_protocol.md (MCP implementation patterns)
+- ../architecture/thread_safety.md (async patterns, queue processors)
+- ../reference/error_handling_strategy.md (error codes, validation)
+- ../reference/data_retention_policy.md (retention initialization)
+- ../research_notes/mcp_protocol.md (MCP implementation patterns)
 - Missions_EvenOddLeague.md (detailed mission requirements)
 
 **Integration Requirements:**

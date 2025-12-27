@@ -862,7 +862,7 @@ Document data retention policy for logs, match data, and player history.
 **SCOPE EXPANDED:** Implemented complete data retention system with automated cleanup.
 
 **Definition of Done:**
-- [x] doc/data_retention_policy.md created (22KB comprehensive spec)
+- [x] doc/reference/data_retention_policy.md created (22KB comprehensive spec)
 - [x] Retention periods defined for: logs (30 days), match data (1 year), standings (permanent)
 - [x] Cleanup procedures documented (manual/automated)
 - [x] Archive strategy for historical data (gzip compression, 80% size reduction)
@@ -884,7 +884,7 @@ Document data retention policy for logs, match data, and player history.
 **Self-Verify Command:**
 ```bash
 # Verify documentation
-cat doc/data_retention_policy.md | grep -E "Retention|Cleanup|Archive|30 days|1 year" && echo "✅ Data retention policy documented"
+cat doc/reference/data_retention_policy.md | grep -E "Retention|Cleanup|Archive|30 days|1 year" && echo "✅ Data retention policy documented"
 
 # Verify implementation
 python -c "from league_sdk.cleanup import cleanup_old_logs, archive_old_matches, run_full_cleanup; print('✅ Cleanup functions available')"
@@ -897,7 +897,7 @@ python SHARED/scripts/cleanup_data.py --help | grep -q "Data Retention Cleanup" 
 ```
 
 **Evidence:**
-- ✅ doc/data_retention_policy.md exists (22KB)
+- ✅ doc/reference/data_retention_policy.md exists (22KB)
 - ✅ SHARED/league_sdk/cleanup.py (6 async functions)
 - ✅ SHARED/scripts/cleanup_data.py (CLI tool with dry-run mode)
 - ✅ 17 unit tests passing (90% coverage)
@@ -1229,7 +1229,7 @@ Design comprehensive error handling strategy covering all 18 error codes and ret
 
 **Self-Verify Command:**
 ```bash
-cat doc/error_handling_strategy.md | grep -E "E001|E018|retryable|LEAGUE_ERROR" && echo "Strategy documented"
+cat doc/reference/error_handling_strategy.md | grep -E "E001|E018|retryable|LEAGUE_ERROR" && echo "Strategy documented"
 ```
 
 **Expected Evidence:**
@@ -1383,7 +1383,7 @@ cat README.md | grep -E "# Even/Odd League|## Installation|## Quick Start|## Tes
 Document all MCP tools exposed by each agent with request/response examples.
 
 **Definition of Done:**
-- [ ] doc/api_reference.md created
+- [ ] doc/reference/api_reference.md created
 - [ ] League Manager tools documented (register_referee, register_player, report_match_result, get_standings)
 - [ ] Referee tools documented (start_match, collect_choices)
 - [ ] Player tools documented (handle_game_invitation, choose_parity, notify_match_result)
@@ -1392,7 +1392,7 @@ Document all MCP tools exposed by each agent with request/response examples.
 
 **Self-Verify Command:**
 ```bash
-cat doc/api_reference.md | grep -E "handle_game_invitation|choose_parity|notify_match_result|register_player" && echo "API docs complete"
+cat doc/reference/api_reference.md | grep -E "handle_game_invitation|choose_parity|notify_match_result|register_player" && echo "API docs complete"
 ```
 
 **Expected Evidence:**
@@ -2644,14 +2644,14 @@ cat doc/testing_guide.md | grep -E "pytest|coverage|integration tests|E2E" && ec
 Document key architectural decisions with ADRs.
 
 **Definition of Done:**
-- [ ] `doc/adr/` directory created with numbered ADRs (e.g., 0001-use-fastapi, 0002-json-rpc-transport)
+- [ ] `doc/architecture/adr/` directory created with numbered ADRs (e.g., 0001-use-fastapi-jsonrpc, 0002-async-httpx-client)
 - [ ] Each ADR includes context, decision, alternatives, consequences, and status
 - [ ] ADR index linked from architecture.md
 - [ ] Minimum ADR count: ≥5 (target ≥7 for 90+)
 
 **Self-Verify Command:**
 ```bash
-ls doc/adr | grep 0001 && cat doc/adr/0001-use-fastapi.md | grep "Decision"
+ls doc/architecture/adr | grep 0001 && cat doc/architecture/adr/0001-use-fastapi-jsonrpc.md | grep "Decision"
 ```
 
 **Expected Evidence:**

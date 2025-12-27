@@ -153,7 +153,7 @@ class TimeoutEnforcer:
         error_description: str,
     ) -> Optional[Dict[str, Any]]:
         """
-        Generic wait with retry and GAME_ERROR sending.
+        Wait with retry and send GAME_ERROR on timeout.
 
         Implements exponential backoff per system.json retry_policy.
 

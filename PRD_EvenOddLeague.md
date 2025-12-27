@@ -135,8 +135,8 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 5. Configuration management - must coordinate system-wide settings (timeouts, retry policies) across multiple config files and ensure consistency
 
 **How This Project Helps:**
-- **3-layer data architecture** (SHARED/config/, SHARED/data/, SHARED/logs/) with atomic file writes prevents data corruption
-- **Centralized configuration** in SHARED/config/system.json defines timeouts, retry policies, and circuit breaker thresholds for entire system
+- **3-layer data architecture** ([SHARED/config/](SHARED/config/), [SHARED/data/](SHARED/data/), [SHARED/logs/](SHARED/logs/)) with atomic file writes prevents data corruption
+- **Centralized configuration** in [SHARED/config/system.json](SHARED/config/system.json) defines timeouts, retry policies, and circuit breaker thresholds for entire system
 - **Structured JSONL logging** with automatic rotation (100MB files, 5 backups) enables log aggregation and analysis tools
 - **Repository pattern** (StandingsRepository, MatchRepository, PlayerHistoryRepository) ensures data consistency through atomic writes and validation
 - **Resilience patterns** built-in: exponential backoff retry (2s→4s→8s), circuit breaker (5 failure threshold, 60s reset), timeout enforcement per message type
@@ -439,7 +439,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - In-progress matches and active logs are NEVER deleted
 - Aggregate player statistics are preserved even when individual match records are pruned
 - Standings data is retained permanently (historical record)
-- Retention policies are configuration-driven (SHARED/config/system.json)
+- Retention policies are configuration-driven ([SHARED/config/system.json](SHARED/config/system.json))
 - Manual cleanup script available for on-demand execution
 - All cleanup operations are logged with statistics (files deleted, MB freed)
 - Player data is archived on player unregistration/shutdown
@@ -452,11 +452,11 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - Standings: Permanent
 
 **Cleanup Architecture:**
-- Cleanup functions in `league_sdk/cleanup.py` (async, non-blocking)
+- Cleanup functions in [SHARED/league_sdk/cleanup.py](SHARED/league_sdk/cleanup.py) (async, non-blocking)
 - League Manager runs automated cleanup scheduler
 - Players archive own data on shutdown
-- Manual script: `SHARED/scripts/cleanup_data.py`
-- Archive location: `SHARED/archive/` (gzip compressed)
+- Manual script: [SHARED/scripts/cleanup_data.py](SHARED/scripts/cleanup_data.py)
+- Archive location: [SHARED/archive/](SHARED/archive/) (gzip compressed)
 
 **Data Protection:**
 - IN_PROGRESS matches never deleted (safety check)
@@ -484,9 +484,9 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 ```
 
 **Related Documentation:**
-- Full policy specification: `doc/data_retention_policy.md`
+- Full policy specification: [doc/reference/data_retention_policy.md](doc/reference/data_retention_policy.md)
 - Mission subsections: M7.4.5 (Player cleanup), M7.9.5 (LM initialization), M7.13.5 (Automated scheduler)
-- Configuration: `SHARED/config/system.json` → `data_retention` section
+- Configuration: [SHARED/config/system.json](SHARED/config/system.json) → `data_retention` section
 
 ---
 
@@ -686,16 +686,55 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 
 ### NFR-013: Extensibility - Future Game Support (ISO/IEC 25010: Maintainability)
 **Priority:** P2 (Medium)
-**Description:** System SHOULD be designed for easy addition of new game types.
+**Description:** System SHOULD be designed for easy addition of new game types, agent types, player strategies, and configuration policies without core code changes.
 
 **Acceptance Criteria:**
-- Game logic abstracted in separate modules (games/even_odd.py)
-- Game registry: config/games/games_registry.json for game metadata
-- Referee design: Pluggable game rule engines
-- Protocol: game_type field supports arbitrary values
-- Documentation: Guide for adding new game types
+- **Game Types:** Game logic abstracted in separate modules (games/even_odd.py), registry in config/games/games_registry.json
+- **Agent Types:** BaseAgent template supports new agent roles (observers, analytics agents, etc.)
+- **Player Strategies:** Strategy pattern enables swapping algorithms (random → LLM-based → ML-based)
+- **Configuration:** 50+ settings in system.json, hierarchical override (CLI > ENV > JSON > defaults)
+- **Retry Policies:** Named retry policies for different operation criticality
+- **Logging Policies:** Component-specific log levels, structured JSONL format
+- **Protocol:** game_type field supports arbitrary values, version negotiation for backward compatibility
+- **Documentation:** Comprehensive extensibility guide with ISO/IEC 25010 quality characteristics mapping (doc/usability_extensibility.md)
 
-**Verification:** `python tests/extensibility/test_game_registry.py && python examples/add_new_game_type.py --game=tic_tac_toe --dry-run`
+**Extension Points Documented:**
+1. Adding new game types (§ 3.1 in extensibility guide)
+2. Adding new agent types (§ 3.2 in extensibility guide)
+3. Custom player strategies including LLM-powered (§ 3.3 in extensibility guide)
+4. Configuration extensibility (§ 3.4 in extensibility guide)
+5. Retry & logging policy customization (§ 3.5 in extensibility guide)
+
+**Quality Characteristics (ISO/IEC 25010):**
+All 8 quality characteristics mapped to implementation with KPIs and verification commands (see doc/usability_extensibility.md § 2):
+- Functional Suitability: 18/18 message types (100%)
+- Reliability: Retry success rate ~90%
+- Performance Efficiency: Response time P95 < 500ms
+- Usability: 3 accessibility modes (plain, quiet, json)
+- Security: 32-byte auth tokens
+- Compatibility: 100% JSON-RPC 2.0 compliant
+- Maintainability: 85% test coverage
+- Portability: Python 3.10+ compatible
+
+**Verification:**
+```bash
+# Verify extensibility documentation exists
+cat doc/usability_extensibility.md | grep -E "ISO/IEC 25010|Extensibility|Usability" && echo "✅ Analysis complete"
+
+# Test configuration extensibility
+grep -c "game_type" SHARED/config/games/games_registry.json
+# Expected: 1+ game types
+
+# Verify BaseAgent template for new agent types
+grep -n "class BaseAgent" agents/base/agent_base.py
+# Expected: Template class definition found
+
+# Check ISO/IEC 25010 mapping completeness
+grep -c "### 2\.[1-8]" doc/usability_extensibility.md
+# Expected: 8 (all quality characteristics covered)
+```
+
+**Reference:** See [doc/usability_extensibility.md](doc/usability_extensibility.md) for comprehensive extensibility guide
 
 ---
 
@@ -797,10 +836,10 @@ python SHARED/scripts/cleanup_data.py --execute --type matches --verbose | grep 
 
 | Component | Technology | Version | Justification |
 |-----------|-----------|---------|---------------|
-| **Language** | Python | 3.9+ | Required for course, excellent asyncio support |
+| **Language** | Python | 3.10+ | Asyncio features used across agents |
 | **HTTP Server** | FastAPI | 0.100+ | Modern async framework, automatic JSON-RPC handling |
 | **ASGI Server** | Uvicorn | 0.20+ | High-performance async server for FastAPI |
-| **HTTP Client** | requests | 2.28+ | Reliable synchronous HTTP client |
+| **HTTP Client** | httpx | 0.24+ | Async HTTP client used by retry layer |
 | **Data Validation** | Pydantic | 2.0+ | Type-safe data models, integrated with FastAPI |
 | **Testing** | pytest | 7.0+ | Industry standard, excellent plugin ecosystem |
 | **Coverage** | pytest-cov | 4.0+ | Code coverage measurement |
@@ -839,9 +878,9 @@ python SHARED/scripts/cleanup_data.py --execute --type matches --verbose | grep 
 
 ```
 ┌─────────────────────────────────────────┐
-│           config/ (Read-Only)            │
+│        SHARED/config/ (Read-Only)       │
 │  - system.json                          │
-│  - agents_config.json                   │
+│  - agents/agents_config.json            │
 │  - leagues/league_2025_even_odd.json    │
 │  - games/games_registry.json            │
 └─────────────────────────────────────────┘
@@ -854,24 +893,25 @@ python SHARED/scripts/cleanup_data.py --execute --type matches --verbose | grep 
 └─────────────────────────────────────────┘
                   ↓ Write results
 ┌─────────────────────────────────────────┐
-│        data/ (Read/Write Runtime)        │
+│     SHARED/data/ (Read/Write Runtime)    │
 │  - leagues/<id>/standings.json           │
-│  - matches/<id>/<match_id>.json          │
+│  - leagues/<id>/rounds.json              │
+│  - matches/<match_id>.json               │
 │  - players/<id>/history.json             │
 └─────────────────────────────────────────┘
                   ↓ Append logs
 ┌─────────────────────────────────────────┐
-│          logs/ (Append-Only)             │
-│  - league/<id>/league.log.jsonl          │
-│  - agents/<agent_id>.log.jsonl           │
+│       SHARED/logs/ (Append-Only)         │
+│  - league/<id>/*.log.jsonl               │
+│  - agents/*.log                          │
 └─────────────────────────────────────────┘
                   ↓ Cleanup & Archive (Daily 2 AM UTC)
 ┌─────────────────────────────────────────┐
-│        archive/ (Compressed Storage)     │
-│  - logs/<agent_id>.log.jsonl.gz          │
-│  - matches/<match_id>.json.gz            │
-│  - players/<id>/history_shutdown.json.gz │
-│  - leagues/<id>/rounds_archive.json.gz   │
+│     SHARED/archive/ (Compressed Storage) │
+│  - logs/*.gz                              │
+│  - matches/*.gz                           │
+│  - players/*.gz                           │
+│  - leagues/*.gz                           │
 └─────────────────────────────────────────┘
 ```
 
@@ -882,14 +922,14 @@ The system implements automated data lifecycle management to optimize storage, m
 
 **Components:**
 
-1. **Cleanup Module** (`league_sdk/cleanup.py`)
+1. **Cleanup Module** ([SHARED/league_sdk/cleanup.py](SHARED/league_sdk/cleanup.py))
    - 6 async cleanup functions (non-blocking)
    - Configuration-driven retention periods
    - Archive-before-delete strategy
    - Thread-safe operations (atomic writes)
    - Comprehensive error handling
 
-2. **Manual Cleanup Script** (`SHARED/scripts/cleanup_data.py`)
+2. **Manual Cleanup Script** ([SHARED/scripts/cleanup_data.py](SHARED/scripts/cleanup_data.py))
    - CLI tool for on-demand cleanup
    - Dry-run mode for preview
    - Type-specific cleanup (logs, matches, history, rounds)
@@ -1001,7 +1041,7 @@ The system implements automated data lifecycle management to optimize storage, m
 - Manual verification: `grep "cleanup" logs/league/*/league.log.jsonl`
 
 **Related Documentation:**
-- Full specification: `doc/data_retention_policy.md` (22KB)
+- Full specification: [doc/reference/data_retention_policy.md](doc/reference/data_retention_policy.md) (22KB)
 - Functional requirement: FR-017
 - Non-functional requirement: NFR-016
 - Mission subsections: M7.4.5, M7.9.5, M7.13.5
@@ -1133,7 +1173,7 @@ def retry_with_backoff(func, max_retries=3):
 
 **Context:** Need to persist league state, match results, player history. Options: SQLite, PostgreSQL, file-based JSON.
 
-**Decision:** Use file-based JSON storage with 3-layer architecture (config/, data/, logs/).
+**Decision:** Use file-based JSON storage with [SHARED/config/](SHARED/config/), [SHARED/data/](SHARED/data/), [SHARED/logs/](SHARED/logs/).
 
 **Rationale:**
 - Simplicity: No database setup required
@@ -1154,28 +1194,26 @@ def retry_with_backoff(func, max_retries=3):
 
 ---
 
-### ADR-003: Synchronous HTTP Client (requests) for Agent-to-Agent Communication
+### ADR-003: Async HTTP Client (httpx) for Agent-to-Agent Communication
 
-**Context:** Agents need to call other agents' MCP endpoints. Options: requests (sync), aiohttp (async), httpx (hybrid).
+**Context:** Agents need to call MCP endpoints concurrently (broadcasts, match flow). Options: requests (sync), aiohttp (async), httpx (async).
 
-**Decision:** Use requests library for synchronous HTTP calls.
+**Decision:** Use httpx.AsyncClient for non-blocking calls in the retry layer.
 
 **Rationale:**
-- Simplicity: Straightforward request-response model
-- Reliability: Battle-tested library with excellent error handling
+- Async support: Does not block event loop during network I/O
+- Compatibility: Works cleanly with asyncio and retry logic
 - Timeout support: Built-in timeout configuration
-- Retry support: Compatible with retry decorators
-- Course familiarity: Students likely already know requests
+- Maintainability: Single client interface across agents
 
 **Consequences:**
-- Positive: Simple, readable code
-- Positive: Easy to reason about call flow
-- Negative: Blocks thread during network I/O (acceptable for project scale)
-- Negative: Less efficient than async for high concurrency (not a bottleneck for 100 players)
+- Positive: Scales for concurrent broadcasts and match flows
+- Positive: Cleaner async control flow
+- Negative: Requires async patterns everywhere (acceptable given design)
 
 **Alternatives Considered:**
-- aiohttp: Async complexity not justified by performance needs
-- httpx: Hybrid approach adds complexity without clear benefit
+- requests: Blocks thread, reduces concurrency
+- aiohttp: Similar async benefits but additional dependency surface
 
 ---
 
@@ -1311,7 +1349,7 @@ def retry_with_backoff(func, max_retries=3):
 
 **Context:** Need to organize code for 3+ agent types with common utilities. Options: Monorepo, separate repos, shared library.
 
-**Decision:** Use monorepo with SHARED/ directory containing common SDK.
+**Decision:** Use monorepo with [SHARED/](SHARED/) directory containing common SDK.
 
 **Rationale:**
 - DRY principle: Protocol definitions, config loaders, utilities shared
@@ -1323,7 +1361,7 @@ def retry_with_backoff(func, max_retries=3):
 **Consequences:**
 - Positive: Reduced code duplication
 - Positive: Centralized protocol implementation
-- Negative: Agents have dependency on SHARED/ (mitigated with pip install -e)
+- Negative: Agents have dependency on [SHARED/](SHARED/) (mitigated with pip install -e)
 
 **Alternatives Considered:**
 - Duplicate code per agent: Maintenance nightmare
@@ -1429,7 +1467,7 @@ def retry_with_backoff(func, max_retries=3):
 │  │         MCP Server (FastAPI) - Port 8000                 │ │
 │  │  Tools: register_referee, register_player,               │ │
 │  │         report_match_result, get_standings,              │ │
-│  │         start_league, league_query                       │ │
+│  │         start_league, league_query, get_league_status     │ │
 │  └──────────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────┘
                            ↕ HTTP/JSON-RPC
@@ -1441,7 +1479,8 @@ def retry_with_backoff(func, max_retries=3):
 │  └──────────────┘  └─────────────┘  └──────────────────────┘ │
 │  ┌──────────────────────────────────────────────────────────┐ │
 │  │         MCP Server (FastAPI) - Port 8001                 │ │
-│  │  Tools: start_match, collect_choices, get_match_state    │ │
+│  │  Tools: start_match, get_match_state,                    │ │
+│  │         get_registration_status, manual_register         │ │
 │  └──────────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────┘
                            ↕ HTTP/JSON-RPC
@@ -1454,7 +1493,8 @@ def retry_with_backoff(func, max_retries=3):
 │  ┌──────────────────────────────────────────────────────────┐ │
 │  │         MCP Server (FastAPI) - Port 8101                 │ │
 │  │  Tools: handle_game_invitation, choose_parity,           │ │
-│  │         notify_match_result, get_player_state            │ │
+│  │         notify_match_result, get_player_state,           │ │
+│  │         get_registration_status, manual_register         │ │
 │  └──────────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────┘
 ```
@@ -2204,12 +2244,13 @@ echo "Data restored from: $1"
 
 | Document | Location | Description |
 |----------|----------|-------------|
-| **Project Guide** | `/PROJECT_GUIDE.md` | Complete implementation guide (this document's source) |
-| **Protocol Specification** | `HW7_Instructions_section1_5.pdf` | Official protocol definition (Sections 1-5) |
-| **Homework Requirements** | `HW7_Instructions_section6_11.pdf` | Grading rubric and requirements (Sections 6-11) |
-| **API Documentation** | `/doc/api_reference.md` | MCP tool definitions and examples |
-| **Configuration Guide** | `/doc/configuration.md` | Guide to config file structure and options |
-| **Data Retention Policy** | `/doc/data_retention_policy.md` | Data lifecycle, cleanup procedures, and retention specifications |
+| **Documentation Index** | [doc/README.md](doc/README.md) | Map of all docs by category |
+| **Project Guide** | [PROJECT_GUIDE.md](PROJECT_GUIDE.md) | Complete implementation guide (this document's source) |
+| **Protocol Specification** | [HW7_Instructions_section1_5.pdf](HW7_Instructions_section1_5.pdf) | Official protocol definition (Sections 1-5) |
+| **Homework Requirements** | [HW7_Instructions_section6_11.pdf](HW7_Instructions_section6_11.pdf) | Grading rubric and requirements (Sections 6-11) |
+| **API Documentation** | [doc/reference/api_reference.md](doc/reference/api_reference.md) | MCP tool definitions and examples |
+| **Configuration Guide** | [doc/configuration.md](doc/configuration.md) | Guide to config file structure and options |
+| **Data Retention Policy** | [doc/reference/data_retention_policy.md](doc/reference/data_retention_policy.md) | Data lifecycle, cleanup procedures, and retention specifications |
 
 ### 15.2 Technical References
 
@@ -2238,7 +2279,7 @@ echo "Data restored from: $1"
 |---------|-----------|------------------------|
 | **Retry with Exponential Backoff** | AWS Architecture Blog | Transient failure recovery |
 | **Circuit Breaker** | Martin Fowler | Optional: repeated failure handling |
-| **Repository Pattern** | Fowler's P of EAA | Data access abstraction (SHARED/league_sdk/repositories.py) |
+| **Repository Pattern** | Fowler's P of EAA | Data access abstraction ([SHARED/league_sdk/repositories.py](SHARED/league_sdk/repositories.py)) |
 | **Strategy Pattern** | Gang of Four | Player move strategies (random, history-based, LLM-guided) |
 | **Observer Pattern** | Gang of Four | Standings updates broadcast to all players |
 
@@ -2353,11 +2394,25 @@ LLM_Agent_Orchestration_HW7/
 │   │   └── test_agents/
 │   └── conftest.py                  # Pytest configuration
 ├── doc/                             # Documentation
-│   ├── api_reference.md
-│   ├── configuration.md
-│   ├── architecture.md
-│   ├── data_retention_policy.md     # Data lifecycle and cleanup specification
-│   └── developer_guide.md
+│   ├── README.md                    # Documentation index
+│   ├── reference/                   # Specs, APIs, error codes
+│   │   ├── api_reference.md
+│   │   ├── error_codes_reference.md
+│   │   ├── error_handling_strategy.md
+│   │   └── data_retention_policy.md # Data lifecycle and cleanup specification
+│   ├── architecture/                # Architecture docs
+│   │   ├── thread_safety.md
+│   │   └── adr/
+│   ├── plans/                       # Execution & verification plans
+│   │   ├── system_integration_verification_plan.md
+│   │   └── M6.1_M6.2_IMPLEMENTATION_PLAN_v2.md
+│   ├── research_notes/
+│   ├── game_rules/
+│   ├── algorithms/
+│   ├── guides/
+│   ├── usability_analysis.md
+│   ├── prompt_log/
+│   └── architecture.md
 ├── scripts/                         # Operational scripts
 │   ├── start_league.sh
 │   ├── stop_league.sh
@@ -2502,14 +2557,14 @@ The Even/Odd League project implements a **research-first development approach**
 4. **Resilience Engineering (M5.4):** Error taxonomy, retry policies, and circuit breaker patterns
 
 **Research Outputs:**
-- `doc/research_notes/mcp_protocol.md` - JSON-RPC 2.0 + MCP tool calling patterns, FastAPI integration, league.v2 alignment
-- `doc/game_rules/even_odd.md` - Parity definitions, winner determination logic, technical loss conditions
-- `doc/algorithms/round_robin.md` - Circle Method pseudocode, referee assignment strategy, match ID generation
-- `doc/error_handling_strategy.md` - 18 error codes, retry policy (3 attempts, 2/4/8s backoff), circuit breaker thresholds
+- [doc/research_notes/mcp_protocol.md](doc/research_notes/mcp_protocol.md) - JSON-RPC 2.0 + MCP tool calling patterns, FastAPI integration, league.v2 alignment
+- [doc/game_rules/even_odd.md](doc/game_rules/even_odd.md) - Parity definitions, winner determination logic, technical loss conditions
+- [doc/algorithms/round_robin.md](doc/algorithms/round_robin.md) - Circle Method pseudocode, referee assignment strategy, match ID generation
+- [doc/reference/error_handling_strategy.md](doc/reference/error_handling_strategy.md) - 18 error codes, retry policy (3 attempts, 2/4/8s backoff), circuit breaker thresholds
 
 ### 17.2 Planned Experiments (M5.5: Simulation & Research Notebook)
 
-The following experiments will be conducted in `doc/research_notes/experiments.ipynb` to validate system behavior and optimize configuration:
+The following experiments will be conducted in [doc/research_notes/experiments.ipynb](doc/research_notes/experiments.ipynb) to validate system behavior and optimize configuration:
 
 #### Experiment 1: Parity Choice Strategy Analysis
 **Objective:** Compare win rates across different player strategies.
@@ -2578,7 +2633,7 @@ Three critical system parameters will undergo sensitivity analysis to determine 
 
 ### 17.4 Jupyter Notebook Structure (M5.5 Deliverable)
 
-**File:** `doc/research_notes/experiments.ipynb`
+**File:** [doc/research_notes/experiments.ipynb](doc/research_notes/experiments.ipynb)
 
 **Minimum Requirements:**
 - **≥8 cells** (mix of markdown, code, visualizations)
@@ -2633,7 +2688,7 @@ grep -E "LaTeX.*formula|plt\.show|matplotlib" doc/research_notes/experiments.ipy
 | Concurrent Match Scaling | NFR-003 (Scalability), NFR-001 (Performance) | What is the maximum concurrent match capacity before degradation? |
 
 **Validation:**
-- Experimental results directly inform `SHARED/config/system.json` parameter tuning
+- Experimental results directly inform [SHARED/config/system.json](SHARED/config/system.json) parameter tuning
 - Performance baselines from experiments feed into NFR-001 acceptance criteria
 - Reliability metrics validate NFR-002 uptime targets (99.9%)
 
@@ -2644,7 +2699,7 @@ grep -E "LaTeX.*formula|plt\.show|matplotlib" doc/research_notes/experiments.ipy
 ### 18.1 Open Questions
 
 #### Q1: Optimal Circuit Breaker Threshold for Production
-**Context:** Current threshold is 5 consecutive failures (60s timeout) per `doc/error_handling_strategy.md`.
+**Context:** Current threshold is 5 consecutive failures (60s timeout) per [doc/reference/error_handling_strategy.md](doc/reference/error_handling_strategy.md).
 
 **Question:** Is a 5-failure threshold too aggressive for real-world network variability, or too lenient for fast failure detection?
 
@@ -2671,7 +2726,7 @@ grep -E "LaTeX.*formula|plt\.show|matplotlib" doc/research_notes/experiments.ipy
 - **Missing Tiebreaker:** Ambiguous final rankings, unclear winner declaration
 - **Complex Tiebreaker:** Implementation complexity, potential bugs
 
-**Mitigation:** Document tiebreaker rule in `doc/game_rules/even_odd.md` before M7.6 (League Manager implementation).
+**Mitigation:** Document tiebreaker rule in [doc/game_rules/even_odd.md](doc/game_rules/even_odd.md) before M7.6 (League Manager implementation).
 
 **Current Assumption:** Ties allowed; no tiebreaker implemented (see A3 below).
 
@@ -2715,7 +2770,7 @@ grep -E "LaTeX.*formula|plt\.show|matplotlib" doc/research_notes/experiments.ipy
 ---
 
 #### Q5: Deterministic Randomness for Testing vs Production
-**Context:** Referee draws random number 1-10 using `secrets.randbelow` (cryptographic randomness) per `doc/game_rules/even_odd.md`.
+**Context:** Referee draws random number 1-10 using `secrets.randbelow` (cryptographic randomness) per [doc/game_rules/even_odd.md](doc/game_rules/even_odd.md).
 
 **Question:** How to balance cryptographic security (production) with test reproducibility (seeded randomness)?
 
@@ -2749,7 +2804,7 @@ grep -E "LaTeX.*formula|plt\.show|matplotlib" doc/research_notes/experiments.ipy
 ---
 
 #### A2: File-Based Storage Sufficient for Scale
-**Assumption:** JSON file storage in `SHARED/data/` and `SHARED/logs/` is sufficient for ≤1000 players, ≤500,000 matches.
+**Assumption:** JSON file storage in [SHARED/data/](SHARED/data/) and [SHARED/logs/](SHARED/logs/) is sufficient for ≤1000 players, ≤500,000 matches.
 
 **Rationale:** PRD targets "thousands of concurrent agents" but not "millions." File I/O benchmarks show JSON read/write <10ms for <1MB files.
 
@@ -2913,18 +2968,18 @@ grep -E "LaTeX.*formula|plt\.show|matplotlib" doc/research_notes/experiments.ipy
 
 | # | Evidence Type | Location | Verification Command | Points |
 |---|---------------|----------|---------------------|--------|
-| 1 | **Player agent implements 3 mandatory tools** | `/agents/player_P01/server.py` | `grep -E "handle_game_invitation\|choose_parity\|notify_match_result" agents/player_P01/server.py` | 15 |
-| 2 | **All 18 message types defined** | `/SHARED/league_sdk/protocol.py` | `grep -E "GAME_INVITATION\|CHOOSE_PARITY_CALL\|..." SHARED/league_sdk/protocol.py \| wc -l` | 5 |
-| 3 | **All 18 error codes handled** | `/SHARED/league_sdk/errors.py` | `grep -E "E001\|E002\|...\|E018" SHARED/league_sdk/errors.py \| wc -l` | 5 |
-| 4 | **Protocol compliance tests pass** | `/tests/protocol_compliance/` | `pytest tests/protocol_compliance/ -v` | 10 |
-| 5 | **Round-robin scheduling implemented** | `/agents/league_manager/scheduler.py` | `python tests/test_scheduling_algorithm.py --players=4` | 8 |
-| 6 | **Standings calculation correct** | `/agents/league_manager/standings.py` | `python tests/test_standings_calculation.py` | 10 |
-| 7 | **Timeout enforcement working** | `/agents/referee_REF01/timeout_handler.py` | `python tests/test_referee_timeout_enforcement.py` | 8 |
-| 8 | **Retry policy implemented** | `/SHARED/league_sdk/retry.py` | `python tests/test_retry_policy.py && grep "RETRY_ATTEMPT" logs/agents/*.log.jsonl` | 5 |
+| 1 | **Player agent implements 3 mandatory tools** | [agents/player_P01/server.py](agents/player_P01/server.py) | `grep -E "handle_game_invitation\|choose_parity\|notify_match_result" agents/player_P01/server.py` | 15 |
+| 2 | **All 18 message types defined** | [SHARED/league_sdk/protocol.py](SHARED/league_sdk/protocol.py) | `grep -E "GAME_INVITATION\|CHOOSE_PARITY_CALL\|..." SHARED/league_sdk/protocol.py \| wc -l` | 5 |
+| 3 | **All 18 error codes handled** | [SHARED/league_sdk/errors.py](SHARED/league_sdk/errors.py) | `grep -E "E001\|E002\|...\|E018" SHARED/league_sdk/errors.py \| wc -l` | 5 |
+| 4 | **Protocol compliance tests pass** | [tests/protocol_compliance/](tests/protocol_compliance/) | `pytest tests/protocol_compliance/ -v` | 10 |
+| 5 | **Round-robin scheduling implemented** | [agents/league_manager/scheduler.py](agents/league_manager/scheduler.py) | `python tests/test_scheduling_algorithm.py --players=4` | 8 |
+| 6 | **Standings calculation correct** | [agents/league_manager/standings.py](agents/league_manager/standings.py) | `python tests/test_standings_calculation.py` | 10 |
+| 7 | **Timeout enforcement working** | [agents/referee_REF01/timeout_handler.py](agents/referee_REF01/timeout_handler.py) | `python tests/test_referee_timeout_enforcement.py` | 8 |
+| 8 | **Retry policy implemented** | [SHARED/league_sdk/retry.py](SHARED/league_sdk/retry.py) | `python tests/test_retry_policy.py && grep "RETRY_ATTEMPT" logs/agents/*.log.jsonl` | 5 |
 | 9 | **4-player league completes** | End-to-end test | `pytest tests/e2e/test_4_player_league.py -v` | 15 |
-| 10 | **Authentication working** | `/agents/league_manager/registration.py` | `python tests/test_authentication.py` | 5 |
-| 11 | **3-layer data architecture** | `/SHARED/config/, /SHARED/data/, /SHARED/logs/` | `ls -R SHARED/config SHARED/data SHARED/logs` | 3 |
-| 12 | **JSON Lines logging** | `/SHARED/logs/agents/*.log.jsonl` | `cat logs/agents/P01.log.jsonl \| jq .` | 3 |
+| 10 | **Authentication working** | [agents/league_manager/registration.py](agents/league_manager/registration.py) | `python tests/test_authentication.py` | 5 |
+| 11 | **3-layer data architecture** | [SHARED/config/](SHARED/config/), [SHARED/data/](SHARED/data/), [SHARED/logs/](SHARED/logs/) | `ls -R SHARED/config SHARED/data SHARED/logs` | 3 |
+| 12 | **JSON Lines logging** | [SHARED/logs/agents/*.log.jsonl](SHARED/logs/agents/) | `cat logs/agents/P01.log.jsonl \| jq .` | 3 |
 | 13 | **Test coverage ≥85%** | Coverage report | `pytest --cov=agents --cov-report=term \| grep "TOTAL"` | 10 |
 | 14 | **Code quality: flake8 passes** | Linting | `flake8 agents/ SHARED/league_sdk/` | 3 |
 | 15 | **Type checking: mypy passes** | Type checking | `mypy agents/ SHARED/league_sdk/ --strict` | 3 |

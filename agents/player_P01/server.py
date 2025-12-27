@@ -17,8 +17,11 @@ import uuid
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
+from agents.base import BaseAgent
+from agents.player_P01 import handlers
 from fastapi import Request
 from fastapi.responses import JSONResponse
+
 from league_sdk.cleanup import get_retention_config
 from league_sdk.config_loader import load_agents_config, load_json_file
 from league_sdk.logger import log_error, log_message_received, log_message_sent
@@ -39,9 +42,6 @@ from league_sdk.protocol import (
 from league_sdk.repositories import PlayerHistoryRepository
 from league_sdk.retry import call_with_retry
 
-from agents.base import BaseAgent
-from agents.player_P01 import handlers
-
 AGENTS_CONFIG_PATH = "SHARED/config/agents/agents_config.json"
 GAMES_REGISTRY_PATH = "SHARED/config/games/games_registry.json"
 
@@ -56,6 +56,14 @@ class PlayerAgent(BaseAgent):
         host: Optional[str] = None,
         port: Optional[int] = None,
     ) -> None:
+        """Initialize player state, configs, and handlers.
+
+        Args:
+            agent_id: Player agent identifier.
+            league_id: League identifier for registration context.
+            host: Optional host override.
+            port: Optional port override.
+        """
         super().__init__(
             agent_id=agent_id,
             agent_type="player",
@@ -260,7 +268,7 @@ class PlayerAgent(BaseAgent):
                 )
 
     def _log_error(self, error: JSONRPCError, payload: Dict[str, Any]) -> None:
-        """Helper to log structured errors."""
+        """Log structured errors."""
         details = error.data if isinstance(error.data, dict) else {"details": error.data}
         details.update(
             {
@@ -546,6 +554,7 @@ class PlayerAgent(BaseAgent):
         }
 
     def registration_endpoint(self) -> str:
+        """Return League Manager registration endpoint."""
         lm_config = self.agents_config.get("league_manager", {})
         endpoint = lm_config.get("endpoint")
         if endpoint:
@@ -1061,5 +1070,5 @@ class PlayerAgent(BaseAgent):
 
 
 def build_player_agent(agent_id: str = "P01") -> PlayerAgent:
-    """Factory to build a PlayerAgent (useful for tests)."""
+    """Build a PlayerAgent instance (useful for tests)."""
     return PlayerAgent(agent_id=agent_id)

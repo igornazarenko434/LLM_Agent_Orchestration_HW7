@@ -643,7 +643,7 @@ response = GameJoinAck(
 
 **Validation:**
 ```python
-# From doc/error_handling_strategy.md:39
+# From [../reference/error_handling_strategy.md](../reference/error_handling_strategy.md):39
 E013: CONVERSATION_ID_MISMATCH - conversation_id does not match
 ```
 
@@ -1385,7 +1385,7 @@ class LeagueManager:
 ## 14. References
 
 1. **PRD**: `PRD_EvenOddLeague.md` - Section 13 (Concurrent Match Execution)
-2. **Error Handling**: `doc/error_handling_strategy.md` - Circuit breaker and retry policies
+2. **Error Handling**: [../reference/error_handling_strategy.md](../reference/error_handling_strategy.md) - Circuit breaker and retry policies
 3. **Repository Implementation**: `SHARED/league_sdk/repositories.py` - Atomic write pattern
 4. **Base Agent**: `agents/base/agent_base.py` - Threading model
 5. **Protocol**: `SHARED/league_sdk/protocol.py` - Message immutability
@@ -1438,7 +1438,7 @@ wc -w doc/architecture/thread_safety.md  # Should be 5000+ words
 - ✅ Future enhancements proposed (file locking, database, message queue)
 
 **Mission Definition of Done**:
-- [x] doc/thread_safety.md created documenting concurrency model
+- [x] doc/architecture/thread_safety.md created documenting concurrency model
 - [x] Thread-safe data access patterns documented (locks, atomics, immutability)
 - [x] Repository layer thread safety guarantees documented
 - [x] Shared resource access patterns (config, logs, data files) explained

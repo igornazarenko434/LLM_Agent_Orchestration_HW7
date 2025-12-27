@@ -15,9 +15,9 @@ from pathlib import Path
 # Add SHARED to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "SHARED"))
 
-from league_sdk.config_loader import load_agents_config, load_system_config  # noqa: E402
-
 from agents.league_manager.server import LeagueManager  # noqa: E402
+
+from league_sdk.config_loader import load_agents_config, load_system_config  # noqa: E402
 
 
 def _default_league_id() -> str | None:
@@ -62,7 +62,7 @@ def parse_args():
         3. Config file values
         4. Hardcoded defaults (lowest priority)
 
-    Exit Codes (aligned with doc/error_codes_reference.md):
+    Exit Codes (aligned with doc/reference/error_codes_reference.md):
         0 - Success
         1 - Configuration error
         2 - Network/connection error
@@ -111,7 +111,7 @@ Exit Codes:
   4 - Runtime error (unexpected failure)
 
 For more information, see:
-  - doc/error_codes_reference.md
+  - doc/reference/error_codes_reference.md
   - SHARED/config/agents/agents_config.json
 
 Responsibilities:
@@ -212,7 +212,7 @@ Responsibilities:
 
 
 async def main():
-    """Main entry point for League Manager."""
+    """Run the League Manager entry point."""
     args = parse_args()
 
     # Create League Manager

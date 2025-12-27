@@ -19,8 +19,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from agents.base import BaseAgent
 from fastapi import Request
 from fastapi.responses import JSONResponse
+
 from league_sdk.cleanup import archive_old_matches, get_retention_config, run_full_cleanup
 from league_sdk.config_loader import load_agents_config, load_league_config, load_system_config
 from league_sdk.logger import log_error, log_message_received, log_message_sent
@@ -44,8 +46,6 @@ from league_sdk.queue_processor import SequentialQueueProcessor
 from league_sdk.repositories import RoundsRepository, StandingsRepository
 from league_sdk.retry import call_with_retry
 
-from agents.base import BaseAgent
-
 AGENTS_CONFIG_PATH = "SHARED/config/agents/agents_config.json"
 SYSTEM_CONFIG_PATH = "SHARED/config/system.json"
 
@@ -68,6 +68,14 @@ class LeagueManager(BaseAgent):
         host: Optional[str] = None,
         port: Optional[int] = None,
     ) -> None:
+        """Initialize league manager state, configs, and repositories.
+
+        Args:
+            agent_id: League manager agent identifier.
+            league_id: League identifier for persistence and schedules.
+            host: Optional host override.
+            port: Optional port override.
+        """
         super().__init__(
             agent_id=agent_id,
             agent_type="league_manager",
@@ -884,7 +892,7 @@ class LeagueManager(BaseAgent):
         )
 
     def _log_error(self, error: JSONRPCError, payload: Dict[str, Any]) -> None:
-        """Helper to log structured errors."""
+        """Log structured errors."""
         details = error.data if isinstance(error.data, dict) else {"details": error.data}
         details.update(
             {
@@ -1720,7 +1728,7 @@ class LeagueManager(BaseAgent):
 
     async def _broadcast_to_players(self, payload: Dict[str, Any], message_type: str) -> None:
         """
-        Helper to broadcast message to all registered players.
+        Broadcast a message to all registered players.
 
         Uses endpoints from agents_config for reliability.
         Logs per-recipient failures with E006 PLAYER_NOT_AVAILABLE.
@@ -2072,7 +2080,7 @@ class LeagueManager(BaseAgent):
         return None
 
     def _round_summary(self, matches: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Basic round summary placeholder."""
+        """Build a basic round summary placeholder."""
         return {
             "total_matches": len(matches),
             "wins": 0,

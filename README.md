@@ -262,6 +262,7 @@ LLM_Agent_Orchestration_HW7/
 │   ├── e2e/                            # End-to-end tests ✅ NEW
 │   └── protocol_compliance/            # Protocol compliance tests ✅ NEW
 ├── 📚 doc/                             # Documentation
+│   ├── README.md                       # Documentation index ✅ NEW
 │   ├── research_notes/
 │   │   ├── mcp_protocol.md             # MCP research and analysis
 │   │   ├── experiments.ipynb           # Research notebook (M5.5) ✅ NEW
@@ -274,9 +275,20 @@ LLM_Agent_Orchestration_HW7/
 │   │   └── even_odd.md                 # Even/Odd game specification
 │   ├── algorithms/
 │   │   └── round_robin.md              # Round-robin scheduling algorithm
-│   ├── system_integration_verification_plan.md # Integration testing guide ✅ NEW
-│   ├── data_retention_policy.md        # Data lifecycle & cleanup specification (22KB)
-│   ├── error_handling_strategy.md      # Error handling approach
+│   ├── reference/                      # Specs, APIs, error codes ✅ NEW
+│   │   ├── api_reference.md            # MCP tools and message formats
+│   │   ├── error_codes_reference.md    # E001–E018 reference
+│   │   ├── error_handling_strategy.md  # Retry, circuit breaker guidance
+│   │   └── data_retention_policy.md    # Data lifecycle & cleanup (22KB)
+│   ├── architecture/                   # Architecture docs ✅ NEW
+│   │   ├── thread_safety.md            # Concurrency model
+│   │   └── adr/                        # Architecture Decision Records
+│   ├── plans/                          # Execution & verification plans ✅ NEW
+│   │   ├── system_integration_verification_plan.md # Integration testing guide
+│   │   └── M6.1_M6.2_IMPLEMENTATION_PLAN_v2.md     # CLI + ops plan
+│   ├── guides/
+│   │   └── HOW_QUALITY_WORKS.md        # Quality workflow
+│   ├── usability_analysis.md           # M6.6 usability review ✅ NEW
 │   └── prompt_log/                     # Implementation prompt logs
 │       ├── mission_2_implementation_prompt.md
 │       ├── config_layer_mission_3.0-3.3_prompt.md
@@ -304,11 +316,11 @@ LLM_Agent_Orchestration_HW7/
 
 ### Key Directories
 
-- **`SHARED/league_sdk/`**: Installable Python package with protocol, config, logging, retry utilities
-- **`SHARED/config/`**: JSON configuration files validated by Pydantic models
-- **`agents/`**: Agent implementations (League Manager, Referees, Players)
-- **`tests/`**: Comprehensive test suite with pytest fixtures
-- **`doc/`**: Research notes, game rules, algorithms, implementation logs
+- **[SHARED/league_sdk/](SHARED/league_sdk/)**: Installable Python package with protocol, config, logging, retry utilities
+- **[SHARED/config/](SHARED/config/)**: JSON configuration files validated by Pydantic models
+- **[agents/](agents/)**: Agent implementations (League Manager, Referees, Players)
+- **[tests/](tests/)**: Comprehensive test suite with pytest fixtures
+- **[doc/](doc/)**: Research notes, game rules, algorithms, implementation logs
 
 ---
 
@@ -391,7 +403,7 @@ ls -la SHARED/config/
 
 Expected files:
 - `system.json` - Global system settings
-- `agents/agents_config.json` - Agent registry
+- [agents/agents_config.json](agents/agents_config.json) - Agent registry
 - `leagues/league_2025_even_odd.json` - League config
 - `games/games_registry.json` - Game definitions
 
@@ -428,7 +440,7 @@ lsof -i :8103  # Player 3
 lsof -i :8104  # Player 4
 ```
 
-If any ports are in use, either stop the conflicting service or update `SHARED/config/system.json`.
+If any ports are in use, either stop the conflicting service or update [SHARED/config/system.json](SHARED/config/system.json).
 
 ### Docker Installation (Alternative)
 
@@ -542,6 +554,137 @@ pkill -f "python3.*player.*main.py"
 ---
 
 ## 🎛️ Usage
+
+### CLI Usage
+
+All agents expose a consistent CLI with accessibility and automation options.
+
+#### Common Arguments (All Agents)
+
+| Argument | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `--help` | Show usage information | - | `--help` |
+| `--version` | Show agent version | - | `--version` |
+| `--log-level` | Set logging level | INFO | `--log-level DEBUG` |
+| `--verbose` | Verbose output | false | `--verbose` |
+| `--quiet` | Minimal output (errors only) | false | `--quiet` |
+| `--plain` | Plain text output (screen reader friendly) | false | `--plain` |
+| `--json` | JSON output (automation) | false | `--json` |
+| `--config` | Custom config path (see notes below) | SHARED/config | `--config /path/to/config` |
+
+Notes:
+- Player agents use `--config` as a config base directory override.
+- League Manager/Referee expose `--config` for compatibility; current behavior
+  uses default config paths.
+
+#### Agent-Specific Examples
+
+```bash
+# League Manager
+python -m agents.league_manager.main \
+  --league-id league_2025_even_odd \
+  --host localhost \
+  --port 8000 \
+  --log-level INFO
+
+# Referee
+python -m agents.referee_REF01.main \
+  --referee-id REF01 \
+  --league-id league_2025_even_odd \
+  --host localhost \
+  --port 8001 \
+  --log-level INFO
+
+# Player
+python -m agents.player_P01.main \
+  --player-id P01 \
+  --league-id league_2025_even_odd \
+  --host localhost \
+  --port 8101 \
+  --log-level INFO
+```
+
+### Accessibility
+
+All agents and scripts support `--plain` for screen readers and `--json` for
+automation.
+
+```bash
+python -m agents.player_P01.main --plain
+./scripts/check_health.sh --plain
+./scripts/query_standings.sh --json
+```
+
+### Exit Codes (Agents)
+
+| Code | Meaning | Examples |
+|------|---------|----------|
+| 0 | Success | Agent running normally |
+| 1 | Configuration error | E002, E008, E011 |
+| 2 | Network error | E016, E018 |
+| 3 | Authentication error | E003, E004, E012 |
+| 4 | Runtime error | E015 |
+
+See [doc/reference/error_codes_reference.md](doc/reference/error_codes_reference.md) for detailed error definitions.
+
+---
+
+### Operational Scripts
+
+#### Core Operations
+
+| Script | Description | Example |
+|--------|-------------|---------|
+| `scripts/start_league.sh` | Start all agents (LM + 2 refs + 4 players) | `./scripts/start_league.sh` |
+| `scripts/stop_league.sh` | Graceful shutdown of all agents | `./scripts/stop_league.sh` |
+| `scripts/check_health.sh` | Health check all endpoints | `./scripts/check_health.sh` |
+| `scripts/backup_data.sh` | Backup SHARED/data and SHARED/logs | `./scripts/backup_data.sh` |
+| `scripts/restore_data.sh` | Restore from backup | `./scripts/restore_data.sh data_20251227_143022` |
+
+#### Verification & Debug Scripts
+
+| Script | Description | Example |
+|--------|-------------|---------|
+| `scripts/verify_configs.sh` | Validate config files | `./scripts/verify_configs.sh` |
+| `scripts/check_registration_status.sh` | Show LM registration state | `./scripts/check_registration_status.sh` |
+| `scripts/trigger_league_start.sh` | Start league orchestration | `./scripts/trigger_league_start.sh` |
+| `scripts/query_standings.sh` | Query standings | `./scripts/query_standings.sh --plain` |
+| `scripts/view_match_state.sh` | Inspect match state | `./scripts/view_match_state.sh R1M1 --referee-id REF01 --sender player:P01 --auth-token <token>` |
+| `scripts/analyze_logs.sh` | Filter log output | `./scripts/analyze_logs.sh MESSAGE_SENT` |
+| `scripts/cleanup_old_data.sh` | Cleanup old backups/logs | `./scripts/cleanup_old_data.sh --dry-run` |
+
+#### Script Options
+
+All scripts support:
+- `--plain` (screen reader friendly)
+- `--json` (automation)
+- `--help`
+
+Some scripts additionally support:
+- `--verbose` (e.g., `verify_configs.sh`)
+- `--quiet` (e.g., `check_health.sh`, `start_league.sh`)
+- `--dry-run`, `--force` (backup/restore/cleanup scripts)
+
+#### Example Workflow
+
+```bash
+./scripts/verify_configs.sh
+./scripts/start_league.sh
+./scripts/check_health.sh
+./scripts/check_registration_status.sh
+./scripts/trigger_league_start.sh
+./scripts/query_standings.sh
+./scripts/view_match_state.sh R1M1 --referee-id REF01 --sender player:P01 --auth-token <token>
+./scripts/analyze_logs.sh MESSAGE_SENT
+./scripts/backup_data.sh post_league_$(date +%Y%m%d)
+./scripts/stop_league.sh
+```
+
+#### Log and Data Paths
+
+- Structured logs: [SHARED/logs/league/<league_id>/*.log.jsonl](SHARED/logs/league/)
+- Agent stdout logs: [SHARED/logs/agents/*.log](SHARED/logs/agents/)
+- Data outputs: [SHARED/data/](SHARED/data/)
 
 ### Player Agent Registration Flow
 
@@ -752,7 +895,7 @@ async def cleanup_player_data(self):
 ```
 
 **Configuration-Driven:**
-All retention periods are configurable in `SHARED/config/system.json` under `data_retention` section. Change retention periods without code changes!
+All retention periods are configurable in [SHARED/config/system.json](SHARED/config/system.json) under `data_retention` section. Change retention periods without code changes!
 
 **Safety Guarantees:**
 - ✅ IN_PROGRESS matches never deleted
@@ -765,7 +908,7 @@ All retention periods are configurable in `SHARED/config/system.json` under `dat
 
 ## ⚙️ Configuration
 
-### System Configuration (`SHARED/config/system.json`)
+### System Configuration ([SHARED/config/system.json](SHARED/config/system.json))
 
 ```json
 {
@@ -862,7 +1005,7 @@ RETRY_INITIAL_DELAY_SEC=2.0
 LEAGUE_ID=league_2025_even_odd
 ```
 
-### Agent Configuration (`SHARED/config/agents/agents_config.json`)
+### Agent Configuration ([SHARED/config/agents/agents_config.json](SHARED/config/agents/agents_config.json))
 
 Register all agents:
 
@@ -900,6 +1043,8 @@ Register all agents:
 
 ## 🏗️ Technical Architecture
 
+Detailed diagrams and flows live in [doc/architecture.md](doc/architecture.md).
+
 ### System Overview
 
 ```
@@ -934,10 +1079,10 @@ Register all agents:
          ┌─────────────────────────────────────────┐
          │        4-LAYER DATA ARCHITECTURE        │
          ├─────────────────────────────────────────┤
-         │ CONFIG/  │ Static configuration files   │
-         │ DATA/    │ Runtime data (standings)     │
-         │ LOGS/    │ Append-only JSONL logs       │
-         │ ARCHIVE/ │ Compressed archived data     │
+         │ SHARED/config/  │ Static configuration  │
+         │ SHARED/data/    │ Runtime data          │
+         │ SHARED/logs/    │ JSONL logs            │
+         │ SHARED/archive/ │ Compressed archive    │
          └─────────────────────────────────────────┘
                                │
                                ▼
@@ -1463,7 +1608,7 @@ Example: 4 players = 6 matches across 3 rounds
 
 ### Error Handling Strategy
 
-**Document:** [`doc/error_handling_strategy.md`](doc/error_handling_strategy.md)
+**Document:** [`doc/reference/error_handling_strategy.md`](doc/reference/error_handling_strategy.md)
 
 - 18 error codes (E001-E018)
 - Retryable: E001, E005, E006, E009, E014, E015, E016
@@ -1544,13 +1689,27 @@ Example: 4 players = 6 matches across 3 rounds
 
 ## 🔧 Extensibility & Maintenance
 
+The Even/Odd League system is designed with **extensibility as a first-class architectural concern**, enabling rapid adaptation to new requirements without core code changes. For comprehensive details, see **[Extensibility & ISO/IEC 25010 Analysis](doc/usability_extensibility.md)**.
+
+### Quick Reference: Extension Points
+
+| Extension Type | Configuration | Code Changes | Example Use Case |
+|----------------|---------------|--------------|------------------|
+| **New Game Types** | ✅ Add GameConfig to `games_registry.json` | ✅ Implement game logic module | Add "Rock/Paper/Scissors" game |
+| **New Agent Types** | ✅ Register in `agents_config.json` | ✅ Extend BaseAgent class | Add "Observer" agent for analytics |
+| **Player Strategies** | ⚠️ Optional metadata in agent config | ✅ Implement strategy module | Replace random with LLM-based decisions |
+| **Retry Policies** | ✅ Update `retry_policy` in `system.json` | ❌ No code changes needed | Aggressive retry for critical ops |
+| **Logging Levels** | ✅ Component-specific levels in `system.json` | ❌ No code changes needed | Debug mode for specific agents |
+| **Timeout Values** | ✅ Update `timeouts` in `system.json` | ❌ No code changes needed | Increase parity choice timeout |
+
 ### Adding New Game Types
 
-1. **Define Game Rules** in `SHARED/config/games/games_registry.json`:
+**Step 1**: Define game in `SHARED/config/games/games_registry.json`:
+
 ```json
 {
   "game_type": "rock_paper_scissors",
-  "display_name": "Rock, Paper, Scissors",
+  "display_name": "Rock/Paper/Scissors",
   "supports_draw": true,
   "min_players": 2,
   "max_players": 2,
@@ -1560,45 +1719,161 @@ Example: 4 players = 6 matches across 3 rounds
 }
 ```
 
-2. **Implement Game Logic** in `agents/referee/games/rock_paper_scissors.py`
-
-3. **Update Protocol Models** if new message types needed
-
-### Adding New Agents
-
-1. **Register in Config** (`SHARED/config/agents/agents_config.json`)
-2. **Extend BaseAgent:**
-```python
-from agents.base import BaseAgent
-
-class CustomAgent(BaseAgent):
-    def __init__(self, agent_id: str):
-        super().__init__(agent_id, agent_type="custom")
-        # Custom initialization
-```
-
-### Custom Parity Strategies
+**Step 2**: Implement game logic in `agents/referee_REF01/games/rock_paper_scissors.py`:
 
 ```python
-# agents/player_P01/strategies.py
-class HistoryBasedStrategy:
-    def choose(self, match_history: list) -> str:
-        # Analyze opponent's past choices
-        return "even"  # or "odd"
-
-# Update handlers.py
-from strategies import HistoryBasedStrategy
-
-strategy = HistoryBasedStrategy()
-parity_choice = strategy.choose(history_repo.get_recent_matches(10))
+class RockPaperScissorsLogic:
+    def determine_winner(self, player_a_choice, player_b_choice):
+        # Game-specific winner determination logic
+        pass
 ```
+
+**Step 3**: Referees auto-discover via `games_registry.json` (no code changes needed).
+
+**Detailed Guide:** [doc/usability_extensibility.md § 3.1](doc/usability_extensibility.md#31-adding-new-game-types)
+
+### Adding New Agent Types
+
+**Example**: Add an "Observer" agent that spectates matches.
+
+1. **Extend BaseAgent** (`agents/observer_OBS01/server.py`):
+   ```python
+   from agents.base import BaseAgent
+
+   class ObserverAgent(BaseAgent):
+       def __init__(self, agent_id: str):
+           super().__init__(agent_id, agent_type="observer")
+   ```
+
+2. **Register in Config** (`SHARED/config/agents/agents_config.json`):
+   ```json
+   {
+     "observers": [
+       {
+         "agent_id": "OBS01",
+         "agent_type": "observer",
+         "endpoint": "http://localhost:8201/mcp",
+         "port": 8201
+       }
+     ]
+   }
+   ```
+
+**Detailed Guide:** [doc/usability_extensibility.md § 3.2](doc/usability_extensibility.md#32-adding-new-agent-types)
+
+### Custom Player Strategies (LLM-Powered)
+
+Replace random parity selection with LLM-based decision-making:
+
+```python
+# agents/player_P01/strategies/llm_strategy.py
+class LLMParityStrategy:
+    def choose_parity(self, match_history: list, opponent_id: str) -> str:
+        # Use OpenAI API to analyze patterns and choose parity
+        prompt = f"Based on match history, should I choose even or odd?"
+        response = openai.ChatCompletion.create(model="gpt-4", messages=[...])
+        return response['choices'][0]['message']['content']
+
+# agents/player_P01/handlers.py
+from strategies.llm_strategy import LLMParityStrategy
+
+strategy = LLMParityStrategy()
+parity_choice = strategy.choose_parity(history_repo.get_recent_matches(10), opponent_id)
+```
+
+**Configuration**:
+```json
+{
+  "players": [
+    {"agent_id": "P01", "strategy": "llm", "metadata": {"llm_model": "gpt-4"}}
+  ]
+}
+```
+
+**Environment**: `export OPENAI_API_KEY="sk-..."`
+
+**Detailed Guide:** [doc/usability_extensibility.md § 3.3](doc/usability_extensibility.md#33-custom-parity-strategies-llm-powered-players)
+
+### ISO/IEC 25010 Quality Characteristics
+
+The system maps all **8 ISO/IEC 25010 quality characteristics** to implementation with measurable KPIs:
+
+| Characteristic | KPI | Verification Command |
+|----------------|-----|----------------------|
+| **Functional Suitability** | 18/18 message types (100%) | `grep -c "class.*Message.*MessageEnvelope" SHARED/league_sdk/protocol.py` |
+| **Reliability** | Retry success rate ~90% | `pytest tests/unit/test_sdk/test_retry.py -v` |
+| **Performance Efficiency** | Response time P95 < 500ms | Manual performance testing |
+| **Usability** | 3 accessibility modes (plain, quiet, json) | `./scripts/check_health.sh --plain` |
+| **Security** | 32-byte auth tokens | `grep "auth_token_length" SHARED/config/system.json` |
+| **Compatibility** | 100% JSON-RPC 2.0 compliant | Protocol compliance tests |
+| **Maintainability** | 85% test coverage | `pytest --cov=SHARED/league_sdk --cov=agents` |
+| **Portability** | Python 3.10+ compatible | `python3 --version` |
+
+**Full Analysis:** [doc/usability_extensibility.md § 2](doc/usability_extensibility.md#2-isoiec-25010-quality-characteristics-mapping)
+
+### Configuration Extensibility
+
+**Philosophy**: 90% of users should never need to change defaults. Power users can override everything.
+
+**Configuration Hierarchy** (highest to lowest priority):
+1. **CLI Arguments**: `--port 8101`
+2. **Environment Variables**: `LEAGUE_MANAGER_PORT=9000`
+3. **JSON Config Files**: `SHARED/config/system.json`
+4. **Hardcoded Defaults**: Fallback values in code
+
+**Example Override**:
+```bash
+# Override via environment
+LEAGUE_MANAGER_PORT=9000 python -m agents.league_manager.main
+
+# Override via CLI
+python -m agents.league_manager.main --port 9000
+```
+
+**50+ Configurable Parameters** in `system.json` covering timeouts, retry policies, network settings, data retention, logging, security, and more.
 
 ### Monitoring & Observability
 
-- **Logs:** Aggregate via ELK stack or Splunk (JSONL format)
-- **Metrics:** Expose Prometheus endpoint (future enhancement)
-- **Tracing:** Use conversation_id for distributed tracing
-- **Health Checks:** `/health` endpoint on all agents
+- **Structured Logs**: JSONL format for ELK stack, Splunk, or Grafana Loki
+- **Health Checks**: `/health` endpoint on all agents (200 OK = healthy)
+- **Distributed Tracing**: `conversation_id` tracks requests across agent boundaries
+- **Future Enhancements**: Prometheus `/metrics` endpoint, OpenTelemetry tracing
+
+**Log Analysis**:
+```bash
+# Query logs for errors
+grep "ERROR" SHARED/logs/agents/*.log.jsonl | jq '.message'
+
+# Aggregate by event type
+cat SHARED/logs/league/*/LM01.log.jsonl | jq -r '.event_type' | sort | uniq -c
+```
+
+### Best Practices for Extensions
+
+1. **Strategy Pattern**: Swap algorithms without changing core logic (see § 5.1.1)
+2. **Repository Pattern**: Abstract data storage (currently file-based, can be SQL/NoSQL)
+3. **Configuration-Driven**: Avoid hardcoded values; use `system.json` for all settings
+4. **Version Fields**: All configs and messages include `schema_version` for evolution
+5. **Graceful Degradation**: Missing config keys log warnings but use sensible defaults
+
+### Future Extensibility Roadmap
+
+**Short-Term (1-3 months)**:
+- Plugin auto-discovery (load game modules dynamically)
+- Database backend support (PostgreSQL, MongoDB)
+- Prometheus metrics exporter
+
+**Medium-Term (3-6 months)**:
+- Multi-league support (run multiple tournaments concurrently)
+- Real-time match spectating (WebSocket streaming)
+- Advanced player strategies (reinforcement learning, genetic algorithms)
+
+**Long-Term (6-12 months)**:
+- Multi-game tournaments (aggregate scores across game types)
+- Federated leagues (inter-league player transfers)
+- Cloud deployment (Kubernetes, auto-scaling)
+
+**Full Roadmap:** [doc/usability_extensibility.md § 7](doc/usability_extensibility.md#7-future-extensibility-roadmap)
 
 ---
 
@@ -1608,18 +1883,20 @@ parity_choice = strategy.choose(history_repo.get_recent_matches(10))
 
 | Document | Location | Description |
 |----------|----------|-------------|
-| **Product Requirements** | `PRD_EvenOddLeague.md` | Complete PRD (102KB, 17 sections) |
-| **Missions Document** | `PROGRESS_TRACKER.md` | 47 missions with DoD and verify commands |
-| **MCP Protocol Research** | `doc/research_notes/mcp_protocol.md` | MCP analysis and recommendations |
-| **Even/Odd Game Rules** | `doc/game_rules/even_odd.md` | Game specification and examples |
-| **Round-Robin Algorithm** | `doc/algorithms/round_robin.md` | Scheduling algorithm with examples |
-| **Error Handling Strategy** | `doc/error_handling_strategy.md` | Error classification and retry logic |
-| **Data Retention Policy** | `doc/data_retention_policy.md` | Data lifecycle & cleanup specification (22KB) ✅ |
-| **Implementation Logs** | `doc/prompt_log/*.md` | Mission implementation prompts |
-| **Contributing Guide** | `CONTRIBUTING.md` | Code style, workflow, and quality standards |
-| **Quality Workflow** | `doc/guides/HOW_QUALITY_WORKS.md` | How quality checks work locally and on CI/CD |
-| **API Reference** | ⚠️ Pending | Mission M6.4 - Auto-generated from docstrings |
-| **Architecture Docs** | ⚠️ Pending | Mission M8.2 - System design and patterns |
+| **Documentation Index** | [doc/README.md](doc/README.md) | Map of all docs by category |
+| **Product Requirements** | [PRD_EvenOddLeague.md](PRD_EvenOddLeague.md) | Complete PRD (102KB, 17 sections) |
+| **Missions Document** | [PROGRESS_TRACKER.md](PROGRESS_TRACKER.md) | 47 missions with DoD and verify commands |
+| **MCP Protocol Research** | [doc/research_notes/mcp_protocol.md](doc/research_notes/mcp_protocol.md) | MCP analysis and recommendations |
+| **Even/Odd Game Rules** | [doc/game_rules/even_odd.md](doc/game_rules/even_odd.md) | Game specification and examples |
+| **Round-Robin Algorithm** | [doc/algorithms/round_robin.md](doc/algorithms/round_robin.md) | Scheduling algorithm with examples |
+| **Error Handling Strategy** | [doc/reference/error_handling_strategy.md](doc/reference/error_handling_strategy.md) | Error classification and retry logic |
+| **Data Retention Policy** | [doc/reference/data_retention_policy.md](doc/reference/data_retention_policy.md) | Data lifecycle & cleanup specification (22KB) ✅ |
+| **Extensibility & ISO/IEC 25010** | [doc/usability_extensibility.md](doc/usability_extensibility.md) | Extensibility guide + quality characteristics mapping (M8.8) ✅ NEW |
+| **Implementation Logs** | [doc/prompt_log/](doc/prompt_log/) | Mission implementation prompts |
+| **Contributing Guide** | [CONTRIBUTING.md](CONTRIBUTING.md) | Code style, workflow, and quality standards |
+| **Quality Workflow** | [doc/guides/HOW_QUALITY_WORKS.md](doc/guides/HOW_QUALITY_WORKS.md) | How quality checks work locally and on CI/CD |
+| **API Reference** | [doc/reference/api_reference.md](doc/reference/api_reference.md) | MCP tools, message formats, and examples |
+| **Architecture Docs** | [doc/architecture.md](doc/architecture.md) | C4 views, sequences, states, data flow |
 | **Configuration Guide** | ⚠️ Pending | Mission M8.3 - Config file documentation |
 | **Developer Guide** | ⚠️ Pending | Mission M8.4 - Contributor onboarding |
 | **Testing Guide** | ⚠️ Pending | Mission M8.5 - Test writing guide |
@@ -1825,7 +2102,7 @@ TOTAL                                 1288    186    85%
 
 - **GitHub Issues:** Report bugs, request features (https://github.com/your-org/even-odd-league/issues)
 - **Discussions:** Ask questions, share ideas (https://github.com/your-org/even-odd-league/discussions)
-- **Documentation:** Check existing docs in `doc/` folder
+- **Documentation:** Check existing docs in [doc/](doc/) folder
 - **Email:** dev@evenoddleague.local (for sensitive issues)
 
 ### Community

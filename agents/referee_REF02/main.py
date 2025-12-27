@@ -15,13 +15,13 @@ from pathlib import Path
 # Add SHARED to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "SHARED"))
 
+from agents.referee_REF02 import RefereeAgent  # noqa: E402
+
 from league_sdk.config_loader import (  # noqa: E402
     load_agents_config,
     load_json_file,
     load_system_config,
 )
-
-from agents.referee_REF02 import RefereeAgent  # noqa: E402
 
 
 def _default_league_id() -> str | None:
@@ -82,7 +82,7 @@ def parse_args():
         3. Config file values
         4. Hardcoded defaults (lowest priority)
 
-    Exit Codes (aligned with doc/error_codes_reference.md):
+    Exit Codes (aligned with doc/reference/error_codes_reference.md):
         0 - Success
         1 - Configuration error
         2 - Network/connection error
@@ -136,7 +136,7 @@ Exit Codes:
   4 - Runtime error (unexpected failure)
 
 For more information, see:
-  - doc/error_codes_reference.md
+  - doc/reference/error_codes_reference.md
   - SHARED/config/defaults/referee.json
 """,
     )
@@ -295,7 +295,7 @@ async def register_with_retry_background(referee, referee_record, defaults) -> N
 
 
 async def main():
-    """Main entry point for referee agent."""
+    """Run the referee agent entry point."""
     args = parse_args()
     defaults = load_json_file("SHARED/config/defaults/referee.json")
     agents_config = load_agents_config("SHARED/config/agents/agents_config.json")

@@ -164,6 +164,8 @@ class MessageEnvelope(BaseModel):
         return v
 
     class Config:
+        """Pydantic configuration for message envelopes."""
+
         extra = "allow"
 
 
@@ -783,6 +785,8 @@ class JSONRPCRequest(BaseModel):
     id: int | str = Field(..., description="Request ID for matching responses")
 
     class Config:
+        """Pydantic configuration for JSON-RPC requests."""
+
         extra = "forbid"
 
 
@@ -828,6 +832,8 @@ class JSONRPCResponse(BaseModel):
         return v
 
     class Config:
+        """Pydantic configuration for JSON-RPC responses."""
+
         extra = "forbid"
 
 
