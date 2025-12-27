@@ -20,7 +20,6 @@ from typing import Any, Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI
-
 from league_sdk.config_loader import load_system_config
 from league_sdk.config_models import SystemConfig
 from league_sdk.logger import JsonLogger, setup_logger

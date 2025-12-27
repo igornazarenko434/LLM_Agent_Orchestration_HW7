@@ -11,13 +11,13 @@ from pathlib import Path
 # Add SHARED to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "SHARED"))
 
-from agents.referee_REF02 import RefereeAgent  # noqa: E402
-
 from league_sdk.config_loader import (  # noqa: E402
     load_agents_config,
     load_json_file,
     load_system_config,
 )
+
+from agents.referee_REF02 import RefereeAgent  # noqa: E402
 
 
 def _default_league_id() -> str | None:

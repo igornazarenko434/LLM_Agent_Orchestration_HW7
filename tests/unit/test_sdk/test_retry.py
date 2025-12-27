@@ -15,7 +15,6 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-
 from league_sdk.protocol import ErrorCode
 from league_sdk.retry import (
     CircuitBreaker,

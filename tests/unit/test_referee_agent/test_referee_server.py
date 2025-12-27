@@ -5,10 +5,10 @@ Tests referee initialization, configuration loading, and server setup.
 """
 
 import pytest
-from agents.referee_REF01.server import RefereeAgent
 from fastapi.testclient import TestClient
-
 from league_sdk.repositories import MatchRepository
+
+from agents.referee_REF01.server import RefereeAgent
 
 
 class TestRefereeAgent:

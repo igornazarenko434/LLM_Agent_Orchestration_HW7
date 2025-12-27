@@ -6,7 +6,6 @@ Valid agent types: player, referee, league_manager
 """
 
 import pytest
-
 from league_sdk.utils import format_sender, parse_sender
 
 

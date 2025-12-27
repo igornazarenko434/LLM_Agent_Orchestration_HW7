@@ -11,9 +11,9 @@ import os
 import signal
 from pathlib import Path
 
-from agents.player_P01.server import PlayerAgent
-
 from league_sdk.config_loader import load_agents_config, load_json_file, load_system_config
+
+from agents.player_P01.server import PlayerAgent
 
 
 def _default_league_id() -> str | None:

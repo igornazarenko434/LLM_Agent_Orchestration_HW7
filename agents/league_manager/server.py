@@ -19,10 +19,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from agents.base import BaseAgent
 from fastapi import Request
 from fastapi.responses import JSONResponse
-
 from league_sdk.cleanup import archive_old_matches, get_retention_config, run_full_cleanup
 from league_sdk.config_loader import load_agents_config, load_league_config, load_system_config
 from league_sdk.logger import log_error, log_message_received, log_message_sent
@@ -45,6 +43,8 @@ from league_sdk.protocol import (
 from league_sdk.queue_processor import SequentialQueueProcessor
 from league_sdk.repositories import RoundsRepository, StandingsRepository
 from league_sdk.retry import call_with_retry
+
+from agents.base import BaseAgent
 
 AGENTS_CONFIG_PATH = "SHARED/config/agents/agents_config.json"
 SYSTEM_CONFIG_PATH = "SHARED/config/system.json"

@@ -2,10 +2,10 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from agents.referee_REF01.server import RefereeAgent
 from fastapi import Request
-
 from league_sdk.protocol import JSONRPCRequest
+
+from agents.referee_REF01.server import RefereeAgent
 
 
 @pytest.fixture

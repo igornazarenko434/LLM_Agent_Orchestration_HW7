@@ -1,8 +1,8 @@
 import pytest
-from agents.player_P01.server import PlayerAgent
 from fastapi.testclient import TestClient
-
 from league_sdk.repositories import PlayerHistoryRepository
+
+from agents.player_P01.server import PlayerAgent
 
 
 @pytest.fixture(scope="module")

@@ -11,9 +11,9 @@ from pathlib import Path
 # Add SHARED to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "SHARED"))
 
-from agents.league_manager.server import LeagueManager  # noqa: E402
-
 from league_sdk.config_loader import load_agents_config, load_system_config  # noqa: E402
+
+from agents.league_manager.server import LeagueManager  # noqa: E402
 
 
 def _default_league_id() -> str | None:

@@ -9,8 +9,6 @@ Tests Pydantic models for configuration files:
 """
 
 import pytest
-from pydantic import ValidationError
-
 from league_sdk.config_models import (
     AgentConfig,
     GameConfig,
@@ -23,6 +21,7 @@ from league_sdk.config_models import (
     TimeoutConfig,
     validate_port_in_range,
 )
+from pydantic import ValidationError
 
 
 @pytest.mark.unit

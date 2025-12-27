@@ -17,11 +17,8 @@ import uuid
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
-from agents.base import BaseAgent
-from agents.player_P01 import handlers
 from fastapi import Request
 from fastapi.responses import JSONResponse
-
 from league_sdk.cleanup import get_retention_config
 from league_sdk.config_loader import load_agents_config, load_json_file
 from league_sdk.logger import log_error, log_message_received, log_message_sent
@@ -41,6 +38,9 @@ from league_sdk.protocol import (
 )
 from league_sdk.repositories import PlayerHistoryRepository
 from league_sdk.retry import call_with_retry
+
+from agents.base import BaseAgent
+from agents.player_P01 import handlers
 
 AGENTS_CONFIG_PATH = "SHARED/config/agents/agents_config.json"
 GAMES_REGISTRY_PATH = "SHARED/config/games/games_registry.json"
