@@ -8,7 +8,6 @@ by unit tests.
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from agents.referee_REF01.server import RefereeAgent
 
 
@@ -30,6 +29,8 @@ class TestRefereeIntegration:
             jsonrpc="2.0",
             method="START_MATCH",
             params={
+                "sender": "league_manager:LM01",
+                "protocol": "league.v2",
                 "match_id": "M001",
                 "round_id": 1,
                 "player_a_id": "P01",
@@ -51,7 +52,7 @@ class TestRefereeIntegration:
     async def test_registration_builds_correct_metadata(self, referee):
         """Test registration builds correct metadata from config."""
         # Mock the League Manager endpoint
-        with patch("league_sdk.retry.call_with_retry") as mock_retry:
+        with patch("agents.referee_REF01.server.call_with_retry", new_callable=AsyncMock) as mock_retry:
             # Mock successful registration response
             mock_retry.return_value = {
                 "result": {
@@ -67,10 +68,11 @@ class TestRefereeIntegration:
             # Verify registration was called with correct metadata
             assert mock_retry.called
             call_args = mock_retry.call_args
-            payload = call_args[0][1]  # Second argument is payload
-
-            assert payload["method"] == "REFEREE_REGISTER_REQUEST"
-            params = payload["params"]
+            # call_with_retry signature: endpoint, method, params, ...
+            # kwargs check
+            kwargs = call_args.kwargs
+            assert kwargs["method"] == "REFEREE_REGISTER_REQUEST"
+            params = kwargs["params"]
             meta = params["referee_meta"]
 
             # Verify metadata from config
@@ -85,7 +87,9 @@ class TestRefereeIntegration:
         """Test successful registration initializes MatchConductor."""
         assert referee.match_conductor is None
 
-        with patch("league_sdk.retry.call_with_retry") as mock_retry:
+        with patch(
+            "agents.referee_REF01.server.call_with_retry", new_callable=AsyncMock
+        ) as mock_retry, patch("agents.referee_REF01.server.MatchConductor") as mock_conductor:
             mock_retry.return_value = {
                 "result": {
                     "status": "ACCEPTED",
@@ -100,12 +104,13 @@ class TestRefereeIntegration:
             assert referee.referee_id == "REF01"
             assert referee.auth_token == "test_token_123"
             assert referee.match_conductor is not None
+            mock_conductor.assert_called_once()
             assert referee.state == "REGISTERED"
 
     @pytest.mark.asyncio
     async def test_registration_rejection_handled(self, referee):
         """Test registration rejection is handled gracefully."""
-        with patch("league_sdk.retry.call_with_retry") as mock_retry:
+        with patch("agents.referee_REF01.server.call_with_retry", new_callable=AsyncMock) as mock_retry:
             mock_retry.return_value = {
                 "result": {"status": "REJECTED", "reason": "Invalid credentials"}
             }
@@ -119,7 +124,7 @@ class TestRefereeIntegration:
     @pytest.mark.asyncio
     async def test_registration_error_handled(self, referee):
         """Test registration error is handled gracefully."""
-        with patch("league_sdk.retry.call_with_retry") as mock_retry:
+        with patch("agents.referee_REF01.server.call_with_retry", new_callable=AsyncMock) as mock_retry:
             mock_retry.return_value = {"error": {"code": -32000, "message": "Internal error"}}
 
             success = await referee.register_with_league_manager()

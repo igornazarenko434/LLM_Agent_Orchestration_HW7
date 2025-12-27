@@ -20,6 +20,7 @@ from typing import Any, Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI
+
 from league_sdk.config_loader import load_system_config
 from league_sdk.config_models import SystemConfig
 from league_sdk.logger import JsonLogger, setup_logger
@@ -152,7 +153,7 @@ class BaseAgent:
             self._server.should_exit = True
 
         if wait and self._thread and self._thread.is_alive():
-            self._thread.join(timeout=5)
+            self._thread.join(timeout=float(self.config.timeouts.generic_sec))
 
     def _handle_shutdown(self, signum, frame=None) -> None:
         """Handle OS shutdown signals."""

@@ -281,10 +281,11 @@ def retry_with_backoff(
 
     Example:
         @retry_with_backoff(max_retries=3, logger=my_logger)
-        def send_message(endpoint: str, message: dict):
-            response = requests.post(endpoint, json=message, timeout=10)
-            response.raise_for_status()
-            return response.json()
+        async def send_message(endpoint: str, message: dict):
+            async with httpx.AsyncClient() as client:
+                response = await client.post(endpoint, json=message, timeout=10)
+                response.raise_for_status()
+                return response.json()
     """
     # Load config
     config = get_retry_config()
@@ -472,13 +473,17 @@ async def call_with_retry(
                     json={"jsonrpc": "2.0", "method": method, "params": params, "id": 1},
                     timeout=timeout,
                 )
-                response.raise_for_status()
 
-            # Record success in circuit breaker (async)
-            if circuit_breaker:
-                await circuit_breaker.record_success()
+                # For 2xx responses, return success
+                if 200 <= response.status_code < 300:
+                    # Record success in circuit breaker (async)
+                    if circuit_breaker:
+                        await circuit_breaker.record_success()
+                    return response.json()
 
-            return response.json()
+                # For 4xx and 5xx responses, return the error response (don't raise exception)
+                # This allows callers to handle specific error codes (e.g., 409 DUPLICATE_REGISTRATION)
+                return response.json()
 
         except (httpx.TimeoutException, httpx.ConnectError) as e:
             last_error = e

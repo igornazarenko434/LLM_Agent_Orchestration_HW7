@@ -37,6 +37,14 @@ from .logger import (
     setup_logger,
 )
 
+# Import method name compatibility layer
+from .method_aliases import (
+    MESSAGE_TYPE_TO_PDF_METHOD,
+    METHOD_ALIASES,
+    is_pdf_method,
+    translate_pdf_method_to_message_type,
+)
+
 # Import core protocol models
 from .protocol import (  # Registration, Orchestration, Match Flow, Query, Errors, JSON-RPC, Helpers
     ChooseParityCall,
@@ -149,4 +157,9 @@ __all__ = [
     "prune_league_rounds",
     "get_retention_config",
     "run_full_cleanup",
+    # Method Name Compatibility
+    "METHOD_ALIASES",
+    "MESSAGE_TYPE_TO_PDF_METHOD",
+    "translate_pdf_method_to_message_type",
+    "is_pdf_method",
 ]

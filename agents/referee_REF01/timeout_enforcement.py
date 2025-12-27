@@ -36,6 +36,7 @@ class TimeoutEnforcer:
         max_retries: int,
         initial_delay: float,
         max_delay: float,
+        game_error_timeout: int,
     ):
         """
         Initialize timeout enforcer.
@@ -58,6 +59,7 @@ class TimeoutEnforcer:
         self.max_retries = max_retries
         self.initial_delay = initial_delay
         self.max_delay = max_delay
+        self.game_error_timeout = game_error_timeout
 
     async def wait_for_join_ack(
         self,
@@ -94,7 +96,9 @@ class TimeoutEnforcer:
             player_endpoint=player_endpoint,
             timeout=self.timeout_join_ack,
             action_required="GAME_JOIN_ACK",
-            error_description="Player failed to acknowledge game invitation within 5s",
+            error_description=(
+                f"Player failed to acknowledge game invitation within {self.timeout_join_ack}s"
+            ),
         )
 
     async def wait_for_parity_choice(
@@ -132,7 +136,9 @@ class TimeoutEnforcer:
             player_endpoint=player_endpoint,
             timeout=self.timeout_parity_choice,
             action_required="CHOOSE_PARITY_RESPONSE",
-            error_description="Player failed to submit parity choice within 30s",
+            error_description=(
+                f"Player failed to submit parity choice within {self.timeout_parity_choice}s"
+            ),
         )
 
     async def _wait_with_retry(
@@ -294,7 +300,7 @@ class TimeoutEnforcer:
                 endpoint=player_endpoint,
                 method="GAME_ERROR",
                 params=game_error.model_dump(),
-                timeout=5,  # Short timeout for error notification
+                timeout=self.game_error_timeout,
                 logger=self.std_logger,
             )
 
@@ -305,7 +311,7 @@ class TimeoutEnforcer:
                 extra={
                     "player_id": player_id,
                     "match_id": match_id,
-                    "error_code": ErrorCode.TIMEOUT_ERROR.value,
+                    "error_code": ErrorCode.TIMEOUT_ERROR,
                     "retry_count": retry_count,
                 },
             )

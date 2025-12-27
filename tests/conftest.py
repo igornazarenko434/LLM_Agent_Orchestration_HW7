@@ -20,3 +20,17 @@ def mock_mcp_server():
     mock.start.return_value = None
     mock.stop.return_value = None
     return mock
+
+
+def pytest_collection_modifyitems(config, items):
+    """
+    Auto-assign test markers based on folder so unit/integration/e2e selection is reliable.
+    """
+    for item in items:
+        path = str(item.fspath)
+        if "/tests/unit/" in path:
+            item.add_marker(pytest.mark.unit)
+        elif "/tests/integration/" in path:
+            item.add_marker(pytest.mark.integration)
+        elif "/tests/e2e/" in path:
+            item.add_marker(pytest.mark.e2e)

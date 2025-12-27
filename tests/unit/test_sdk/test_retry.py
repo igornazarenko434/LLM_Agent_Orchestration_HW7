@@ -15,6 +15,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+
 from league_sdk.protocol import ErrorCode
 from league_sdk.retry import (
     CircuitBreaker,
@@ -244,6 +245,7 @@ class TestCallWithRetry:
         mock_resp = Mock()
         mock_resp.json.return_value = {"ok": True}
         mock_resp.raise_for_status.return_value = None
+        mock_resp.status_code = 200
 
         async def mock_post(*args, **kwargs):
             return mock_resp
@@ -259,6 +261,7 @@ class TestCallWithRetry:
         mock_resp = Mock()
         mock_resp.json.return_value = {"ok": True}
         mock_resp.raise_for_status.return_value = None
+        mock_resp.status_code = 200
 
         call_count = {"count": 0}
 
@@ -280,6 +283,7 @@ class TestCallWithRetry:
         mock_resp = Mock()
         mock_resp.json.return_value = {"ok": True}
         mock_resp.raise_for_status.return_value = None
+        mock_resp.status_code = 200
 
         call_count = {"count": 0}
 
@@ -330,8 +334,6 @@ class TestIntegrationWithProtocol:
 
     def test_protocol_error_codes_classification(self):
         """Verify protocol error codes are correctly mapped."""
-        from league_sdk.protocol import ErrorCode
-
         # E005 is retryable
         assert is_error_retryable(ErrorCode.INVALID_GAME_STATE)
 

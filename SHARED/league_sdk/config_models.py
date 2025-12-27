@@ -12,7 +12,7 @@ All models enforce PRD specifications and provide validation.
 
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
 __all__ = [
     "TimeoutConfig",
@@ -125,6 +125,11 @@ class SecurityConfig(BaseModel):
 
     require_auth: bool = Field(
         default=True, description="Whether authentication is required for all requests"
+    )
+
+    allow_start_league_without_auth: bool = Field(
+        default=False,
+        description="Allow start_league tool without auth token (admin/operator usage)",
     )
 
     allowed_origins: list[str] = Field(
@@ -286,11 +291,28 @@ class ScoringConfig(BaseModel):
     - LOSS: 0 points
     """
 
-    points_for_win: int = Field(default=3, ge=0, description="Points awarded for a win (PRD: 3)")
+    model_config = ConfigDict(populate_by_name=True)
 
-    points_for_draw: int = Field(default=1, ge=0, description="Points awarded for a draw (PRD: 1)")
+    points_for_win: int = Field(
+        default=3,
+        ge=0,
+        alias="win_points",
+        description="Points awarded for a win (PRD: 3)",
+    )
 
-    points_for_loss: int = Field(default=0, ge=0, description="Points awarded for a loss (PRD: 0)")
+    points_for_draw: int = Field(
+        default=1,
+        ge=0,
+        alias="draw_points",
+        description="Points awarded for a draw (PRD: 1)",
+    )
+
+    points_for_loss: int = Field(
+        default=0,
+        ge=0,
+        alias="loss_points",
+        description="Points awarded for a loss (PRD: 0)",
+    )
 
     tiebreaker_order: list[str] = Field(
         default=["points", "wins", "head_to_head", "random"],

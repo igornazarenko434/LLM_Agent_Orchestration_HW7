@@ -168,8 +168,8 @@ class StandingsRepository:
         elif result == "LOSS":
             player_entry["losses"] = player_entry.get("losses", 0) + 1
 
-        # Sort standings by points (descending)
-        standings_list.sort(key=lambda x: x.get("points", 0), reverse=True)
+        # Sort standings by points (descending) then wins (descending)
+        standings_list.sort(key=lambda x: (x.get("points", 0), x.get("wins", 0)), reverse=True)
 
         standings_data["standings"] = standings_list
         self.save(standings_data)

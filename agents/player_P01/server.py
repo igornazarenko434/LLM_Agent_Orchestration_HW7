@@ -12,17 +12,24 @@ from __future__ import annotations
 import asyncio
 import gzip
 import shutil
+import time
+import uuid
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
+from agents.base import BaseAgent
+from agents.player_P01 import handlers
 from fastapi import Request
 from fastapi.responses import JSONResponse
+
 from league_sdk.cleanup import get_retention_config
 from league_sdk.config_loader import load_agents_config, load_json_file
 from league_sdk.logger import log_error, log_message_received, log_message_sent
+from league_sdk.method_aliases import translate_pdf_method_to_message_type
 from league_sdk.protocol import (
     ChooseParityCall,
     ErrorCode,
+    GameError,
     GameInvitation,
     GameOver,
     JSONRPCError,
@@ -34,9 +41,6 @@ from league_sdk.protocol import (
 )
 from league_sdk.repositories import PlayerHistoryRepository
 from league_sdk.retry import call_with_retry
-
-from agents.base import BaseAgent
-from agents.player_P01 import handlers
 
 AGENTS_CONFIG_PATH = "SHARED/config/agents/agents_config.json"
 GAMES_REGISTRY_PATH = "SHARED/config/games/games_registry.json"
@@ -72,19 +76,36 @@ class PlayerAgent(BaseAgent):
         self.history_repo = PlayerHistoryRepository(self.agent_id)
         self.state: str = "INIT"
 
+        # P0/P1/P2: Registration tracking (correlation IDs, retry attempts, status)
+        self.registration_attempts: int = 0
+        self.registration_failures: int = 0
+        self.last_registration_attempt: Optional[float] = None
+        self.last_registration_error: Optional[str] = None
+
         self._method_map: Dict[str, Callable[[Dict[str, Any]], Dict[str, Any]]] = {
+            "ROUND_ANNOUNCEMENT": lambda params: self._handle_round_announcement(params),
             "GAME_INVITATION": lambda params: handlers.handle_game_invitation(
                 self.agent_id, params, self.auth_token
             ),
             "CHOOSE_PARITY_CALL": lambda params: handlers.handle_choose_parity(
-                self.agent_id, params, self.auth_token
+                self.agent_id,
+                params,
+                self.auth_token,
+                self._valid_choices_for_game(params.get("game_type")),
             ),
             "GAME_OVER": lambda params: handlers.handle_game_over(
-                params, self.history_repo, self.auth_token
+                params, self.history_repo, self.auth_token, self.agent_id
             ),
             "MATCH_RESULT_REPORT": lambda params: handlers.handle_match_result(
-                params, self.history_repo, self.auth_token
+                params, self.history_repo, self.auth_token, self.agent_id
             ),
+            "GAME_ERROR": lambda params: self._handle_game_error(params),
+            "LEAGUE_STANDINGS_UPDATE": lambda params: self._handle_standings_update(params),
+            "ROUND_COMPLETED": lambda params: self._handle_round_completed(params),
+            "LEAGUE_COMPLETED": lambda params: self._handle_league_completed(params),
+            "get_player_state": self._handle_get_player_state,
+            "get_registration_status": self._handle_get_registration_status,  # P1: Debug tool
+            "manual_register": self._handle_manual_register,  # type: ignore[dict-item]
         }
         self._register_mcp_route()
 
@@ -104,6 +125,43 @@ class PlayerAgent(BaseAgent):
         for player in self.agents_config.get("players", []):
             senders[f"player:{player.get('agent_id')}"] = "player"
         return senders
+
+    def _get_config_with_warning(
+        self, config_dict: Dict[str, Any], key: str, default: Any, config_name: str
+    ) -> Any:
+        """
+        Get config value with warning if missing (P2.1 best practice).
+
+        Args:
+            config_dict: Configuration dictionary to query
+            key: Configuration key to retrieve
+            default: Default value if key is missing
+            config_name: Human-readable config name for warning message
+
+        Returns:
+            Configuration value or default
+        """
+        value = config_dict.get(key)
+        if value is None:
+            self.std_logger.warning(
+                f"Config key '{key}' not found in {config_name}, using default: {default}. "
+                f"Add '{key}' to config for explicit control."
+            )
+            return default
+        return value
+
+    def _valid_choices_for_game(self, game_type: Optional[str]) -> list[str]:
+        """Get valid choices for a game from the registry."""
+        if not game_type:
+            return ["even", "odd"]
+
+        for game in self.game_registry.get("games", []):
+            if game.get("game_type") == game_type:
+                config = game.get("game_specific_config", {})
+                choices = config.get("valid_choices", [])
+                return choices if choices else ["even", "odd"]
+
+        return ["even", "odd"]
 
     async def cleanup_player_data(self) -> None:
         """Cleanup player data on unregister/shutdown."""
@@ -139,6 +197,22 @@ class PlayerAgent(BaseAgent):
             rpc_request = self._parse_rpc(body)
             if isinstance(rpc_request, JSONResponse):
                 return rpc_request
+
+            # PDF COMPATIBILITY LAYER: Translate PDF-style method names to message types
+            # Enables both 'handle_game_invitation' (PDF) and 'GAME_INVITATION' (ours)
+            original_method = rpc_request.method
+            rpc_request.method = translate_pdf_method_to_message_type(rpc_request.method)
+
+            # Log translation if PDF-style method was used
+            if original_method != rpc_request.method:
+                self.std_logger.debug(
+                    f"Translated PDF method '{original_method}' → '{rpc_request.method}'",
+                    extra={
+                        "pdf_method": original_method,
+                        "message_type": rpc_request.method,
+                        "compatibility_layer": True,
+                    },
+                )
 
             validation_error = self._validate_params(rpc_request)
             if validation_error:
@@ -198,6 +272,112 @@ class PlayerAgent(BaseAgent):
         )
         log_error(self.std_logger, details.get("error_code", ErrorCode.INTERNAL_SERVER_ERROR), details)
 
+    def _handle_get_player_state(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Return player history and stats for debug tooling."""
+        history = self.history_repo.load()
+        return {
+            "message_type": "get_player_state",
+            "conversation_id": params.get("conversation_id"),
+            "player_id": self.agent_id,
+            "history": history.get("matches", []),
+            "stats": history.get("stats", {}),
+            "last_updated": history.get("last_updated"),
+        }
+
+    def _handle_round_announcement(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle ROUND_ANNOUNCEMENT from League Manager.
+
+        This is informational - player learns which matches are scheduled.
+        No action required, just acknowledge receipt.
+        """
+        round_id = params.get("round_id")
+        matches = params.get("matches", [])
+
+        self.std_logger.info(
+            f"Round {round_id} announced with {len(matches)} matches",
+            extra={"round_id": round_id, "matches": matches, "player_id": self.agent_id},
+        )
+
+        return {
+            "message_type": "ROUND_ANNOUNCEMENT",
+            "conversation_id": params.get("conversation_id"),
+            "sender": f"player:{self.agent_id}",
+            "status": "acknowledged",
+            "player_id": self.agent_id,
+            "round_id": round_id,
+        }
+
+    def _handle_standings_update(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle LEAGUE_STANDINGS_UPDATE from League Manager.
+
+        Informational message about current league standings.
+        """
+        round_id = params.get("round_id")
+        standings = params.get("standings", [])
+
+        self.std_logger.info(
+            f"Standings update after round {round_id}",
+            extra={"round_id": round_id, "standings": standings, "player_id": self.agent_id},
+        )
+
+        return {
+            "message_type": "LEAGUE_STANDINGS_UPDATE",
+            "conversation_id": params.get("conversation_id"),
+            "sender": f"player:{self.agent_id}",
+            "status": "acknowledged",
+            "player_id": self.agent_id,
+        }
+
+    def _handle_round_completed(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle ROUND_COMPLETED from League Manager.
+
+        Informational message that a round has finished.
+        """
+        round_id = params.get("round_id")
+
+        self.std_logger.info(
+            f"Round {round_id} completed", extra={"round_id": round_id, "player_id": self.agent_id}
+        )
+
+        return {
+            "message_type": "ROUND_COMPLETED",
+            "conversation_id": params.get("conversation_id"),
+            "sender": f"player:{self.agent_id}",
+            "status": "acknowledged",
+            "player_id": self.agent_id,
+            "round_id": round_id,
+        }
+
+    def _handle_league_completed(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle LEAGUE_COMPLETED from League Manager.
+
+        Final message with league results and champion.
+        """
+        champion = params.get("champion")
+        final_standings = params.get("final_standings", [])
+
+        self.std_logger.info(
+            f"League completed! Champion: {champion}",
+            extra={
+                "champion": champion,
+                "final_standings": final_standings,
+                "player_id": self.agent_id,
+            },
+        )
+
+        return {
+            "message_type": "LEAGUE_COMPLETED",
+            "conversation_id": params.get("conversation_id"),
+            "sender": f"player:{self.agent_id}",
+            "status": "acknowledged",
+            "player_id": self.agent_id,
+            "champion": champion,
+        }
+
     def _error_response(
         self,
         request_id: int | str,
@@ -233,7 +413,7 @@ class PlayerAgent(BaseAgent):
 
     def _validate_params(self, rpc_request: JSONRPCRequest) -> Optional[JSONResponse]:
         params = rpc_request.params
-        if params.get("protocol") != "league.v2":
+        if params.get("protocol") != self.config.protocol_version:
             return self._error_response(
                 rpc_request.id,
                 code=-32602,
@@ -241,8 +421,33 @@ class PlayerAgent(BaseAgent):
                 error_code=ErrorCode.PROTOCOL_VERSION_MISMATCH,
                 status=400,
                 payload=rpc_request.model_dump(),
-                extra_data={"supported_protocols": ["league.v2"]},
+                extra_data={"supported_protocols": [self.config.protocol_version]},
             )
+
+        if rpc_request.method == "get_player_state":
+            sender = params.get("sender")
+            if sender not in self.allowed_senders:
+                return self._error_response(
+                    rpc_request.id,
+                    code=-32602,
+                    message="Sender not registered",
+                    error_code=ErrorCode.AGENT_NOT_REGISTERED,
+                    status=400,
+                    payload=rpc_request.model_dump(),
+                    extra_data={"sender": sender},
+                )
+            if self.config.security.require_auth:
+                auth_token = params.get("auth_token")
+                if not auth_token:
+                    return self._error_response(
+                        rpc_request.id,
+                        code=-32001,
+                        message="Missing auth token",
+                        error_code=ErrorCode.AUTH_TOKEN_INVALID,
+                        status=401,
+                        payload=rpc_request.model_dump(),
+                    )
+            return None
 
         try:
             if rpc_request.method == "GAME_INVITATION":
@@ -253,6 +458,8 @@ class PlayerAgent(BaseAgent):
                 GameOver(**rpc_request.params)
             elif rpc_request.method == "MATCH_RESULT_REPORT":
                 MatchResultReport(**rpc_request.params)
+            elif rpc_request.method == "GAME_ERROR":
+                GameError(**rpc_request.params)
         except Exception as exc:
             return self._error_response(
                 rpc_request.id,
@@ -289,7 +496,20 @@ class PlayerAgent(BaseAgent):
             )
 
         auth_token = params.get("auth_token")
-        if not auth_token:
+
+        # DEBUG: Log exact auth_token value received
+        self.std_logger.info(
+            f"Auth token validation for {rpc_request.method}",
+            extra={
+                "method": rpc_request.method,
+                "auth_token_in_params": "auth_token" in params,
+                "auth_token_value": repr(auth_token),
+                "auth_token_length": len(auth_token) if auth_token else 0,
+                "require_auth": self.config.security.require_auth,
+            },
+        )
+
+        if self.config.security.require_auth and not auth_token:
             return self._error_response(
                 rpc_request.id,
                 code=-32001,
@@ -302,7 +522,35 @@ class PlayerAgent(BaseAgent):
         self.auth_token = auth_token
         return None
 
+    def _handle_game_error(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle GAME_ERROR messages from referee (informational)."""
+        game_error = GameError(**params)
+        self.std_logger.warning(
+            "Game error received",
+            extra={
+                "match_id": game_error.match_id,
+                "error_code": game_error.error_code,
+                "error_description": game_error.error_description,
+                "affected_player": game_error.affected_player,
+                "action_required": game_error.action_required,
+                "conversation_id": game_error.conversation_id,
+            },
+        )
+        return {
+            "message_type": "GAME_ERROR",
+            "conversation_id": game_error.conversation_id,
+            "sender": f"player:{self.agent_id}",
+            "status": "acknowledged",
+            "match_id": game_error.match_id,
+            "player_id": self.agent_id,
+        }
+
     def registration_endpoint(self) -> str:
+        lm_config = self.agents_config.get("league_manager", {})
+        endpoint = lm_config.get("endpoint")
+        if endpoint:
+            return endpoint
+
         host = self.config.network.host
         port = self.config.network.league_manager_port
         return f"http://{host}:{port}/mcp"
@@ -313,13 +561,31 @@ class PlayerAgent(BaseAgent):
         conversation_id = self._conversation_id()
         player_meta = {
             "display_name": (
-                self.agent_record.get("display_name", self.agent_id)
+                self._get_config_with_warning(
+                    self.agent_record,
+                    "display_name",
+                    self.agent_id,
+                    f"agents_config player {self.agent_id}",
+                )
                 if self.agent_record
                 else self.agent_id
             ),
-            "version": self.agent_record.get("version", "1.0.0") if self.agent_record else "1.0.0",
+            "version": (
+                self._get_config_with_warning(
+                    self.agent_record, "version", "1.0.0", f"agents_config player {self.agent_id}"
+                )
+                if self.agent_record
+                else "1.0.0"
+            ),
             "game_types": (
-                self.agent_record.get("game_types", ["even_odd"]) if self.agent_record else ["even_odd"]
+                self._get_config_with_warning(
+                    self.agent_record,
+                    "game_types",
+                    sorted(self.supported_game_types),
+                    f"agents_config player {self.agent_id}",
+                )
+                if self.agent_record
+                else sorted(self.supported_game_types)
             ),
             "contact_endpoint": f"http://{self.host}:{self.port}/mcp",
         }
@@ -327,7 +593,7 @@ class PlayerAgent(BaseAgent):
             sender=f"player:{self.agent_id}",
             timestamp=self._utc_timestamp(),
             conversation_id=conversation_id,
-            protocol="league.v2",
+            protocol=self.config.protocol_version,
             player_meta=player_meta,
         )
         payload = request.model_dump()
@@ -343,12 +609,16 @@ class PlayerAgent(BaseAgent):
 
     def handle_registration_response(self, response: Dict[str, Any]) -> Dict[str, Any]:
         """Validate and persist registration response."""
-        if "error" in response:
+        # Check if error is not just present but also not None (JSON-RPC may include error: null)
+        if response.get("error"):
             self._transition("INIT")
             return response
 
+        # Extract result from JSON-RPC response format
+        result = response.get("result", response)
+
         try:
-            reg = LeagueRegisterResponse(**response)
+            reg = LeagueRegisterResponse(**result)
         except Exception as exc:
             self._transition("INIT")
             return {
@@ -360,7 +630,7 @@ class PlayerAgent(BaseAgent):
 
         if reg.status != "ACCEPTED":
             self._transition("INIT")
-            return response
+            return result  # Return extracted result, not JSON-RPC wrapper
 
         # Store player_id and optional auth_token
         self.agent_id = reg.player_id
@@ -370,7 +640,393 @@ class PlayerAgent(BaseAgent):
 
         self._transition("REGISTERED", conversation_id=getattr(reg, "conversation_id", None))
         self._transition("ACTIVE", conversation_id=getattr(reg, "conversation_id", None))
-        return response
+        return result  # Return extracted result so retry logic can find "status" field
+
+    async def send_deregistration_request(self) -> Dict[str, Any]:
+        """
+        Send LEAGUE_DEREGISTER_REQUEST to League Manager (P0 fix).
+
+        Clean shutdown: De-register from League Manager so it knows agent is unavailable.
+        Uses call_with_retry for resilience.
+        """
+        if self.state not in ("REGISTERED", "ACTIVE"):
+            self.std_logger.info(
+                "Skipping de-registration - agent not registered", extra={"state": self.state}
+            )
+            return {"status": "SKIPPED", "reason": "Not registered"}
+
+        correlation_id = f"dereg-{self.agent_id}-{uuid.uuid4().hex[:8]}"
+
+        self.std_logger.info(
+            "Initiating de-registration",
+            extra={"correlation_id": correlation_id, "agent_id": self.agent_id, "state": self.state},
+        )
+
+        request_params = {
+            "protocol": self.config.protocol_version,
+            "message_type": "LEAGUE_DEREGISTER_REQUEST",
+            "sender": f"player:{self.agent_id}",
+            "timestamp": self._utc_timestamp(),
+            "conversation_id": correlation_id,
+            "player_id": self.agent_id,
+            "auth_token": self.auth_token,
+        }
+
+        try:
+            response = await call_with_retry(
+                endpoint=self.registration_endpoint(),
+                method="LEAGUE_DEREGISTER_REQUEST",
+                params=request_params,
+                timeout=self.config.timeouts.generic_sec,
+                logger=self.std_logger,
+                circuit_breaker=self.circuit_breaker,
+            )
+
+            self._transition("INIT")
+            self.auth_token = None
+
+            self.std_logger.info(
+                "De-registration successful",
+                extra={"correlation_id": correlation_id, "response": response},
+            )
+            return response
+
+        except Exception as e:
+            log_error(
+                self.std_logger,
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                {
+                    "message": "De-registration failed",
+                    "correlation_id": correlation_id,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
+            )
+            return {"status": "FAILED", "reason": str(e), "correlation_id": correlation_id}
+
+    async def register_with_retry(
+        self, max_attempts: Optional[int] = None, correlation_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Register with League Manager with exponential backoff retry (P0 fix).
+
+        Non-blocking registration that:
+        - Uses retry_policy from system.json
+        - Logs all attempts with correlation IDs (P2)
+        - Handles all exceptions gracefully (P0)
+        - Returns detailed status even on failure (P1)
+
+        Args:
+            max_attempts: Override config max_retries (for testing)
+            correlation_id: Optional correlation ID for tracking
+
+        Returns:
+            Registration response with status and correlation_id
+        """
+        # P1: Check if already registered with valid token
+        if self.state in ("REGISTERED", "ACTIVE") and self.auth_token:
+            self.std_logger.info(
+                "Already registered - skipping re-registration",
+                extra={
+                    "agent_id": self.agent_id,
+                    "state": self.state,
+                    "has_token": bool(self.auth_token),
+                },
+            )
+            return {
+                "status": "ALREADY_REGISTERED",
+                "player_id": self.agent_id,
+                "auth_token": self.auth_token,
+            }
+
+        # Use retry policy from config (no hardcoding!)
+        max_attempts = max_attempts or self.config.retry_policy.max_retries + 1
+        initial_delay = self.config.retry_policy.initial_delay_sec
+        max_delay = self.config.retry_policy.max_delay_sec
+
+        # P2: Generate correlation ID for tracking all retry attempts
+        correlation_id = correlation_id or f"reg-{self.agent_id}-{uuid.uuid4().hex[:8]}"
+
+        self.std_logger.info(
+            "Starting registration with retry",
+            extra={
+                "correlation_id": correlation_id,
+                "agent_id": self.agent_id,
+                "max_attempts": max_attempts,
+                "initial_delay_sec": initial_delay,
+                "max_delay_sec": max_delay,
+            },
+        )
+
+        delay = initial_delay
+
+        for attempt in range(1, max_attempts + 1):
+            self.registration_attempts += 1
+            self.last_registration_attempt = time.time()
+
+            self.std_logger.info(
+                f"Registration attempt {attempt}/{max_attempts}",
+                extra={
+                    "correlation_id": correlation_id,
+                    "attempt": attempt,
+                    "total_attempts": self.registration_attempts,
+                    "total_failures": self.registration_failures,
+                },
+            )
+
+            try:
+                response = await asyncio.wait_for(
+                    self.send_registration_request(), timeout=self.config.timeouts.registration_sec
+                )
+
+                # Check if registration succeeded
+                if response.get("status") == "ACCEPTED":
+                    self.std_logger.info(
+                        "Registration successful",
+                        extra={
+                            "correlation_id": correlation_id,
+                            "attempt": attempt,
+                            "player_id": self.agent_id,
+                            "auth_token_received": bool(response.get("auth_token")),
+                        },
+                    )
+                    return {**response, "correlation_id": correlation_id, "attempts": attempt}
+
+                # Check if error is DUPLICATE_REGISTRATION (E017) - means already registered!
+                error_data = response.get("error", {}).get("data", {})
+                error_code = error_data.get("error_code", "")
+                if error_code == ErrorCode.DUPLICATE_REGISTRATION or error_code == "E017":
+                    # Already registered! Check if we have auth_token from earlier attempt
+                    if self.auth_token:
+                        self.std_logger.info(
+                            "Already registered (409 Conflict) - using existing auth_token",
+                            extra={
+                                "correlation_id": correlation_id,
+                                "attempt": attempt,
+                                "player_id": self.agent_id,
+                                "state": self.state,
+                            },
+                        )
+                        return {
+                            "status": "ACCEPTED",
+                            "player_id": self.agent_id,
+                            "auth_token": self.auth_token,
+                            "correlation_id": correlation_id,
+                            "attempts": attempt,
+                            "note": "Already registered (409 Conflict)",
+                        }
+                    # If no auth_token yet, this is a real error - continue to retry logic below
+
+                # Registration rejected for other reasons (E013, etc.)
+                self.registration_failures += 1
+                self.last_registration_error = response.get("error", {}).get(
+                    "error_description", "Unknown"
+                )
+
+                log_error(
+                    self.std_logger,
+                    ErrorCode.AGENT_NOT_REGISTERED,
+                    {
+                        "message": f"Registration rejected (attempt {attempt}/{max_attempts})",
+                        "correlation_id": correlation_id,
+                        "response": response,
+                        "error_code": error_code,
+                        "will_retry": attempt < max_attempts,
+                    },
+                )
+
+            except asyncio.TimeoutError:
+                self.registration_failures += 1
+                self.last_registration_error = "Registration timeout"
+
+                log_error(
+                    self.std_logger,
+                    ErrorCode.TIMEOUT_ERROR,
+                    {
+                        "message": f"Registration timeout (attempt {attempt}/{max_attempts})",
+                        "correlation_id": correlation_id,
+                        "timeout_sec": self.config.timeouts.registration_sec,
+                        "will_retry": attempt < max_attempts,
+                    },
+                )
+
+            except ConnectionRefusedError:
+                self.registration_failures += 1
+                self.last_registration_error = "League Manager unavailable"
+
+                log_error(
+                    self.std_logger,
+                    ErrorCode.SERVICE_UNAVAILABLE,
+                    {
+                        "message": f"League Manager unavailable (attempt {attempt}/{max_attempts})",
+                        "correlation_id": correlation_id,
+                        "endpoint": self.registration_endpoint(),
+                        "will_retry": attempt < max_attempts,
+                    },
+                )
+
+            except Exception as e:
+                self.registration_failures += 1
+                self.last_registration_error = str(e)
+
+                log_error(
+                    self.std_logger,
+                    ErrorCode.INTERNAL_SERVER_ERROR,
+                    {
+                        "message": f"Registration error (attempt {attempt}/{max_attempts})",
+                        "correlation_id": correlation_id,
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                        "will_retry": attempt < max_attempts,
+                    },
+                )
+
+            # Exponential backoff (if not last attempt)
+            if attempt < max_attempts:
+                self.std_logger.debug(
+                    f"Retrying in {delay:.1f}s...",
+                    extra={"correlation_id": correlation_id, "delay_sec": delay},
+                )
+                await asyncio.sleep(delay)
+                delay = min(delay * 2.0, max_delay)  # Exponential backoff with cap
+
+        # All attempts failed
+        self.std_logger.warning(
+            "Registration failed after all attempts",
+            extra={
+                "correlation_id": correlation_id,
+                "total_attempts": max_attempts,
+                "last_error": self.last_registration_error,
+                "agent_state": "UNREGISTERED",
+            },
+        )
+
+        return {
+            "status": "FAILED",
+            "reason": self.last_registration_error,
+            "correlation_id": correlation_id,
+            "attempts": max_attempts,
+            "agent_id": self.agent_id,
+        }
+
+    def _handle_get_registration_status(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Debug tool: Get current registration status (P1 fix).
+
+        Returns detailed registration state for debugging and monitoring.
+        Uses protocol error codes and comprehensive logging.
+        """
+        try:
+            self.std_logger.info(
+                "Registration status requested",
+                extra={
+                    "requester": params.get("sender"),
+                    "current_state": self.state,
+                    "registration_attempts": self.registration_attempts,
+                },
+            )
+
+            result = {
+                "message_type": "get_registration_status",
+                "conversation_id": params.get("conversation_id"),
+                "agent_id": self.agent_id,
+                "state": self.state,
+                "registered": self.state in ("REGISTERED", "ACTIVE"),
+                "has_auth_token": bool(self.auth_token),
+                "registration_stats": {
+                    "total_attempts": self.registration_attempts,
+                    "total_failures": self.registration_failures,
+                    "last_attempt_timestamp": self.last_registration_attempt,
+                    "last_error": self.last_registration_error,
+                },
+                "league_id": self.league_id,
+                "endpoint": f"http://{self.host}:{self.port}/mcp",
+                "auth_token": self.auth_token,  # Return actual token for debugging
+            }
+
+            self.std_logger.debug(
+                "Registration status retrieved successfully", extra={"result": result}
+            )
+
+            return result
+
+        except Exception as e:
+            # Use E015 INTERNAL_SERVER_ERROR per protocol
+            log_error(
+                self.std_logger,
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                {
+                    "message": "Failed to retrieve registration status",
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
+            )
+            raise
+
+    async def _handle_manual_register(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Debug tool: Manually trigger registration with retry (P2 fix).
+
+        Allows operators to manually trigger registration for debugging or recovery.
+        Useful when auto_register is disabled or failed.
+        Uses protocol error codes and comprehensive logging.
+        """
+        try:
+            max_attempts = params.get("max_attempts", self.config.retry_policy.max_retries + 1)
+            force = params.get("force", False)
+
+            self.std_logger.info(
+                "Manual registration requested",
+                extra={
+                    "requester": params.get("sender"),
+                    "max_attempts": max_attempts,
+                    "force": force,
+                    "current_state": self.state,
+                },
+            )
+
+            # Allow force re-registration even if already registered
+            if force and self.state in ("REGISTERED", "ACTIVE"):
+                self.std_logger.info(
+                    "Force re-registration requested",
+                    extra={"current_state": self.state, "has_token": bool(self.auth_token)},
+                )
+                self._transition("INIT")
+                self.auth_token = None
+
+            result = await self.register_with_retry(max_attempts=max_attempts)
+
+            response = {
+                "message_type": "manual_register",
+                "conversation_id": params.get("conversation_id"),
+                "registration_result": result,
+                "current_state": self.state,
+                "registered": self.state in ("REGISTERED", "ACTIVE"),
+            }
+
+            self.std_logger.info(
+                "Manual registration completed",
+                extra={
+                    "success": result.get("status") == "ACCEPTED",
+                    "final_state": self.state,
+                    "attempts": result.get("attempts"),
+                },
+            )
+
+            return response
+
+        except Exception as e:
+            # Use E015 INTERNAL_SERVER_ERROR per protocol
+            log_error(
+                self.std_logger,
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                {
+                    "message": "Manual registration failed",
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
+            )
+            raise
 
     def _transition(self, new_state: str, conversation_id: Optional[str] = None) -> None:
         """Log and update state machine."""

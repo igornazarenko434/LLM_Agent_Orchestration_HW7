@@ -14,7 +14,8 @@
       "register_player",
       "report_match_result",
       "get_standings",
-      "broadcast_announcements"
+      "start_league",
+      "league_query"
     ],
     "game_types": ["even_odd"],
     "metadata": {
@@ -36,14 +37,16 @@
         "conduct_match",
         "enforce_timeouts",
         "determine_winner",
-        "report_results"
+        "report_results",
+        "get_match_state"
       ],
       "game_types": ["even_odd"],
       "max_concurrent_matches": 10,
       "metadata": {
         "match_timeout_enforcement": true,
         "supports_draw": true,
-        "specialization": "even_odd"
+        "specialization": "even_odd",
+        "auto_register": true
       }
     },
     {
@@ -58,14 +61,16 @@
         "conduct_match",
         "enforce_timeouts",
         "determine_winner",
-        "report_results"
+        "report_results",
+        "get_match_state"
       ],
       "game_types": ["even_odd"],
       "max_concurrent_matches": 10,
       "metadata": {
         "match_timeout_enforcement": true,
         "supports_draw": true,
-        "specialization": "even_odd"
+        "specialization": "even_odd",
+        "auto_register": true
       }
     }
   ],
@@ -81,13 +86,15 @@
       "capabilities": [
         "handle_game_invitation",
         "choose_parity",
-        "notify_match_result"
+        "notify_match_result",
+        "get_player_state"
       ],
       "game_types": ["even_odd"],
       "metadata": {
         "strategy": "random",
         "team": "alpha",
-        "skill_level": "beginner"
+        "skill_level": "beginner",
+        "auto_register": true
       }
     },
     {
@@ -101,13 +108,15 @@
       "capabilities": [
         "handle_game_invitation",
         "choose_parity",
-        "notify_match_result"
+        "notify_match_result",
+        "get_player_state"
       ],
       "game_types": ["even_odd"],
       "metadata": {
         "strategy": "history_based",
         "team": "beta",
-        "skill_level": "intermediate"
+        "skill_level": "intermediate",
+        "auto_register": true
       }
     },
     {
@@ -121,13 +130,15 @@
       "capabilities": [
         "handle_game_invitation",
         "choose_parity",
-        "notify_match_result"
+        "notify_match_result",
+        "get_player_state"
       ],
       "game_types": ["even_odd"],
       "metadata": {
         "strategy": "random",
         "team": "gamma",
-        "skill_level": "beginner"
+        "skill_level": "beginner",
+        "auto_register": true
       }
     },
     {
@@ -141,13 +152,15 @@
       "capabilities": [
         "handle_game_invitation",
         "choose_parity",
-        "notify_match_result"
+        "notify_match_result",
+        "get_player_state"
       ],
       "game_types": ["even_odd"],
       "metadata": {
         "strategy": "random",
         "team": "delta",
-        "skill_level": "beginner"
+        "skill_level": "beginner",
+        "auto_register": true
       }
     }
   ]

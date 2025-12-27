@@ -1,0 +1,21 @@
+[run]
+source = agents, SHARED/league_sdk
+omit =
+    */main.py
+    */setup.py
+    */tests/*
+    */__pycache__/*
+    */venv/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+
+[html]
+directory = htmlcov

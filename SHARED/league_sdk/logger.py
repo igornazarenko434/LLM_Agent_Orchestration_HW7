@@ -336,13 +336,21 @@ def log_message_sent(logger: logging.Logger, message: dict) -> None:
         logger: Logger instance
         message: Message dictionary (should include message_type, conversation_id)
     """
+    payload = message.get("result") if isinstance(message.get("result"), dict) else message
+    message_type = payload.get("message_type") or payload.get("method")
+    conversation_id = payload.get("conversation_id")
+    if conversation_id is None and isinstance(payload.get("params"), dict):
+        conversation_id = payload["params"].get("conversation_id")
+    sender = payload.get("sender")
+    if sender is None and isinstance(payload.get("params"), dict):
+        sender = payload["params"].get("sender")
     logger.info(
-        f"Sent {message.get('message_type', 'UNKNOWN')}",
+        f"Sent {message_type or 'UNKNOWN'}",
         extra={
             "event_type": "MESSAGE_SENT",
-            "message_type": message.get("message_type"),
-            "conversation_id": message.get("conversation_id"),
-            "sender": message.get("sender"),
+            "message_type": message_type,
+            "conversation_id": conversation_id,
+            "sender": sender,
         },
     )
 
@@ -355,13 +363,21 @@ def log_message_received(logger: logging.Logger, message: dict) -> None:
         logger: Logger instance
         message: Message dictionary
     """
+    payload = message.get("result") if isinstance(message.get("result"), dict) else message
+    message_type = payload.get("message_type") or payload.get("method")
+    conversation_id = payload.get("conversation_id")
+    if conversation_id is None and isinstance(payload.get("params"), dict):
+        conversation_id = payload["params"].get("conversation_id")
+    sender = payload.get("sender")
+    if sender is None and isinstance(payload.get("params"), dict):
+        sender = payload["params"].get("sender")
     logger.info(
-        f"Received {message.get('message_type', 'UNKNOWN')}",
+        f"Received {message_type or 'UNKNOWN'}",
         extra={
             "event_type": "MESSAGE_RECEIVED",
-            "message_type": message.get("message_type"),
-            "conversation_id": message.get("conversation_id"),
-            "sender": message.get("sender"),
+            "message_type": message_type,
+            "conversation_id": conversation_id,
+            "sender": sender,
         },
     )
 

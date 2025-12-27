@@ -9,7 +9,8 @@
     "conduct_match",
     "enforce_timeouts",
     "determine_winner",
-    "report_results"
+    "report_results",
+    "get_match_state"
   ],
   "max_concurrent_matches": 10,
   "metadata": {

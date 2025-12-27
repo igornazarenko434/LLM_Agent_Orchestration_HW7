@@ -13,9 +13,9 @@ import asyncio
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from league_sdk.protocol import ErrorCode
-
 from agents.referee_REF01.timeout_enforcement import TimeoutEnforcer
+
+from league_sdk.protocol import ErrorCode
 
 
 @pytest.fixture
@@ -30,6 +30,7 @@ def timeout_enforcer():
         max_retries=3,  # From system.json
         initial_delay=2.0,  # From system.json
         max_delay=10.0,  # From system.json
+        game_error_timeout=10,  # From system.json network.request_timeout_sec
     )
 
 
@@ -176,17 +177,18 @@ class TestTimeoutEnforcer:
             # Verify GAME_ERROR was sent
             assert mock_retry.called
 
-            # Get the payload sent
+            # Get arguments from kwargs
             call_args = mock_retry.call_args_list[0]
-            payload = call_args[0][1]  # Second positional arg is the payload
+            kwargs = call_args.kwargs
 
-            assert payload["jsonrpc"] == "2.0"
-            assert payload["method"] == "GAME_ERROR"
-            assert payload["params"]["error_code"] == ErrorCode.TIMEOUT_ERROR  # String enum
-            assert payload["params"]["affected_player"] == "P01"
-            assert payload["params"]["match_id"] == "R1M1"
-            assert "retry_info" in payload["params"]
-            assert payload["params"]["retry_info"]["max_retries"] == 3
+            assert kwargs["method"] == "GAME_ERROR"
+            params = kwargs["params"]
+
+            assert params["error_code"] == ErrorCode.TIMEOUT_ERROR  # String enum
+            assert params["affected_player"] == "P01"
+            assert params["match_id"] == "R1M1"
+            assert "retry_info" in params
+            assert params["retry_info"]["max_retries"] == 3
 
     @pytest.mark.asyncio
     async def test_retry_info_in_game_error(self, timeout_enforcer):
@@ -208,8 +210,8 @@ class TestTimeoutEnforcer:
             )
 
             # Get first GAME_ERROR sent
-            payload = mock_retry.call_args_list[0][0][1]
-            retry_info = payload["params"]["retry_info"]
+            kwargs = mock_retry.call_args_list[0].kwargs
+            retry_info = kwargs["params"]["retry_info"]
 
             assert retry_info["retry_count"] == 1  # First retry
             assert retry_info["max_retries"] == 3
@@ -235,9 +237,10 @@ class TestTimeoutEnforcer:
                 player_endpoint="http://localhost:8101/mcp",
             )
 
-            payload = mock_retry.call_args_list[0][0][1]
-            assert "Technical loss" in payload["params"]["consequence"]
-            assert str(timeout_enforcer.max_retries) in payload["params"]["consequence"]
+            kwargs = mock_retry.call_args_list[0].kwargs
+            params = kwargs["params"]
+            assert "Technical loss" in params["consequence"]
+            assert str(timeout_enforcer.max_retries) in params["consequence"]
 
     @pytest.mark.asyncio
     async def test_logging_timeout_events(self, timeout_enforcer):

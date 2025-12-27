@@ -5,8 +5,10 @@ Tests referee initialization, configuration loading, and server setup.
 """
 
 import pytest
-
 from agents.referee_REF01.server import RefereeAgent
+from fastapi.testclient import TestClient
+
+from league_sdk.repositories import MatchRepository
 
 
 class TestRefereeAgent:
@@ -47,6 +49,7 @@ class TestRefereeAgent:
             "enforce_timeouts",
             "determine_winner",
             "report_results",
+            "get_match_state",
         ]
         assert set(expected_capabilities).issubset(set(capabilities))
 
@@ -95,6 +98,36 @@ class TestRefereeAgent:
         """Test /health endpoint exists."""
         routes = [route.path for route in referee.app.routes]
         assert "/health" in routes
+
+
+def test_get_match_state_returns_match(tmp_path):
+    referee = RefereeAgent(agent_id="REF01", league_id="league_2025_even_odd")
+    referee.match_repo = MatchRepository(data_root=tmp_path)
+    referee.match_repo.save(
+        "R1M1",
+        {
+            "league_id": "league_2025_even_odd",
+            "round_id": 1,
+            "game_type": "even_odd",
+            "status": "FINISHED",
+        },
+    )
+    client = TestClient(referee.app)
+    payload = {
+        "jsonrpc": "2.0",
+        "method": "get_match_state",
+        "params": {
+            "protocol": "league.v2",
+            "sender": "player:P01",
+            "auth_token": "tok-player",
+            "match_id": "R1M1",
+        },
+        "id": 55,
+    }
+    resp = client.post("/mcp", json=payload)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["result"]["match"]["match_id"] == "R1M1"
 
 
 class TestRefereeRegistration:

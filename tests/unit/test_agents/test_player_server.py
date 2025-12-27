@@ -1,8 +1,8 @@
 import pytest
-from fastapi.testclient import TestClient
-from league_sdk.repositories import PlayerHistoryRepository
-
 from agents.player_P01.server import PlayerAgent
+from fastapi.testclient import TestClient
+
+from league_sdk.repositories import PlayerHistoryRepository
 
 
 @pytest.fixture(scope="module")
@@ -137,6 +137,24 @@ def test_handle_match_result_report(player_client: TestClient):
     repo = PlayerHistoryRepository("P99")
     history = repo.load()
     assert any(m["match_id"] == "R1M1" for m in history.get("matches", []))
+
+
+def test_get_player_state(player_client: TestClient):
+    payload = {
+        "jsonrpc": "2.0",
+        "method": "get_player_state",
+        "params": {
+            "protocol": "league.v2",
+            "sender": "league_manager:LM01",
+            "auth_token": "tok-admin",
+        },
+        "id": 9,
+    }
+    resp = player_client.post("/mcp", json=payload)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["result"]["player_id"] == "P99"
+    assert "history" in body["result"]
 
 
 def test_parity_timeout_returns_e001(monkeypatch):

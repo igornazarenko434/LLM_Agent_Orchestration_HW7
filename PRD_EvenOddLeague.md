@@ -1428,7 +1428,8 @@ def retry_with_backoff(func, max_retries=3):
 │  ┌──────────────────────────────────────────────────────────┐ │
 │  │         MCP Server (FastAPI) - Port 8000                 │ │
 │  │  Tools: register_referee, register_player,               │ │
-│  │         report_match_result, get_standings               │ │
+│  │         report_match_result, get_standings,              │ │
+│  │         start_league, league_query                       │ │
 │  └──────────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────┘
                            ↕ HTTP/JSON-RPC
@@ -1440,7 +1441,7 @@ def retry_with_backoff(func, max_retries=3):
 │  └──────────────┘  └─────────────┘  └──────────────────────┘ │
 │  ┌──────────────────────────────────────────────────────────┐ │
 │  │         MCP Server (FastAPI) - Port 8001                 │ │
-│  │  Tools: start_match, collect_choices                     │ │
+│  │  Tools: start_match, collect_choices, get_match_state    │ │
 │  └──────────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────┘
                            ↕ HTTP/JSON-RPC
@@ -1453,7 +1454,7 @@ def retry_with_backoff(func, max_retries=3):
 │  ┌──────────────────────────────────────────────────────────┐ │
 │  │         MCP Server (FastAPI) - Port 8101                 │ │
 │  │  Tools: handle_game_invitation, choose_parity,           │ │
-│  │         notify_match_result                              │ │
+│  │         notify_match_result, get_player_state            │ │
 │  └──────────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────┘
 ```

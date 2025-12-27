@@ -27,6 +27,7 @@
     "auth_token_length": 32,
     "token_ttl_minutes": 1440,
     "require_auth": true,
+    "allow_start_league_without_auth": true,
     "allowed_origins": ["*"]
   },
   "network": {

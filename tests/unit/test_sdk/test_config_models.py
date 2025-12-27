@@ -9,6 +9,8 @@ Tests Pydantic models for configuration files:
 """
 
 import pytest
+from pydantic import ValidationError
+
 from league_sdk.config_models import (
     AgentConfig,
     GameConfig,
@@ -21,7 +23,6 @@ from league_sdk.config_models import (
     TimeoutConfig,
     validate_port_in_range,
 )
-from pydantic import ValidationError
 
 
 @pytest.mark.unit
@@ -93,6 +94,7 @@ class TestSecurityConfig:
         assert config.auth_token_length == 32
         assert config.token_ttl_minutes == 1440
         assert config.require_auth is True
+        assert config.allow_start_league_without_auth is False
 
     def test_custom_security_config(self):
         """Test custom security settings."""
