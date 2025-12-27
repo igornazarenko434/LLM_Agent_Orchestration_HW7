@@ -213,6 +213,48 @@ def test_game_invitation_unsupported_game_type_returns_e002():
     assert body["error"]["data"]["error_code"] == "E002"
 
 
+def test_registration_endpoint_prefers_config_endpoint():
+    agent = PlayerAgent(agent_id="P99")
+    agent.agents_config = {"league_manager": {"endpoint": "http://lm.local/mcp"}}
+    assert agent.registration_endpoint() == "http://lm.local/mcp"
+
+
+def test_registration_endpoint_falls_back_to_system_config():
+    agent = PlayerAgent(agent_id="P99")
+    agent.agents_config = {"league_manager": {}}
+    agent.config.network.host = "localhost"
+    agent.config.network.league_manager_port = 9999
+    assert agent.registration_endpoint() == "http://localhost:9999/mcp"
+
+
+def test_valid_choices_for_game_from_registry():
+    agent = PlayerAgent(agent_id="P99")
+    agent.game_registry = {
+        "games": [
+            {
+                "game_type": "even_odd",
+                "game_specific_config": {"valid_choices": ["even", "odd", "zero"]},
+            }
+        ]
+    }
+    assert agent._valid_choices_for_game("even_odd") == ["even", "odd", "zero"]
+
+
+def test_timeout_for_method_branches():
+    agent = PlayerAgent(agent_id="P99")
+    timeouts = agent.config.timeouts
+    assert agent._timeout_for_method("GAME_INVITATION") == float(timeouts.game_join_ack_sec)
+    assert agent._timeout_for_method("CHOOSE_PARITY_CALL") == float(timeouts.parity_choice_sec)
+    assert agent._timeout_for_method("GAME_OVER") == float(timeouts.game_over_sec)
+    assert agent._timeout_for_method("MATCH_RESULT_REPORT") == float(timeouts.game_over_sec)
+    assert agent._timeout_for_method("UNKNOWN") == float(timeouts.generic_sec)
+
+
+def test_get_config_with_warning_returns_default():
+    agent = PlayerAgent(agent_id="P99")
+    assert agent._get_config_with_warning({}, "missing", 7, "cfg") == 7
+
+
 def test_get_registration_status_returns_attempts(player_client: TestClient):
     payload = {
         "jsonrpc": "2.0",
