@@ -5,10 +5,10 @@ Integration test for League Manager match result reporting (M7.12).
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from league_sdk.protocol import JSONRPCRequest
-from league_sdk.repositories import RoundsRepository, StandingsRepository
 
 from agents.league_manager.server import LeagueManager
+from league_sdk.protocol import JSONRPCRequest
+from league_sdk.repositories import RoundsRepository, StandingsRepository
 
 
 @pytest.mark.asyncio

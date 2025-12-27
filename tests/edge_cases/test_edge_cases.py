@@ -3,14 +3,14 @@ import logging
 
 import pytest
 from fastapi.testclient import TestClient
-from league_sdk.protocol import GameJoinAck, JSONRPCRequest, MessageEnvelope
-from league_sdk.utils import generate_conversation_id, generate_timestamp
 from pydantic import ValidationError
 
 from agents.player_P01.server import PlayerAgent
 from agents.referee_REF01.game_logic import EvenOddGameLogic
 from agents.referee_REF01.match_conductor import MatchConductor
 from agents.referee_REF01.timeout_enforcement import TimeoutEnforcer
+from league_sdk.protocol import GameJoinAck, JSONRPCRequest, MessageEnvelope
+from league_sdk.utils import generate_conversation_id, generate_timestamp
 
 
 @pytest.mark.edge

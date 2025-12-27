@@ -81,6 +81,8 @@ include_trailing_comma = true
 force_grid_wrap = 0
 use_parentheses = true
 line_length = 104
+src_paths = ["agents", "SHARED"]
+known_first_party = ["agents", "league_sdk"]
 skip = ["venv", ".venv", "env", "dist", "build", "__pycache__"]
 
 [tool.mypy]

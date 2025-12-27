@@ -11,9 +11,9 @@ Tests:
 """
 
 import pytest
-from league_sdk.protocol import JSONRPCRequest
 
 from agents.league_manager.server import LeagueManager
+from league_sdk.protocol import JSONRPCRequest
 
 
 class TestLeagueManagerRegistration:

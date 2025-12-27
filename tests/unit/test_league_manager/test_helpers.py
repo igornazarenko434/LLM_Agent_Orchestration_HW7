@@ -1,7 +1,7 @@
 import pytest
-from league_sdk.repositories import StandingsRepository
 
 from agents.league_manager.server import LeagueManager
+from league_sdk.repositories import StandingsRepository
 
 
 @pytest.mark.unit

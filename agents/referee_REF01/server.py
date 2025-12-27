@@ -17,11 +17,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from agents.base import BaseAgent
-from agents.referee_REF01.match_conductor import MatchConductor
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from agents.base import BaseAgent
+from agents.referee_REF01.match_conductor import MatchConductor
 from league_sdk.config_loader import load_agents_config, load_json_file, load_system_config
 from league_sdk.logger import log_error, log_message_received, log_message_sent
 from league_sdk.method_aliases import translate_pdf_method_to_message_type

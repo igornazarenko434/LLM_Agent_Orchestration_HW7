@@ -2,9 +2,9 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from league_sdk.protocol import JSONRPCRequest
 
 from agents.league_manager.server import LeagueManager
+from league_sdk.protocol import JSONRPCRequest
 
 
 @pytest.fixture

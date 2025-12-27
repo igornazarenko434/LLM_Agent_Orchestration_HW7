@@ -1,9 +1,9 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from league_sdk.repositories import RoundsRepository, StandingsRepository
 
 from agents.league_manager.server import LeagueManager
+from league_sdk.repositories import RoundsRepository, StandingsRepository
 
 
 @pytest.mark.asyncio

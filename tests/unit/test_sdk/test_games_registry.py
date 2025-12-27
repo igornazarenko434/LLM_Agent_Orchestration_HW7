@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from league_sdk.config_loader import load_json_file, validate_config
 from league_sdk.config_models import GameConfig
 

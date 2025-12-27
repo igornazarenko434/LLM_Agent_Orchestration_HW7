@@ -1,9 +1,9 @@
 import types
 
 import pytest
-from league_sdk.config_models import SystemConfig
 
 from agents.base.agent_base import BaseAgent
+from league_sdk.config_models import SystemConfig
 
 
 class DummyServer:

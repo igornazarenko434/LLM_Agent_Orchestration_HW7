@@ -9,6 +9,7 @@ import asyncio
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+
 from league_sdk.queue_processor import SequentialQueueProcessor
 
 

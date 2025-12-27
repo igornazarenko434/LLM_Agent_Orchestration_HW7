@@ -12,6 +12,8 @@ Tests Pydantic models for the league.v2 protocol:
 import json
 
 import pytest
+from pydantic import ValidationError
+
 from league_sdk.protocol import (
     ChooseParityCall,
     ChooseParityResponse,
@@ -39,7 +41,6 @@ from league_sdk.protocol import (
     unwrap_message,
     wrap_message,
 )
-from pydantic import ValidationError
 
 
 @pytest.mark.unit

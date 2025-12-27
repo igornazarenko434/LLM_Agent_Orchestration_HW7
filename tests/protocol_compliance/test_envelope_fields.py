@@ -10,6 +10,7 @@ Tests that all messages have the required envelope fields:
 """
 
 import pytest
+
 from league_sdk.protocol import MessageEnvelope
 from league_sdk.utils import generate_conversation_id, generate_timestamp
 

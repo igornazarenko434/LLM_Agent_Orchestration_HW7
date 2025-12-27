@@ -13,9 +13,9 @@ import asyncio
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from league_sdk.protocol import ErrorCode
 
 from agents.referee_REF01.timeout_enforcement import TimeoutEnforcer
+from league_sdk.protocol import ErrorCode
 
 
 @pytest.fixture

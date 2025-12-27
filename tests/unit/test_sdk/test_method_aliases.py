@@ -6,6 +6,7 @@ and our message-type names (e.g., 'GAME_INVITATION') work correctly.
 """
 
 import pytest
+
 from league_sdk.method_aliases import (
     MESSAGE_TYPE_TO_PDF_METHOD,
     METHOD_ALIASES,

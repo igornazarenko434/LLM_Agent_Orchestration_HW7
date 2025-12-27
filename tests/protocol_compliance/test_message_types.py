@@ -6,6 +6,7 @@ and are mapped to protocol models.
 """
 
 import pytest
+
 from league_sdk.protocol import get_message_class
 
 # Message type constants from league.v2 protocol

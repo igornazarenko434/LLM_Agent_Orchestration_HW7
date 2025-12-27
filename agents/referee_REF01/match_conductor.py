@@ -14,7 +14,6 @@ from typing import Any, Dict, Literal, Optional, Tuple
 
 from agents.referee_REF01.game_logic import EvenOddGameLogic
 from agents.referee_REF01.timeout_enforcement import TimeoutEnforcer
-
 from league_sdk.config_loader import load_agents_config, load_json_file, load_system_config
 from league_sdk.logger import log_error, log_message_received, log_message_sent
 from league_sdk.protocol import (

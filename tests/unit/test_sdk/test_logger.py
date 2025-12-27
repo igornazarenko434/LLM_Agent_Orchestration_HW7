@@ -14,6 +14,7 @@ import logging
 from pathlib import Path
 
 import pytest
+
 from league_sdk.logger import (
     JSONFormatter,
     JsonLogger,

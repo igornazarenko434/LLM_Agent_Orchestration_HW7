@@ -10,9 +10,9 @@ import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from league_sdk.protocol import JSONRPCRequest
 
 from agents.referee_REF01.match_conductor import MatchConductor
+from league_sdk.protocol import JSONRPCRequest
 
 pytestmark = pytest.mark.integration
 

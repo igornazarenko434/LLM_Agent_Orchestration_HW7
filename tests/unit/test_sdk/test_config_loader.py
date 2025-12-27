@@ -13,6 +13,8 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
+
 from league_sdk.config_loader import (
     load_agents_config,
     load_json_file,
@@ -21,7 +23,6 @@ from league_sdk.config_loader import (
     validate_config,
 )
 from league_sdk.config_models import LeagueConfig, SystemConfig
-from pydantic import ValidationError
 
 
 @pytest.mark.unit
