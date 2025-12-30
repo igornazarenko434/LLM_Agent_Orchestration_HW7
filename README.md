@@ -338,20 +338,27 @@ LLM_Agent_Orchestration_HW7/          # 345 files (excluding venv/caches), ~27MB
 │   │   ├── test_graceful_shutdown.py   # Graceful shutdown
 │   │   ├── test_network_failure_recovery.py # Network recovery paths
 │   │   └── test_standings_accuracy.py  # Standings accuracy
-│   ├── protocol_compliance/            # Protocol compliance tests (5 files)
+│   ├── protocol_compliance/            # Protocol compliance tests (6 files)
 │   │   ├── test_auth_token_presence.py # Auth token validation
 │   │   ├── test_envelope_fields.py     # Envelope format compliance
 │   │   ├── test_message_types.py       # All 18 message types validation
 │   │   ├── test_sender_format.py       # Sender formatting rules
 │   │   └── test_timestamp_format.py    # Timestamp format validation
-│   └── edge_cases/                     # Edge case tests (1 file)
-│       └── test_edge_cases.py          # Boundary conditions, error scenarios
+│   ├── edge_cases/                     # Edge case tests (1 file)
+│   │   └── test_edge_cases.py          # Boundary conditions, error scenarios
+│   └── load/                           # Load & performance tests (directory exists, ready for M4.5)
+│       └── (empty - planned for 50 concurrent matches test)
 ├── 📚 doc/                             # Documentation (4,500+ lines across guides)
 │   ├── README.md                       # Documentation index
 │   ├── configuration.md                # Configuration Guide (M8.3) - 1,154 lines ✅
 │   ├── developer_guide.md              # Developer Guide (M8.4) - Two installation methods ✅
 │   ├── testing_guide.md                # Testing Guide (M8.5) - 3,208 lines, 588 tests ✅
 │   ├── usability_extensibility.md      # Extensibility & ISO/IEC 25010 Analysis (M8.8) ✅
+│   ├── usability_analysis.md           # Usability Analysis (M6.6) - CLI principles & accessibility ✅
+│   ├── evidence_matrix.md              # Evidence Matrix (M8.9) - 35 verification items (93% verified) ✅
+│   ├── risk_register.md                # Risk Register (M8.9) - 12 risks with severity calculations ✅
+│   ├── deployment_guide.md             # Deployment Guide - Production deployment instructions ✅
+│   ├── architecture.md                 # Architecture Documentation (M8.2) ✅
 │   ├── research_notes/
 │   │   ├── mcp_protocol.md             # MCP research and analysis
 │   │   ├── experiments.ipynb           # Research notebook (M5.5) - 14 cells, 7 plots
@@ -370,19 +377,38 @@ LLM_Agent_Orchestration_HW7/          # 345 files (excluding venv/caches), ~27MB
 │   │   ├── error_handling_strategy.md  # Retry, circuit breaker guidance
 │   │   └── data_retention_policy.md    # Data lifecycle & cleanup (22KB)
 │   ├── architecture/
-│   │   ├── thread_safety.md            # Concurrency model
-│   │   └── adr/                        # Architecture Decision Records
+│   │   ├── thread_safety.md            # Concurrency model (M2.6) - 4,584 words ✅
+│   │   └── adr/                        # Architecture Decision Records (13 files: 12 ADRs + README) ✅
+│   │       ├── README.md               # ADR index
+│   │       ├── 0001-use-fastapi-jsonrpc.md
+│   │       ├── 0002-async-httpx-client.md
+│   │       ├── 0003-file-based-storage.md
+│   │       ├── 0004-structured-jsonl-logging.md
+│   │       ├── 0005-retry-and-circuit-breaker.md
+│   │       ├── 0006-method-alias-layer.md
+│   │       ├── 0007-cleanup-scheduler.md
+│   │       ├── 0008-separate-referee-agents.md
+│   │       ├── 0009-shared-sdk-structure.md
+│   │       ├── 0010-round-robin-scheduling.md
+│   │       ├── 0011-timeout-enforcement-referee.md
+│   │       └── 0012-iso-8601-utc-timestamps.md
 │   ├── plans/
 │   │   ├── system_integration_verification_plan.md # Integration testing guide
 │   │   └── M6.1_M6.2_IMPLEMENTATION_PLAN_v2.md     # CLI + ops plan
 │   ├── guides/
-│   │   └── HOW_QUALITY_WORKS.md        # Quality workflow
-│   └── prompt_log/                     # Implementation prompt logs
+│   │   ├── HOW_QUALITY_WORKS.md        # Quality workflow guide
+│   │   └── queue_processor_guide.md    # Sequential Queue Processor documentation
+│   └── prompt_log/                     # Implementation prompt logs (8 entries, 1,024 lines) ✅
 │       ├── mission_2_implementation_prompt.md
 │       ├── config_layer_mission_3.0-3.3_prompt.md
 │       ├── mission_4_0_4_1_implementation_prompt.md
-│       └── league_manager_implementation_prompt.md
-├── 🔧 scripts/                         # Automation scripts (13 scripts)
+│       ├── testing_infrastructure_mission_4.0-4.1_prompt.md
+│       ├── league_manager_missions_7.9-7.12_prompt.md
+│       ├── mission_7.13_and_7.13.5_deep_analysis_prompt.md
+│       ├── missions_M6.1_M6.2_cli_and_operational_scripts_prompt.md
+│       └── comprehensive_verification_prompt.md
+├── 🔧 scripts/                         # Automation scripts (13 scripts + lib/)
+│   ├── lib/                            # Shared script libraries
 │   ├── start_league.sh                 # Start all agents (LM + 2 refs + 4 players)
 │   ├── stop_league.sh                  # Graceful shutdown of all agents
 │   ├── check_health.sh                 # Health check all endpoints
@@ -399,15 +425,32 @@ LLM_Agent_Orchestration_HW7/          # 345 files (excluding venv/caches), ~27MB
 ├── 📄 Configuration & Project Files
 │   ├── pyproject.toml                  # PEP 621 project metadata + tool configs (consolidated)
 │   ├── requirements.txt                # Python dependencies (with research packages)
+│   ├── uv.lock                         # UV lock file for reproducible dependencies
+│   ├── mypy.ini                        # MyPy type-checking configuration
 │   ├── .env.example                    # Environment template (61 lines)
 │   ├── .gitignore                      # Git exclusions (90 lines)
 │   ├── .flake8                         # Flake8 linting config
 │   ├── .pre-commit-config.yaml         # Pre-commit hooks configuration
+│   ├── .github/                        # GitHub configuration
+│   │   └── workflows/
+│   │       └── test.yml                # CI/CD pipeline (lint + type-check + tests + coverage)
 │   ├── PRD_EvenOddLeague.md            # Product Requirements Document (102KB)
-│   ├── Missions_EvenOddLeague.md       # Mission definitions and requirements
-│   ├── PROGRESS_TRACKER.md             # Mission tracking and status
-│   ├── CONTRIBUTING.md                 # Contribution guidelines
-│   └── even-odd-league-v1.0.0.tar.gz   # Full system archive (2.2 MB, will be rebuilt clean) ✅
+│   ├── Missions_EvenOddLeague.md       # Mission definitions and requirements (64KB)
+│   ├── PROGRESS_TRACKER.md             # Mission tracking and status (v2.0.0, 99% complete)
+│   ├── CONTRIBUTING.md                 # Contribution guidelines (300+ lines)
+│   ├── PROJECT_GUIDE.md                # Project overview and guide
+│   ├── Assignment_7_Cover_Page.html    # Self-assessment cover page for submission ✅
+│   ├── verify_installation.py          # Installation verification script
+│   ├── even-odd-league-v1.0.0.tar.gz   # Full system archive (2.2 MB, will be rebuilt clean) ✅
+│   ├── HW7_Instructions_full.pdf       # Complete assignment instructions
+│   ├── HW7_Instructions_section1_5.pdf # Assignment instructions sections 1-5
+│   ├── HW7_Instructions_section6_11.pdf # Assignment instructions sections 6-11
+│   ├── grader_agent.md                 # Grader agent planning document
+│   ├── kickoff_agent_core_v3.1.md      # Agent kickoff planning
+│   └── kickoff_templates_v3.1.md       # Agent templates and planning
+├── 🗂️ Git-Ignored Directories
+│   ├── backups/                        # Data/log backups (created by backup_data.sh)
+│   └── htmlcov/                        # Code coverage HTML reports (pytest --cov-report=html)
 └── 📜 Root Documentation
     ├── README.md                       # This file
     └── LICENSE                         # MIT License
@@ -438,7 +481,7 @@ LLM_Agent_Orchestration_HW7/          # 345 files (excluding venv/caches), ~27MB
 Quick check:
 ```bash
 python3 --version  # Should be ≥3.10.0
-pip --version
+python3 -m pip --version
 ```
 
 ---
@@ -482,8 +525,8 @@ cd LLM_Agent_Orchestration_HW7
 #### Step 2: Create Virtual Environment
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 ```
 
 #### Step 3: Install Dependencies
@@ -530,7 +573,7 @@ mkdir -p SHARED/archive/{logs,matches,players,leagues}
 
 ```bash
 # Start a player agent
-PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P01/main.py
+PYTHONPATH=SHARED:$PYTHONPATH python3 -m agents.player_P01.main
 ```
 
 See [Quick Start](#-quick-start) for running the full system.
@@ -564,8 +607,8 @@ cd even-odd-league-v1.0.0
 #### Step 2: Create Virtual Environment
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 ```
 
 #### Step 3: Install Dependencies
@@ -665,8 +708,8 @@ from league_sdk.logger import JsonLogger
 
 **Solution:** Use a virtual environment (always recommended):
 ```bash
-python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 </details>
@@ -731,6 +774,9 @@ Use our convenience scripts to start the entire system:
 # Start League Manager, Referees, and Players
 ./scripts/start_league.sh
 
+# Non-interactive mode (CI/CD or sandboxed shells)
+FORCE=1 ./scripts/start_league.sh
+
 # Check system health
 ./scripts/check_health.sh
 
@@ -767,7 +813,7 @@ If you want to understand the system or run agents individually:
 
 ```bash
 # From project root
-PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P01/main.py
+PYTHONPATH=SHARED:$PYTHONPATH python3 -m agents.player_P01.main
 ```
 
 **Expected output:**
@@ -775,6 +821,10 @@ PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P01/main.py
 INFO: Started server process [12345]
 INFO: Uvicorn running on http://localhost:8101 (Press CTRL+C to quit)
 ```
+
+**Note:** If you see "error while attempting to bind ... [Errno 1] operation not permitted",
+use the automated scripts in Option 1, or deactivate the virtual environment and retry
+with system Python.
 
 #### Step 2: Test Player Health
 
@@ -803,10 +853,12 @@ curl -X POST http://localhost:8101/mcp \
       "sender": "referee:REF01",
       "timestamp": "2025-01-15T10:30:00Z",
       "conversation_id": "conv-123",
-      "auth_token": "test-token-32-characters",
+      "auth_token": "test-token-32-characters-0000000",
       "league_id": "league_2025_even_odd",
+      "round_id": 1,
       "match_id": "R1M1",
       "game_type": "even_odd",
+      "role_in_match": "PLAYER_A",
       "player_id": "P01",
       "opponent_id": "P02"
     }
@@ -830,14 +882,14 @@ curl -X POST http://localhost:8101/mcp \
 
 ```bash
 # Terminal 1: League Manager
-PYTHONPATH=SHARED:$PYTHONPATH python3 agents/league_manager/main.py
+PYTHONPATH=SHARED:$PYTHONPATH python3 -m agents.league_manager.main
 
 # Terminal 2-3: Referees
-PYTHONPATH=SHARED:$PYTHONPATH python3 agents/referee_REF01/main.py
-PYTHONPATH=SHARED:$PYTHONPATH python3 agents/referee_REF02/main.py
+PYTHONPATH=SHARED:$PYTHONPATH python3 -m agents.referee_REF01.main
+PYTHONPATH=SHARED:$PYTHONPATH python3 -m agents.referee_REF02.main
 
 # Terminal 4-7: Players
-PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P01/main.py
+PYTHONPATH=SHARED:$PYTHONPATH python3 -m agents.player_P01.main
 PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P02/main.py
 PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P03/main.py
 PYTHONPATH=SHARED:$PYTHONPATH python3 agents/player_P04/main.py
@@ -939,7 +991,10 @@ See [doc/reference/error_codes_reference.md](doc/reference/error_codes_reference
 | `scripts/stop_league.sh` | Graceful shutdown of all agents | `./scripts/stop_league.sh` |
 | `scripts/check_health.sh` | Health check all endpoints | `./scripts/check_health.sh` |
 | `scripts/backup_data.sh` | Backup SHARED/data and SHARED/logs | `./scripts/backup_data.sh` |
-| `scripts/restore_data.sh` | Restore from backup | `./scripts/restore_data.sh data_20251227_143022` |
+| `scripts/restore_data.sh` | Restore from backup | `./scripts/restore_data.sh --force data_20251227_143022` |
+
+Note: `restore_data.sh` requires an existing backup ID under `backups/` and will prompt for
+confirmation unless `--force` is used.
 
 #### Verification & Debug Scripts
 
@@ -949,7 +1004,7 @@ See [doc/reference/error_codes_reference.md](doc/reference/error_codes_reference
 | `scripts/check_registration_status.sh` | Show LM registration state | `./scripts/check_registration_status.sh` |
 | `scripts/trigger_league_start.sh` | Start league orchestration | `./scripts/trigger_league_start.sh` |
 | `scripts/query_standings.sh` | Query standings | `./scripts/query_standings.sh --plain` |
-| `scripts/view_match_state.sh` | Inspect match state | `./scripts/view_match_state.sh R1M1 --referee-id REF01 --sender player:P01 --auth-token <token>` |
+| `scripts/view_match_state.sh` | Inspect match state | `./scripts/view_match_state.sh R1M1 --referee-id REF01 --sender player:P01 --auth-token "$AUTH_TOKEN"` |
 | `scripts/analyze_logs.sh` | Filter log output | `./scripts/analyze_logs.sh MESSAGE_SENT` |
 | `scripts/cleanup_old_data.sh` | Cleanup old backups/logs | `./scripts/cleanup_old_data.sh --dry-run` |
 
@@ -959,6 +1014,12 @@ All scripts support:
 - `--plain` (screen reader friendly)
 - `--json` (automation)
 - `--help`
+
+If you're running in a non-interactive environment, set `FORCE=1` to skip prompts:
+```bash
+FORCE=1 ./scripts/start_league.sh
+FORCE=1 ./scripts/backup_data.sh
+```
 
 Some scripts additionally support:
 - `--verbose` (e.g., `verify_configs.sh`)
@@ -974,9 +1035,10 @@ Some scripts additionally support:
 ./scripts/check_registration_status.sh
 ./scripts/trigger_league_start.sh
 ./scripts/query_standings.sh
-./scripts/view_match_state.sh R1M1 --referee-id REF01 --sender player:P01 --auth-token <token>
+AUTH_TOKEN=token_from_registration_response
+./scripts/view_match_state.sh R1M1 --referee-id REF01 --sender player:P01 --auth-token "$AUTH_TOKEN"
 ./scripts/analyze_logs.sh MESSAGE_SENT
-./scripts/backup_data.sh post_league_$(date +%Y%m%d)
+./scripts/backup_data.sh --force
 ./scripts/stop_league.sh
 ```
 
@@ -2303,13 +2365,13 @@ find SHARED/archive -type f ! -name "*.gz" -exec gzip {} \;
 ```bash
 # Method 1: Environment variable
 export LOG_LEVEL=DEBUG
-python3 agents/player_P01/main.py
+python3 -m agents.player_P01.main
 
 # Method 2: Edit .env file
 echo "LOG_LEVEL=DEBUG" >> .env
 
 # Method 3: Temporarily in command
-LOG_LEVEL=DEBUG python3 agents/player_P01/main.py
+LOG_LEVEL=DEBUG python3 -m agents.player_P01.main
 ```
 
 #### View Logs in Real-Time
