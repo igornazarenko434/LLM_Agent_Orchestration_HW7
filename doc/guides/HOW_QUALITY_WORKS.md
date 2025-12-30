@@ -221,7 +221,7 @@ PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ --cov=SHARED/league_sdk --cov=agents
 │ 5. GITHUB: Workflow triggers automatically                      │
 │    → Runs on GitHub's servers (Ubuntu Linux)                    │
 │    → Re-runs ALL quality checks (black, flake8, mypy)           │
-│    → Runs ALL 182 tests                                         │
+│    → Runs ALL 588 tests                                         │
 │    → Checks coverage ≥85%                                        │
 │    → ❌ Build fails if any check/test fails                     │
 │    → ✅ Build passes if everything succeeds                     │

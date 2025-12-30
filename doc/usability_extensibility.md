@@ -79,16 +79,16 @@ PYTHONPATH=SHARED:$PYTHONPATH pytest tests/unit/test_sdk/test_protocol_models.py
 - Pydantic validation ensures message schema correctness
 - Game logic verified against `games_registry.json` rules
 - Atomic file writes prevent data corruption
-- Unit tests for all SDK modules (209 tests passing)
+- Unit tests for all SDK modules (588 tests passing)
 - Integration tests verify multi-agent interactions
 
-**KPI:** Test Pass Rate = 209/209 (100%)
+**KPI:** Test Pass Rate = 588/588 (100%)
 
 **Verification Command:**
 ```bash
 # Run full test suite
 PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ -v --cov=SHARED/league_sdk --cov=agents
-# Expected: 209 passed, 85%+ coverage
+# Expected: 588 passed, 85%+ coverage
 
 # Verify game logic correctness
 PYTHONPATH=SHARED:$PYTHONPATH python -c "
@@ -721,7 +721,7 @@ grep -n "_get_config_with_warning" agents/ -r | head -n 3
 
 **Evidence:**
 - Pytest fixtures for reusable test utilities
-- 209 tests passing (100% pass rate)
+- 588 tests passing (100% pass rate)
 - 85% code coverage (exceeds 85% target)
 - Test markers: `unit`, `integration`, `e2e`, `slow`, `protocol`
 - Mock data generators in test fixtures
@@ -732,7 +732,7 @@ grep -n "_get_config_with_warning" agents/ -r | head -n 3
 ```bash
 # Run test suite with coverage
 PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ --cov=SHARED/league_sdk --cov=agents --cov-report=term
-# Expected: 85%+ coverage, 209 tests passed
+# Expected: 85%+ coverage, 588 tests passed
 
 # Count test files
 find tests/ -name "test_*.py" | wc -l

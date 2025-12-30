@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment 7 - Even/Odd League Multi-Agent Orchestration System</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 10pt; /* Base font size for better density */
+            line-height: 1.4;
+            color: #333;
+            margin: 0; /* Control margins via @page print */
+        }
+
+        .container {
+            max-width: 800px; /* Max width for content for readability */
+            margin: 0 auto;
+            padding: 1.5cm; /* Standard padding for content */
+            box-sizing: border-box;
+            min-height: 100vh; /* Ensure container fills viewport for layout purposes */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Default for content pages */
+            align-items: flex-start; /* Default for content pages */
+        }
+
+        /* Headings */
+        h1 { font-size: 18pt; margin-top: 0.5em; margin-bottom: 0.5em; text-align: center;}
+        h2 { font-size: 14pt; margin-top: 0.8em; margin-bottom: 0.5em; text-align: center; }
+        h3 { font-size: 12pt; margin-top: 1em; margin-bottom: 0.4em; }
+        h4 { font-size: 11pt; margin-top: 1em; margin-bottom: 0.4em; }
+
+        /* Paragraphs and Lists */
+        p { margin-top: 0.5em; margin-bottom: 0.5em; }
+        ul { margin-top: 0.5em; margin-bottom: 0.5em; padding-left: 1.5em; }
+        li { margin-bottom: 0.2em; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* Code blocks */
+        pre, code {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 0.3em 0.5em;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        pre { display: block; padding: 0.8em; }
+
+        /* Page Break Control */
+        .page-break-after {
+            page-break-after: always;
+        }
+
+        /* Cover Page Specific Styles */
+        .cover-page {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-height: 100vh; /* Use min-height for flex centering */
+        }
+        .cover-page h1 { font-size: 24pt; margin-bottom: 1em; }
+        .cover-page h2 { font-size: 16pt; margin-bottom: 0.5em; }
+        .cover-page h3 { font-size: 12pt; margin-top: 2em; margin-bottom: 0.3em; }
+        .cover-page p { font-size: 11pt; margin-bottom: 0.2em; }
+        .cover-page .grade { font-size: 16pt; font-weight: bold; color: #28a745; margin-top: 3em; }
+        .cover-page .date { margin-top: 1em; font-size: 10pt; }
+
+        /* Academic Integrity Page Specific Styles */
+        .academic-integrity-page {
+            justify-content: center; /* Center vertically like cover */
+            align-items: flex-start;
+            text-align: left;
+            min-height: 100vh;
+        }
+        .academic-integrity-page h1 { font-size: 18pt; text-align: center; margin-bottom: 1em;}
+        .academic-integrity-page h2 { font-size: 14pt; text-align: center; margin-bottom: 1.5em; }
+        .academic-integrity-page h3 { margin-top: 2em; margin-bottom: 0.5em; font-size: 11pt;}
+        .academic-integrity-page p { margin-bottom: 0.5em; }
+        .academic-integrity-page ul { margin-left: 1.5em; list-style-type: disc; }
+        .academic-integrity-page li { margin-bottom: 0.5em; }
+        .academic-integrity-page .signature-block { margin-top: 3em; line-height: 1.8;}
+        .academic-integrity-page .signature-block p { margin-top: 1.5em; border-top: 1px solid #ccc; padding-top: 0.5em;}
+        .academic-integrity-page .date-line { margin-top: 0.5em; }
+
+        /* Print Specific Styles */
+        @media print {
+            html, body {
+                width: 210mm; /* A4 width */
+                height: 297mm; /* A4 height */
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 2cm 1.5cm; /* Print margins (top/bottom, left/right) */
+                justify-content: flex-start; /* Reset for print flow */
+                align-items: flex-start;
+                box-shadow: none;
+                /* Add this for self-assessment page to prevent overflow */
+                overflow: hidden;
+                display: block; /* Important for print flow, override flex */
+            }
+
+            /* Cover and Academic Integrity Pages: ensure they center in print */
+            .cover-page, .academic-integrity-page {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                height: 100%;
+            }
+            /* Override for self-assessment page to allow scrolling/flow naturally */
+            .self-assessment-page {
+                display: block; /* Override flex for normal document flow in print */
+            }
+
+            .page-break-after {
+                page-break-after: always;
+            }
+
+            /* Aggressive space-saving for Self-Assessment Justification */
+            .self-assessment-page p,
+            .self-assessment-page li {
+                font-size: 8.5pt; /* Significantly smaller font */
+                line-height: 1.15; /* Tighter line height */
+                margin-top: 0.2em; /* Reduced paragraph/list item margins */
+                margin-bottom: 0.2em;
+            }
+            .self-assessment-page ul {
+                margin-top: 0.2em;
+                margin-bottom: 0.2em;
+                padding-left: 1.2em; /* Slightly less padding for lists */
+            }
+            .self-assessment-page h1 { font-size: 16pt; margin-top: 0.5em; margin-bottom: 0.8em; }
+            .self-assessment-page h2 { font-size: 13pt; margin-top: 0.8em; margin-bottom: 0.6em; }
+            .self-assessment-page h3 { font-size: 11pt; margin-top: 1em; margin-bottom: 0.4em; }
+            .self-assessment-page strong { font-weight: bold; } /* Ensure strong is bold */
+
+            /* Ensure cover page fonts are consistent in print */
+            .cover-page h1 { font-size: 24pt; margin-bottom: 1em; }
+            .cover-page h2 { font-size: 16pt; margin-bottom: 0.5em; }
+            .cover-page h3 { font-size: 12pt; margin-top: 2em; margin-bottom: 0.3em; }
+            .cover-page p { font-size: 11pt; margin-bottom: 0.2em; }
+            .cover-page .grade { font-size: 16pt; font-weight: bold; color: #28a745; margin-top: 3em; }
+            .cover-page .date { margin-top: 1em; font-size: 10pt; }
+
+            /* Academic Integrity Page fonts in print */
+            .academic-integrity-page h1 { font-size: 18pt; text-align: center; margin-bottom: 1em; }
+            .academic-integrity-page h2 { font-size: 14pt; text-align: center; margin-bottom: 1.5em; }
+            .academic-integrity-page p { font-size: 9.5pt; line-height: 1.25; margin-bottom: 0.3em; margin-top: 0.3em;}
+            .academic-integrity-page li { font-size: 9.5pt; line-height: 1.25; margin-bottom: 0.2em; margin-top: 0.2em;}
+            .academic-integrity-page ul { margin-left: 1.5em; margin-top: 0.5em; margin-bottom: 0.5em;}
+            .academic-integrity-page .signature-block { margin-top: 2em; line-height: 1.6;}
+            .academic-integrity-page .signature-block p { margin-top: 1em; padding-top: 0.5em;}
+        }
+    </style>
+</head>
+<body>
+    <div class="container cover-page">
+        <h1>Assignment 7 - Even/Odd League Multi-Agent Orchestration System</h1>
+        <h2>Group Code: LLM_Agents_Tom_Igor_Roie</h2>
+        <h3>Submitters:</h3>
+        <p>Igor Nazarenko, ID 322029158</p>
+        <p>Roie Gilad, ID 312169543</p>
+        <h3>GitHub Repository:</h3>
+        <p><a href="https://github.com/igornazarenko434/LLM_Agent_Orchestration_HW7">https://github.com/igornazarenko434/LLM_Agent_Orchestration_HW7</a></p>
+        <p class="grade">Self-Assigned Grade: 95/100</p>
+        <p class="date">December 28, 2025</p>
+    </div>
+
+    <div class="page-break-after"></div>
+
+    <div class="container self-assessment-page">
+        <h1>2 Self-Assessment Justification</h1>
+        <h2>Even/Odd League Multi-Agent Orchestration System Assignment 7</h2>
+
+        <h3>Strengths - What We Did Exceptionally Well</h3>
+        <p><strong>Complete MCP Multi-Agent Ecosystem (Our Core Achievement):</strong> We built a production-grade Model Context Protocol (MCP) infrastructure with <strong>7 fully operational MCP servers</strong> communicating via JSON-RPC 2.0. This isn't a single-agent MCP integration—it's a <strong>distributed multi-agent orchestration platform</strong> where the League Manager coordinates 2 Referees and 4 Players through 18 standardized message types. Each agent exposes async FastAPI /mcp endpoints, implements protocol validation, maintains conversation context, and handles timeout enforcement. We wrote <strong>86 dedicated protocol compliance tests</strong> verifying every message type adheres to the league.v2 envelope specification—demonstrating mastery of MCP architecture patterns beyond typical single-agent implementations.</p>
+        <p><strong>Infrastructure Engineering Excellence:</strong> Implemented <strong>588 passing tests</strong> (85-91% coverage) across unit, integration, E2E, and protocol suites. Built a <strong>Sequential Queue Processor</strong> for thread-safe concurrent operations, <strong>circuit breaker pattern</strong> with exponential backoff, <strong>atomic file operations</strong>, and <strong>JSONL structured logging</strong> with correlation IDs. Created <strong>13 Architecture Decision Records</strong> documenting critical design choices (async httpx, FastAPI, file storage, retry policies).</p>
+        <p><strong>Research & Documentation Rigor:</strong> Delivered a <strong>14-cell Jupyter notebook</strong> with statistical analysis, 95% confidence intervals, 2 LaTeX formulas, and 7 visualizations analyzing parity strategies and timeout sensitivity. Produced <strong>546 docstrings</strong>, <strong>evidence matrix with 35 executable verification commands</strong> (93% verified), ISO/IEC 25010 quality analysis, thread safety documentation (4,584 words), and comprehensive testing guide (3,208 lines).</p>
+        <p><strong>Production Readiness:</strong> Implemented <strong>data retention policies</strong> with archival compression, <strong>13 operational scripts</strong> (start/stop/health/backup/restore), <strong>22 text-based screenshots</strong> (CLI best practice), and complete deployment tooling. All <strong>5 Quality Gates passed</strong> with documented evidence.</p>
+
+        <h3>Weaknesses - Areas for Improvement</h3>
+        <p><strong>Missing LLM-Based Player Intelligence:</strong> Our players use <strong>simple deterministic/random parity strategies</strong> rather than LLM-powered decision-making. While we built the complete MCP infrastructure for agent communication, we didn't integrate Claude or other LLMs for intelligent game strategy (e.g., analyzing opponent history, adapting tactics). This is a significant gap for an "LLM agents" course—we built the orchestration layer but not the cognitive layer.</p>
+        <p><strong>Load Testing:</strong> 50 concurrent matches test suite remains unimplemented (directory exists but empty), leaving high-throughput validation untested.</p>
+        <p><strong>Simulation Notebook:</strong> Achieved 3 plots instead of target 4, though 7 total visualizations and statistical depth partially compensate.</p>
+
+        <h3>Time Investment & Effort</h3>
+        <p><strong>~125 hours</strong> across MCP protocol implementation, 7-agent orchestration system, 588-test suite development, research experiments, and comprehensive documentation. Significant time invested in understanding JSON-RPC 2.0, async/await patterns, and thread-safe concurrent processing.</p>
+
+        <h3>Innovation & Unique Aspects</h3>
+        <p><strong>Multi-Agent MCP Orchestration:</strong> Unlike typical single-agent MCP projects, we built a <strong>distributed MCP ecosystem</strong> with centralized orchestration (League Manager), autonomous agents (Referees conducting matches), and protocol-mediated communication. <strong>Sequential Queue Processor</strong> prevents race conditions, <strong>circuit breaker</strong> prevents cascade failures, <strong>evidence matrix</strong> (35 commands) enables reproducible verification, and <strong>method alias layer</strong> ensures backward compatibility.</p>
+
+        <h3>Learning Outcomes</h3>
+        <p>Mastered <strong>Model Context Protocol (MCP) architecture</strong> at scale—not just tool integration but building complete MCP server ecosystems with async communication, protocol validation, and distributed coordination. Learned production patterns: thread safety for concurrent systems, structured observability (JSONL logging), atomic file operations, circuit breaker resilience, and test-driven development. Understood the distinction between <strong>infrastructure layer</strong> (MCP orchestration—✅ achieved) and <strong>intelligence layer</strong> (LLM-powered strategy—❌ missed)—a critical insight for future multi-agent AI systems.</p>
+    </div>
+
+    <div class="page-break-after"></div>
+
+    <div class="container academic-integrity-page">
+        <h1>Academic Integrity Declaration</h1>
+        <h2>Even/Odd League Multi-Agent Orchestration System Assignment 7</h2>
+        <p>We, the undersigned, declare that this submission is our own original work. We have:</p>
+        <ul>
+            <li>Completed this assignment independently as a group</li>
+            <li>Properly cited all external sources, libraries, and tools used</li>
+            <li>Not copied code from other students or unauthorized sources</li>
+            <li>Not shared our code with other students</li>
+            <li>Followed all academic integrity guidelines of the course</li>
+        </ul>
+        <p>We understand that violations of academic integrity may result in penalties including failure of the assignment or course.</p>
+        <h3>Signatures:</h3>
+        <div class="signature-block">
+            <p>Igor Nazarenko, ID 322029158</p>
+            <p>Roie Gilad, ID 312169543</p>
+            <p class="date-line">Date: December 28, 2025</p>
+        </div>
+    </div>
+
+    <div class="page-break-after"></div>
+
+    <div class="container empty-page">
+        <!-- This is the empty blank page -->
+        <p>&nbsp;</p>
+    </div>
+</body>
+</html>

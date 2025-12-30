@@ -1205,6 +1205,8 @@ class CircuitBreaker:
 
 **Robust Solution:** Sequential processing via async queue
 
+> **📚 Complete Guide**: See [../guides/queue_processor_guide.md](../guides/queue_processor_guide.md) for full implementation details and examples.
+
 ```python
 import asyncio
 
@@ -1386,14 +1388,15 @@ class LeagueManager:
 
 1. **PRD**: `PRD_EvenOddLeague.md` - Section 13 (Concurrent Match Execution)
 2. **Error Handling**: [../reference/error_handling_strategy.md](../reference/error_handling_strategy.md) - Circuit breaker and retry policies
-3. **Repository Implementation**: `SHARED/league_sdk/repositories.py` - Atomic write pattern
-4. **Base Agent**: `agents/base/agent_base.py` - Threading model
-5. **Protocol**: `SHARED/league_sdk/protocol.py` - Message immutability
-6. **Retry Module**: `SHARED/league_sdk/retry.py` - Circuit breaker implementation
-7. **POSIX Spec**: IEEE Std 1003.1 - Atomic rename guarantees
-8. **Python Threading**: https://docs.python.org/3/library/threading.html
-9. **FastAPI Concurrency**: https://fastapi.tiangolo.com/async/
-10. **JSON Lines**: https://jsonlines.org/ - Append-only log format
+3. **Queue Processor Guide**: [../guides/queue_processor_guide.md](../guides/queue_processor_guide.md) - Thread-safe sequential processing
+4. **Repository Implementation**: `SHARED/league_sdk/repositories.py` - Atomic write pattern
+5. **Base Agent**: `agents/base/agent_base.py` - Threading model
+6. **Protocol**: `SHARED/league_sdk/protocol.py` - Message immutability
+7. **Retry Module**: `SHARED/league_sdk/retry.py` - Circuit breaker implementation
+8. **POSIX Spec**: IEEE Std 1003.1 - Atomic rename guarantees
+9. **Python Threading**: https://docs.python.org/3/library/threading.html
+10. **FastAPI Concurrency**: https://fastapi.tiangolo.com/async/
+11. **JSON Lines**: https://jsonlines.org/ - Append-only log format
 
 ---
 

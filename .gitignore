@@ -90,3 +90,6 @@ dmypy.json
 *.tar.gz
 *.zip
 .quality_check_venv/
+
+# Package Manager Lockfiles
+uv.lock

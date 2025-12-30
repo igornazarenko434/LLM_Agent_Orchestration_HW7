@@ -26,15 +26,15 @@
 
 ## Overview
 
-The Even/Odd League multi-agent system includes a comprehensive test suite with **568 test functions** across **56 test files**, providing extensive coverage of all system components.
+The Even/Odd League multi-agent system includes a comprehensive test suite with **588 tests** across **50 test files**, providing extensive coverage of all system components.
 
 ### Test Suite Statistics
 
 | Metric | Value |
 |--------|-------|
-| **Total Test Functions** | 568 |
-| **Total Test Files** | 56 |
-| **Total Lines of Test Code** | ~11,806 |
+| **Total Tests (Collected)** | 588 |
+| **Total Test Files** | 50 |
+| **Total Lines of Test Code** | See `tests/` for current totals |
 | **Coverage Target** | ≥85% |
 | **Current Coverage** | 85%+ (agents + SDK) |
 | **Test Categories** | 5 (Unit, Integration, E2E, Protocol, Edge) |
@@ -73,7 +73,7 @@ Our testing strategy follows a **test pyramid** approach:
 tests/
 ├── __init__.py
 ├── conftest.py                       # Shared pytest configuration and fixtures
-├── pytest.ini                        # Pytest configuration
+├── pyproject.toml                    # Pytest configuration ([tool.pytest.ini_options])
 ├── .coveragerc                       # Coverage configuration
 │
 ├── unit/                             # 29 test files
@@ -81,7 +81,7 @@ tests/
 │   │   ├── test_base_agent.py
 │   │   ├── test_player_server.py
 │   │   └── test_agent_base.py
-│   ├── test_league_manager/         # League Manager tests (9 files)
+│   ├── test_league_manager/         # League Manager tests (8 files)
 │   │   ├── test_advanced_logic.py
 │   │   ├── test_data_retention_init.py
 │   │   ├── test_helpers.py
@@ -90,7 +90,7 @@ tests/
 │   │   ├── test_registration.py
 │   │   ├── test_scheduler.py
 │   │   └── test_standings.py
-│   ├── test_referee_agent/          # Referee tests (5 files)
+│   ├── test_referee_agent/          # Referee tests (6 files)
 │   │   ├── test_game_logic.py
 │   │   ├── test_message_routing.py
 │   │   ├── test_match_conductor.py
@@ -197,14 +197,14 @@ PYTHONPATH=SHARED:$PYTHONPATH pytest
 platform darwin -- Python 3.10.x, pytest-7.x.x, pluggy-1.x.x
 rootdir: /path/to/LLM_Agent_Orchestration_HW7
 plugins: asyncio-0.21.x, cov-4.x.x, timeout-2.x.x
-collected 568 items
+collected 588 items
 
 tests/unit/test_sdk/test_protocol_models.py ...................        [ 3%]
 tests/unit/test_sdk/test_retry.py .............................        [ 8%]
 ...
 tests/e2e/test_4_player_league.py ....                               [100%]
 
-========================== 568 passed in 45.23s ==================================
+========================== 588 passed in 45.23s ==================================
 ```
 
 ### Run Quick Smoke Test
@@ -267,12 +267,12 @@ The test suite uses **pytest markers** to categorize tests. Markers are automati
 
 | Marker | Directory | Description | Example Count |
 |--------|-----------|-------------|---------------|
-| `unit` | `tests/unit/` | Fast, isolated component tests | ~350 tests |
-| `integration` | `tests/integration/` | Component interaction tests | ~120 tests |
-| `e2e` | `tests/e2e/` | Full system tests with real servers | ~40 tests |
-| `slow` | Various | Tests taking >5 seconds | ~50 tests |
-| `protocol` | `tests/protocol_compliance/` | Protocol validation tests | ~40 tests |
-| `edge` | `tests/edge_cases/` | Edge case and error handling | ~18 tests |
+| `unit` | `tests/unit/` | Fast, isolated component tests | Varies |
+| `integration` | `tests/integration/` | Component interaction tests | Varies |
+| `e2e` | `tests/e2e/` | Full system tests with real servers | Varies |
+| `slow` | Various | Tests taking >5 seconds | Varies |
+| `protocol` | `tests/protocol_compliance/` | Protocol validation tests | Varies |
+| `edge` | `tests/edge_cases/` | Edge case and error handling | Varies |
 
 #### Run Tests by Marker
 
@@ -2606,37 +2606,39 @@ pre-commit run --all-files
 
 ### Configuration Files
 
-#### pytest.ini
+#### pyproject.toml (pytest config)
 
-**File:** `pytest.ini`
+**File:** `pyproject.toml`
 
-```ini
-[pytest]
+```toml
+[tool.pytest.ini_options]
 # Test discovery
-testpaths = tests
-python_files = test_*.py
-python_classes = Test*
-python_functions = test_*
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 
 # Coverage
-addopts =
-    --cov=agents
-    --cov=SHARED/league_sdk
-    --cov-report=term
-    --cov-report=html
-    --strict-markers
+addopts = [
+  "--cov=agents",
+  "--cov=SHARED/league_sdk",
+  "--cov-report=term",
+  "--cov-report=html",
+  "--strict-markers",
+]
 
 # Markers
-markers =
-    unit: Unit tests for individual components
-    integration: Integration tests between components
-    e2e: End-to-end full system tests
-    slow: Tests that take longer to run
-    protocol: Protocol compliance tests
-    edge: Edge-case tests for error handling and boundary conditions
+markers = [
+  "unit: Unit tests for individual components",
+  "integration: Integration tests between components",
+  "e2e: End-to-end full system tests",
+  "slow: Tests that take longer to run",
+  "protocol: Protocol compliance tests",
+  "edge: Edge-case tests for error handling and boundary conditions",
+]
 
 # Asyncio mode
-asyncio_mode = auto
+asyncio_mode = "auto"
 ```
 
 #### .coveragerc
@@ -3171,11 +3173,11 @@ pytest --trace                          # Drop into debugger at start
 
 | Category | Marker | Speed | Purpose | Example Count |
 |----------|--------|-------|---------|---------------|
-| **Unit** | `@pytest.mark.unit` | Fast (<1s) | Test components in isolation | ~350 |
-| **Integration** | `@pytest.mark.integration` | Medium (1-5s) | Test component interactions | ~120 |
-| **E2E** | `@pytest.mark.e2e` | Slow (30-60s) | Test complete system | ~40 |
-| **Protocol** | `@pytest.mark.protocol` | Fast (<1s) | Test protocol compliance | ~40 |
-| **Edge** | `@pytest.mark.edge` | Fast (<1s) | Test error handling | ~18 |
+| **Unit** | `@pytest.mark.unit` | Fast (<1s) | Test components in isolation | Varies |
+| **Integration** | `@pytest.mark.integration` | Medium (1-5s) | Test component interactions | Varies |
+| **E2E** | `@pytest.mark.e2e` | Slow (30-60s) | Test complete system | Varies |
+| **Protocol** | `@pytest.mark.protocol` | Fast (<1s) | Test protocol compliance | Varies |
+| **Edge** | `@pytest.mark.edge` | Fast (<1s) | Test error handling | Varies |
 
 ### Coverage Goals
 
@@ -3187,7 +3189,7 @@ pytest --trace                          # Drop into debugger at start
 
 | File | Purpose |
 |------|---------|
-| `pytest.ini` | Pytest configuration |
+| `pyproject.toml` | Pytest configuration |
 | `.coveragerc` | Coverage configuration |
 | `tests/conftest.py` | Shared fixtures |
 | `htmlcov/index.html` | Coverage report |

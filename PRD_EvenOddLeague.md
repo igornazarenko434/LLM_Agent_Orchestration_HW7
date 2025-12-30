@@ -21,7 +21,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - **Secondary Goals:**
   - Demonstrate protocol compliance with league.v2 specification (18 message types, 18 error codes)
   - Implement robust error handling and retry mechanisms with exponential backoff
-  - Create scalable architecture supporting 10,000+ concurrent players
+  - Create scalable architecture configurable up to 10,000 players per league
   - Achieve comprehensive test coverage (unit, integration, protocol compliance)
   - Maintain production-grade logging and monitoring capabilities
 
@@ -33,7 +33,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - 18 error codes with comprehensive error handling
 - Round-robin tournament scheduling (n*(n-1)/2 matches)
 - Even/Odd game logic with parity checking
-- 3-layer data architecture (config/, data/, logs/)
+- 3-layer data architecture (SHARED/config, SHARED/data, SHARED/logs)
 - JSON-RPC 2.0 over HTTP/localhost communication
 - Timeout enforcement (5s join, 30s moves, 10s generic)
 - Retry policy with exponential backoff (3 retries, 2/4/8s delays)
@@ -63,7 +63,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - Retry logic with exponential backoff operational
 - Structured JSON logging for all agents
 - Protocol compliance validated via automated tests
-- System handles 100+ concurrent matches without crashes
+- System handles concurrent matches up to configured referee capacity (default 2 refs × 10 matches each)
 - Documentation complete with verification commands
 
 ---
@@ -108,7 +108,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - **Comprehensive PRD** provides complete protocol specification with all 18 message types and 18 error codes clearly documented
 - **league_sdk package** offers ready-to-use utilities for logging, retry logic, circuit breakers, and protocol validation
 - **BaseAgent class** handles FastAPI server setup, health checks, graceful shutdown, and configuration loading automatically
-- **Extensive test suite** with 182 tests demonstrates correct protocol usage, timeout handling, and error scenarios
+- **Extensive test suite** with 588 tests demonstrates correct protocol usage, timeout handling, and error scenarios
 - **Structured logging** (JSONL format) enables easy debugging of agent communication flows and performance analysis
 - **Code examples** in agents/player_P01/ provide working reference implementation for all required MCP tools
 
@@ -128,7 +128,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 5. Generate analytics and reports on tournament performance, agent behavior, and system bottlenecks
 
 **Pain Points:**
-1. Operational complexity - managing 7+ agents (League Manager, 3 Referees, 4 Players) with different ports, configurations, and state machines
+1. Operational complexity - managing 7 agents (League Manager, 2 Referees, 4 Players) with different ports, configurations, and state machines
 2. Reliability concerns - needs robust retry policies, circuit breakers, and timeout enforcement to prevent cascading failures
 3. Data integrity - worried about race conditions in concurrent matches, file corruption, or inconsistent standings updates
 4. Observability gaps - needs structured logging, performance metrics, and error tracking across all agents
@@ -150,19 +150,19 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 
 | # | KPI | Target | Measurement Method | Verification Command | Priority |
 |---|-----|--------|-------------------|---------------------|----------|
-| 1 | **Protocol Compliance Rate** | 100% | All messages conform to league.v2 envelope structure | `python tests/test_protocol_compliance.py` | P0 |
-| 2 | **Message Handling Success Rate** | ≥95% | Percentage of messages processed without errors | `grep "MESSAGE_SENT" logs/agents/*.log.jsonl \| wc -l` | P0 |
-| 3 | **Timeout Compliance** | 100% | All responses within specified timeouts (5s/30s/10s) | `grep "TIMEOUT_ERROR" logs/league/*/league.log.jsonl \| wc -l` (should be 0) | P0 |
-| 4 | **Registration Success Rate** | 100% | All agents successfully register on startup | `grep "REGISTERED" logs/agents/*.log.jsonl \| wc -l` | P0 |
-| 5 | **Match Completion Rate** | ≥98% | Percentage of matches finishing successfully | `jq '.result.status' data/matches/*/*.json \| grep "FINISHED" \| wc -l` | P0 |
-| 6 | **Standings Accuracy** | 100% | Correct point calculation (Win=3, Draw=1, Loss=0) | `python tests/test_standings_accuracy.py` | P0 |
-| 7 | **Error Recovery Rate** | ≥90% | Percentage of retries succeeding after transient failures | `grep "RETRY_SUCCESS" logs/agents/*.log.jsonl \| wc -l` | P1 |
-| 8 | **Concurrent Match Capacity** | ≥50 | Number of simultaneous matches system can handle | `python tests/test_load_capacity.py --concurrent=50` | P1 |
+| 1 | **Protocol Compliance Rate** | 100% | All messages conform to league.v2 envelope structure | `pytest tests/protocol_compliance/ -v` | P0 |
+| 2 | **Message Handling Success Rate** | ≥95% | Percentage of messages processed without errors | `grep "MESSAGE_SENT" SHARED/logs/agents/*.log.jsonl \| wc -l` | P0 |
+| 3 | **Timeout Compliance** | 100% | All responses within specified timeouts (5s/30s/10s) | `grep "TIMEOUT_ERROR" SHARED/logs/league/*/league.log.jsonl \| wc -l` (should be 0) | P0 |
+| 4 | **Registration Success Rate** | 100% | All agents successfully register on startup | `grep "REGISTERED" SHARED/logs/agents/*.log.jsonl \| wc -l` | P0 |
+| 5 | **Match Completion Rate** | ≥98% | Percentage of matches finishing successfully | `jq '.result.status' SHARED/data/matches/*.json \| grep "FINISHED" \| wc -l` | P0 |
+| 6 | **Standings Accuracy** | 100% | Correct point calculation (Win=3, Draw=1, Loss=0) | `pytest tests/e2e/test_standings_accuracy.py -v` | P0 |
+| 7 | **Error Recovery Rate** | ≥90% | Percentage of retries succeeding after transient failures | `grep "RETRY_SUCCESS" SHARED/logs/agents/*.log.jsonl \| wc -l` | P1 |
+| 8 | **Concurrent Match Capacity** | ≥50 | Number of simultaneous matches system can handle | `pytest tests/integration/test_concurrent_matches.py -v` | P1 |
 | 9 | **Agent Uptime** | ≥99.9% | Percentage of time agents remain responsive | `curl -X POST http://localhost:8000/mcp -H "Content-Type: application/json" --max-time 1` | P1 |
-| 10 | **Log Integrity** | 100% | All log entries are valid JSON Lines format | `cat logs/agents/*.log.jsonl \| jq . > /dev/null` | P1 |
-| 11 | **Authentication Success Rate** | 100% | All authenticated requests accepted | `grep "E012\|E003" logs/league/*/league.log.jsonl \| wc -l` (should be 0) | P0 |
-| 12 | **Data Consistency** | 100% | Standings match sum of match results | `python tests/test_data_consistency.py` | P0 |
-| 13 | **Mean Response Time** | <500ms | Average time to respond to MCP requests | `grep "response_time_ms" logs/agents/*.log.jsonl \| jq .response_time_ms \| awk '{s+=$1; c++} END {print s/c}'` | P2 |
+| 10 | **Log Integrity** | 100% | All log entries are valid JSON Lines format | `cat SHARED/logs/agents/*.log.jsonl \| jq . > /dev/null` | P1 |
+| 11 | **Authentication Success Rate** | 100% | All authenticated requests accepted | `grep "E012\|E003" SHARED/logs/league/*/league.log.jsonl \| wc -l` (should be 0) | P0 |
+| 12 | **Data Consistency** | 100% | Standings match sum of match results | `pytest tests/integration/test_standings_update.py -v` | P0 |
+| 13 | **Mean Response Time** | <500ms | Average time to respond to MCP requests | `grep "response_time_ms" SHARED/logs/agents/*.log.jsonl \| jq .response_time_ms \| awk '{s+=$1; c++} END {print s/c}'` | P2 |
 | 14 | **Test Coverage** | ≥85% | Percentage of code covered by automated tests | `pytest --cov=agents --cov-report=term` | P1 |
 | 15 | **Documentation Completeness** | 100% | All functions/classes have docstrings | `pydocstyle agents/ \| wc -l` (should be 0) | P2 |
 
@@ -186,7 +186,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - Player includes all mandatory envelope fields (protocol, message_type, sender, timestamp, conversation_id, auth_token)
 - Player logs invitation receipt and response
 
-**Verification:** `curl -X POST http://localhost:8101/mcp -H "Content-Type: application/json" -d @test_data/game_invitation.json && grep "GAME_JOIN_ACK" logs/agents/P01.log.jsonl`
+**Verification:** `pytest tests/unit/test_agents/test_player_server.py -k game_invitation -v`
 
 ---
 
@@ -201,7 +201,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - Player validates input parameters before processing
 - Player handles concurrent choice requests gracefully
 
-**Verification:** `python tests/test_player_parity_choice.py --timeout=30`
+**Verification:** `pytest tests/unit/test_agents/test_player_server.py -v`
 
 ---
 
@@ -211,12 +211,12 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 
 **Acceptance Criteria:**
 - Player implements `notify_match_result` tool accepting GAME_OVER message
-- Player updates internal match history file (data/players/<player_id>/history.json)
+- Player updates internal match history file (SHARED/data/players/<player_id>/history.json)
 - Player updates statistics (wins, losses, draws, total_matches)
 - Player returns acknowledgment within 10 seconds
 - Player logs result receipt and state updates
 
-**Verification:** `python tests/test_player_result_notification.py && cat data/players/P01/history.json | jq '.stats'`
+**Verification:** `pytest tests/integration/test_match_result_reporting.py -v && cat SHARED/data/players/P01/history.json | jq '.stats'`
 
 ---
 
@@ -231,7 +231,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - Player stores auth_token for all subsequent communications
 - Player transitions to REGISTERED state upon success
 
-**Verification:** `grep "LEAGUE_REGISTER_RESPONSE" logs/agents/P01.log.jsonl && grep "player_id" logs/agents/P01.log.jsonl`
+**Verification:** `grep "LEAGUE_REGISTER_RESPONSE" SHARED/logs/agents/P01.log.jsonl && grep "player_id" SHARED/logs/agents/P01.log.jsonl`
 
 ---
 
@@ -249,7 +249,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - Referee sends MATCH_RESULT_REPORT to League Manager
 - Referee logs complete match transcript
 
-**Verification:** `python tests/test_referee_match_flow.py && cat data/matches/league_2025_even_odd/R1M1.json | jq .lifecycle.state`
+**Verification:** `pytest tests/integration/test_match_flow.py -v && cat SHARED/data/matches/R1M1.json | jq .lifecycle.state`
 
 ---
 
@@ -265,7 +265,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - Referee reports timeout result to League Manager
 - Referee logs timeout events with error codes
 
-**Verification:** `python tests/test_referee_timeout_enforcement.py --timeout-type=join && grep "E001" logs/agents/REF01.log.jsonl`
+**Verification:** `pytest tests/integration/test_timeout_enforcement.py -v && grep "E001" SHARED/logs/agents/REF01.log.jsonl`
 
 ---
 
@@ -281,7 +281,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - League Manager tracks round completion status
 - League Manager sends ROUND_COMPLETED after all matches finish
 
-**Verification:** `python tests/test_scheduling_algorithm.py --players=4 && cat data/leagues/league_2025_even_odd/rounds.json | jq '.rounds | length'`
+**Verification:** `pytest tests/unit/test_league_manager/test_scheduler.py -v && cat SHARED/data/leagues/league_2025_even_odd/rounds.json | jq '.rounds | length'`
 
 ---
 
@@ -294,10 +294,10 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - League Manager updates standings after each match result
 - League Manager sorts standings by points (primary), wins (tiebreaker)
 - League Manager broadcasts LEAGUE_STANDINGS_UPDATE after each match
-- League Manager persists standings to data/leagues/<league_id>/standings.json
+- League Manager persists standings to SHARED/data/leagues/<league_id>/standings.json
 - League Manager identifies and announces champion on league completion
 
-**Verification:** `python tests/test_standings_calculation.py && cat data/leagues/league_2025_even_odd/standings.json | jq '.standings[0]'`
+**Verification:** `pytest tests/unit/test_league_manager/test_standings.py -v && cat SHARED/data/leagues/league_2025_even_odd/standings.json | jq '.standings[0]'`
 
 ---
 
@@ -313,7 +313,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - All messages include "conversation_id" for thread tracking
 - All messages include "auth_token" (except registration requests)
 
-**Verification:** `python tests/test_message_envelope_compliance.py && jq '.protocol, .message_type, .sender, .timestamp, .conversation_id, .auth_token' logs/agents/*.log.jsonl | grep -c "null"` (should be 0)
+**Verification:** `pytest tests/protocol_compliance/test_envelope_fields.py -v && jq '.protocol, .message_type, .sender, .timestamp, .conversation_id, .auth_token' SHARED/logs/agents/*.log.jsonl | grep -c "null"` (should be 0)
 
 ---
 
@@ -329,23 +329,23 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - Agents abandon retry on terminal errors (E003, E004, E011, E012)
 - Agents report final failure after max retries exceeded
 
-**Verification:** `python tests/test_retry_policy.py --failure-type=transient && grep "RETRY_ATTEMPT" logs/agents/P01.log.jsonl | wc -l`
+**Verification:** `pytest tests/unit/test_sdk/test_retry.py -v && grep "RETRY_ATTEMPT" SHARED/logs/agents/P01.log.jsonl | wc -l`
 
 ---
 
 ### FR-011: Data Persistence - 3-Layer Architecture
 **Priority:** P1 (High)
-**Description:** System MUST organize data across config/, data/, and logs/ layers.
+**Description:** System MUST organize data across SHARED/config, SHARED/data, and SHARED/logs layers.
 
 **Acceptance Criteria:**
-- config/ contains static configuration files (system.json, agents_config.json, leagues/, games/)
-- data/ contains runtime data (leagues/<league_id>/standings.json, matches/<league_id>/<match_id>.json, players/<player_id>/history.json)
-- logs/ contains append-only JSON Lines logs (league/<league_id>/league.log.jsonl, agents/<agent_id>.log.jsonl)
+- SHARED/config contains static configuration files (system.json, agents/agents_config.json, leagues/, games/)
+- SHARED/data contains runtime data (leagues/<league_id>/standings.json, matches/<match_id>.json, players/<player_id>/history.json)
+- SHARED/logs contains append-only JSON Lines logs (league/<league_id>/league.log.jsonl, agents/<agent_id>.log.jsonl)
 - All JSON files conform to schema_version structure
-- All timestamps in logs/data are ISO 8601 UTC format
+- All timestamps in SHARED/logs and SHARED/data are ISO 8601 UTC format
 - All files are readable/writable by appropriate agents
 
-**Verification:** `ls -R SHARED/config SHARED/data SHARED/logs && python tests/test_data_layer_integrity.py`
+**Verification:** `ls -R SHARED/config SHARED/data SHARED/logs && pytest tests/unit/test_sdk/test_repositories.py -v`
 
 ---
 
@@ -361,7 +361,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - Referee correctly handles all 4 outcome scenarios (both even, both odd, player A match, player B match)
 - Referee logs drawn number and parity in match result
 
-**Verification:** `python tests/test_even_odd_game_logic.py --iterations=100 && python tests/test_draw_scenarios.py`
+**Verification:** `pytest tests/unit/test_referee_agent/test_game_logic.py -v`
 
 ---
 
@@ -377,7 +377,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - System rejects messages from unregistered agents (E004)
 - System logs all authentication failures
 
-**Verification:** `python tests/test_authentication.py --invalid-token && grep "E012" logs/league/league_2025_even_odd/league.log.jsonl | wc -l`
+**Verification:** `pytest tests/protocol_compliance/test_auth_token_presence.py -v && grep "E012" SHARED/logs/league/league_2025_even_odd/league.log.jsonl | wc -l`
 
 ---
 
@@ -393,7 +393,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - System prevents conversation_id collisions
 - System handles concurrent standings updates atomically
 
-**Verification:** `python tests/test_concurrent_matches.py --concurrent=10 && cat data/leagues/league_2025_even_odd/standings.json | jq '.standings[] | .played' | awk '{s+=$1} END {print s}'` (should equal total matches)
+**Verification:** `pytest tests/integration/test_concurrent_matches.py -v && cat SHARED/data/leagues/league_2025_even_odd/standings.json | jq '.standings[] | .played' | awk '{s+=$1} END {print s}'` (should equal total matches)
 
 ---
 
@@ -409,7 +409,7 @@ The Even/Odd League is a production-ready **multi-agent orchestration system** w
 - Agents transition to SHUTDOWN state
 - Agents do not leave orphaned processes or locked files
 
-**Verification:** `python tests/test_graceful_shutdown.py && ps aux | grep "python.*agent" | wc -l` (should be 0 after shutdown)
+**Verification:** `pytest tests/e2e/test_graceful_shutdown.py -v && ps aux | grep "python.*agent" | wc -l` (should be 0 after shutdown)
 
 ---
 
@@ -503,7 +503,7 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 - Mean response time: <500ms across all message types
 - System handles 100 concurrent matches with <10% performance degradation
 
-**Verification:** `python tests/load/test_response_times.py --duration=300 --concurrent=50 && python tests/load/analyze_latency.py logs/agents/*.log.jsonl`
+**Verification (planned):** `python tests/load/test_response_times.py --duration=300 --concurrent=50 && python tests/load/analyze_latency.py SHARED/logs/agents/*.log.jsonl` (load suite not yet in repo)
 
 ---
 
@@ -519,7 +519,7 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 - System completes 100-match league without manual intervention
 - Mean time between failures (MTBF): >10 hours
 
-**Verification:** `python tests/reliability/test_continuous_operation.py --duration=3600 --matches=100 && grep "UNHANDLED_EXCEPTION" logs/agents/*.log.jsonl | wc -l` (should be 0)
+**Verification (planned):** `python tests/reliability/test_continuous_operation.py --duration=3600 --matches=100 && grep "UNHANDLED_EXCEPTION" SHARED/logs/agents/*.log.jsonl | wc -l` (reliability suite not yet in repo)
 
 ---
 
@@ -528,14 +528,14 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 **Description:** System MUST scale to support thousands of concurrent agents as specified in design goals.
 
 **Acceptance Criteria:**
-- Support 100+ players in single league
-- Support 50+ concurrent matches
-- League Manager handles 1000+ registration requests/minute
+- Support 100+ players in a single league (configurable; default configs show 10,000 max)
+- Support 20+ concurrent matches by default (2 referees × 10 matches each; configurable via agents_config.json)
+- League Manager handles high registration volume (target; not benchmarked yet)
 - Memory usage: <500MB per agent under normal load
 - CPU usage: <25% per agent under normal load
 - Standings calculation: <5 seconds for 1000 players
 
-**Verification:** `python tests/scalability/test_agent_capacity.py --players=100 --concurrent-matches=50 && python tests/scalability/measure_resource_usage.py`
+**Verification (planned):** `python tests/scalability/test_agent_capacity.py --players=100 --concurrent-matches=50 && python tests/scalability/measure_resource_usage.py` (scalability suite not yet in repo)
 
 ---
 
@@ -561,11 +561,11 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 
 **Acceptance Criteria:**
 - Unit test coverage: ≥85% (line coverage)
-- Integration tests: All 18 message types covered
-- Protocol compliance tests: Automated validation of envelope structure
+- Integration tests: Core agent workflows covered (registration, match flow, standings)
+- Protocol compliance tests: Automated validation of envelope/auth fields and message_type coverage
 - End-to-end tests: Complete 4-player league simulation
-- Performance tests: Load testing with 50+ concurrent matches
-- Error injection tests: All 18 error codes triggered and validated
+- Performance tests: Load testing with concurrent matches (planned; load suite not yet in repo)
+- Error injection tests: Targeted error code scenarios (remaining coverage planned)
 
 **Verification:** `pytest tests/ --cov=agents --cov-report=term --cov-report=html && open htmlcov/index.html`
 
@@ -583,7 +583,7 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 - Log rotation: Automatic archival after 100MB
 - Correlation IDs: conversation_id enables request tracing across agents
 
-**Verification:** `cat logs/agents/P01.log.jsonl | jq . && cat logs/league/league_2025_even_odd/league.log.jsonl | jq . && python tests/test_log_integrity.py`
+**Verification:** `cat SHARED/logs/agents/P01.log.jsonl | jq . && cat SHARED/logs/league/league_2025_even_odd/league.log.jsonl | jq .`
 
 ---
 
@@ -599,7 +599,7 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 - No hardcoded credentials in source code
 - Token expiration: Not implemented (future enhancement)
 
-**Verification:** `python tests/security/test_authentication.py --invalid-token && python tests/security/test_authorization.py --wrong-agent && grep "E012\|E003" logs/league/*/league.log.jsonl`
+**Verification:** `pytest tests/protocol_compliance/test_auth_token_presence.py -v && grep "E012\|E003" SHARED/logs/league/*/league.log.jsonl`
 
 ---
 
@@ -615,7 +615,7 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 - Network: localhost binding works on all platforms
 - Verification: CI/CD tests pass on Ubuntu, macOS, Windows
 
-**Verification:** `python --version && python tests/test_platform_compatibility.py && pytest tests/ --platform=all`
+**Verification:** `python --version && pytest tests/integration/test_pdf_compatibility.py -v` (run across OS matrix in CI)
 
 ---
 
@@ -631,7 +631,7 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 - Examples: Sample player/referee implementations provided
 - README: Comprehensive with quick start guide
 
-**Verification:** `cat README.md && python setup.py --help && python -m agents.player_P01 --help`
+**Verification:** `cat README.md && python -m agents.league_manager.main --help && python -m agents.player_P01.main --help`
 
 ---
 
@@ -648,7 +648,7 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 - Protocol documentation versioned in sync with code
 - Graceful degradation: Agents log unsupported version and return ERROR_RESPONSE with E011
 
-**Verification:** `python tests/test_protocol_version_enforcement.py --version=league.v1 && grep "E011" logs/agents/*.log.jsonl`
+**Verification (planned):** `python tests/test_protocol_version_enforcement.py --version=league.v1 && grep "E011" SHARED/logs/agents/*.log.jsonl` (protocol version suite not yet in repo)
 
 ---
 
@@ -664,7 +664,7 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 - Partial agent failures: League continues with available agents
 - State recovery: Agents restore from persisted state on restart
 
-**Verification:** `python tests/fault_tolerance/test_network_failures.py --failure-rate=0.1 && python tests/fault_tolerance/test_agent_recovery.py --kill-agent=P01`
+**Verification (planned):** `python tests/fault_tolerance/test_network_failures.py --failure-rate=0.1 && python tests/fault_tolerance/test_agent_recovery.py --kill-agent=P01` (fault-tolerance suite not yet in repo)
 
 ---
 
@@ -680,7 +680,7 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 - Atomic file writes: Use temp files + rename pattern
 - File locking: Prevent concurrent write conflicts
 
-**Verification:** `python tests/data_integrity/test_consistency.py && python tests/data_integrity/test_referential_integrity.py`
+**Verification:** `pytest tests/integration/test_standings_update.py -v && pytest tests/unit/test_sdk/test_repositories.py -v`
 
 ---
 
@@ -689,7 +689,7 @@ grep -A 5 "M7.4.5\|M7.9.5\|M7.13.5" Missions_EvenOddLeague.md
 **Description:** System SHOULD be designed for easy addition of new game types, agent types, player strategies, and configuration policies without core code changes.
 
 **Acceptance Criteria:**
-- **Game Types:** Game logic abstracted in separate modules (games/even_odd.py), registry in config/games/games_registry.json
+- **Game Types:** Game logic implemented in referee modules (e.g., `agents/referee_REF01/game_logic.py`), registry in `SHARED/config/games/games_registry.json`
 - **Agent Types:** BaseAgent template supports new agent roles (observers, analytics agents, etc.)
 - **Player Strategies:** Strategy pattern enables swapping algorithms (random → LLM-based → ML-based)
 - **Configuration:** 50+ settings in system.json, hierarchical override (CLI > ENV > JSON > defaults)
@@ -750,7 +750,7 @@ grep -c "### 2\.[1-8]" doc/usability_extensibility.md
 - Log retention: Logs preserved for full league duration + 30 days
 - Compliance: JSONL format enables easy parsing and analysis
 
-**Verification:** `cat data/matches/league_2025_even_odd/R1M1.json | jq '.transcript | length' && python tests/test_audit_trail_completeness.py`
+**Verification (planned):** `cat SHARED/data/matches/R1M1.json | jq '.transcript | length' && python tests/test_audit_trail_completeness.py` (audit-trail tests not yet in repo)
 
 ---
 
@@ -766,7 +766,7 @@ grep -c "### 2\.[1-8]" doc/usability_extensibility.md
 - Documentation: All config options documented with examples
 - Hot reload: Not required (restart agents to apply changes)
 
-**Verification:** `python agents/league_manager/main.py --config=config/system.json --validate && python tests/test_config_validation.py`
+**Verification:** `./scripts/verify_configs.sh --verbose && pytest tests/unit/test_sdk/test_config_models.py -v && pytest tests/unit/test_sdk/test_config_loader.py -v`
 
 ---
 
@@ -816,11 +816,11 @@ grep -c "### 2\.[1-8]" doc/usability_extensibility.md
 # Verify cleanup performance
 pytest tests/unit/test_sdk/test_cleanup.py -v --durations=10
 
-# Verify thread safety
-pytest tests/integration/test_concurrent_cleanup.py -v
+# Verify cleanup scheduling integration
+pytest tests/integration/test_cleanup_scheduler.py -v
 
 # Verify no data loss
-pytest tests/integration/test_cleanup_safety.py -v
+pytest tests/unit/test_sdk/test_cleanup.py -v
 
 # Verify compression ratio
 python SHARED/scripts/cleanup_data.py --execute --type matches --verbose | grep "compression"
@@ -867,11 +867,11 @@ python SHARED/scripts/cleanup_data.py --execute --type matches --verbose | grep 
     │            │
     │ HTTP/JSON-RPC
     │            │
-  ┌─┴────────────┴─┐
-  │                │
-┌─▼──┐  ┌────┐  ┌─▼──┐
-│P01 │  │P02 │  │P03 │  Ports 8101-8104
-└────┘  └────┘  └────┘  Role: Server
+  ┌─┴────────────────────┴─┐
+  │                        │
+┌─▼──┐  ┌────┐  ┌────┐  ┌─▼──┐
+│P01 │  │P02 │  │P03 │  │P04 │  Ports 8101-8104
+└────┘  └────┘  └────┘  └────┘  Role: Server
 ```
 
 #### 6.2.2 Data Flow Architecture
@@ -903,15 +903,14 @@ python SHARED/scripts/cleanup_data.py --execute --type matches --verbose | grep 
 ┌─────────────────────────────────────────┐
 │       SHARED/logs/ (Append-Only)         │
 │  - league/<id>/*.log.jsonl               │
-│  - agents/*.log                          │
+│  - agents/*.log.jsonl                    │
 └─────────────────────────────────────────┘
                   ↓ Cleanup & Archive (Daily 2 AM UTC)
 ┌─────────────────────────────────────────┐
 │     SHARED/archive/ (Compressed Storage) │
-│  - logs/*.gz                              │
-│  - matches/*.gz                           │
-│  - players/*.gz                           │
-│  - leagues/*.gz                           │
+│  - logs/<year>/<month>/*.gz              │
+│  - matches/<league_id>/<year>.tar.gz     │
+│  - players/<player_id>/history_shutdown.json.gz │
 └─────────────────────────────────────────┘
 ```
 
@@ -1034,11 +1033,11 @@ The system implements automated data lifecycle management to optimize storage, m
 
 **Monitoring & Observability:**
 
-- All cleanup operations logged to `logs/league/<id>/league.log.jsonl`
+- All cleanup operations logged to `SHARED/logs/league/<id>/league.log.jsonl`
 - Statistics tracked: files scanned, deleted, archived, bytes freed
 - Errors logged with full stack traces
 - Cleanup duration tracked
-- Manual verification: `grep "cleanup" logs/league/*/league.log.jsonl`
+- Manual verification: `grep "cleanup" SHARED/logs/league/*/league.log.jsonl`
 
 **Related Documentation:**
 - Full specification: [doc/reference/data_retention_policy.md](doc/reference/data_retention_policy.md) (22KB)
@@ -1746,7 +1745,7 @@ P01          REF01        P02          League Manager
 - League Manager updates played, wins, losses, draws counters
 - League Manager sorts standings by points (primary), wins (tiebreaker)
 - League Manager broadcasts LEAGUE_STANDINGS_UPDATE after each match
-- League Manager persists standings to data/leagues/<league_id>/standings.json
+- League Manager persists standings to SHARED/data/leagues/<league_id>/standings.json
 
 ---
 
@@ -1772,7 +1771,7 @@ P01          REF01        P02          League Manager
 
 **Acceptance Criteria:**
 - Developer can search logs using conversation_id to find all messages
-- Developer can view match transcript in data/matches/<league_id>/<match_id>.json
+- Developer can view match transcript in SHARED/data/matches/<match_id>.json
 - Developer can see timestamps for each message exchange
 - Developer can verify message envelope compliance
 - Developer can identify timeout or error events
@@ -1826,82 +1825,92 @@ SHARED/league_sdk/
 
 ```
            ┌──────────────┐
-          /  E2E Tests    /  ← 10% (Full 4-player league)
-         /   (5 tests)   /
+          /   E2E Tests   /  ← 4 files (full league flows)
+         /              /
         ┌──────────────┐
-       /  Integration  /     ← 30% (Agent interactions)
-      /   (30 tests)  /
+       / Integration  /     ← 11 files (agent interactions)
+      /              /
      ┌──────────────┐
-    /  Unit Tests   /        ← 60% (Individual functions)
-   /  (100+ tests) /
+    /   Unit Tests  /        ← 29 files (component-level)
+   /               /
   └──────────────┘
 ```
 
+**Additional suites:** Protocol compliance (5 files) and Edge cases (1 file) run as fast suites alongside unit tests.
+
 ### 11.2 Test Categories
 
-#### 11.2.1 Unit Tests (Target: 100+ tests, 85%+ coverage)
+#### 11.2.1 Unit Tests (Current: 29 files, coverage target ≥85%)
 
 **Scope:** Individual functions and classes in isolation.
 
 **Examples:**
-- `test_generate_round_robin_schedule()` - Verify n*(n-1)/2 matches generated
-- `test_calculate_standings()` - Verify point calculations (Win=3, Draw=1, Loss=0)
-- `test_determine_even_odd_winner()` - Test all 4 outcome scenarios
-- `test_message_envelope_validation()` - Verify mandatory fields checked
-- `test_auth_token_generation()` - Verify token uniqueness and length
-- `test_exponential_backoff_delays()` - Verify 2, 4, 8 second delays
+- `test_schedule_4_players_generates_6_matches()` - Verify n*(n-1)/2 matches generated
+- `test_process_match_result_updates_repo()` - Verify standings updates on match results
+- `test_draw_random_number_in_range()` - Validate Even/Odd random range
+- `test_handle_game_invitation()` - Verify mandatory envelope fields and ACK
+- `test_backoff_delays_are_exponential()` - Verify 2, 4, 8 second delays
 
 **Verification:** `pytest tests/unit/ --cov=agents --cov-report=term`
 
 ---
 
-#### 11.2.2 Integration Tests (Target: 30+ tests)
+#### 11.2.2 Integration Tests (Current: 11 files)
 
 **Scope:** Agent-to-agent interactions and protocol compliance.
 
 **Examples:**
-- `test_player_registration_flow()` - Player registers with League Manager successfully
-- `test_match_execution_flow()` - Full match from invitation to result reporting
-- `test_timeout_enforcement()` - Referee awards technical loss on player timeout
-- `test_standings_update_broadcast()` - League Manager broadcasts standings after match
-- `test_retry_policy_execution()` - Agent retries failing request with backoff
-- `test_concurrent_matches()` - Multiple referees conduct simultaneous matches
+- `test_player_registers_successfully()` - Player registers with League Manager successfully
+- `test_successful_match_flow_with_mocked_http()` - Full match from invitation to result reporting
+- `test_join_timeout_player_a()` - Referee awards technical loss on player timeout
+- `test_broadcast_standings_update()` - League Manager broadcasts standings after match
+- `test_two_concurrent_matches()` - Multiple referees conduct simultaneous matches
 
 **Verification:** `pytest tests/integration/ -v`
 
 ---
 
-#### 11.2.3 End-to-End Tests (Target: 5+ tests)
+#### 11.2.3 End-to-End Tests (Current: 4 files)
 
 **Scope:** Complete league execution from startup to completion.
 
 **Examples:**
-- `test_4_player_league_completion()` - Full league with 6 matches across 3 rounds
-- `test_standings_accuracy_e2e()` - Verify final standings match expected results
-- `test_graceful_shutdown_e2e()` - All agents shut down cleanly after league
-- `test_network_failure_recovery_e2e()` - League completes despite transient failures
-- `test_100_player_league_performance()` - Scalability test with large player count
+- `test_league_completes_successfully()` - Full league with 6 matches across 3 rounds
+- `test_standings_update_after_each_match()` - Verify standings match expected results
+- `test_no_orphan_processes_after_shutdown()` - All agents shut down cleanly after league
+- `test_network_timeout_handling()` - League completes despite transient failures
 
 **Verification:** `pytest tests/e2e/ -v --timeout=600`
 
 ---
 
-#### 11.2.4 Protocol Compliance Tests (Target: 18 tests, one per message type)
+#### 11.2.4 Protocol Compliance Tests (Current: 5 files)
 
 **Scope:** Validate all messages conform to league.v2 specification.
 
 **Examples:**
-- `test_game_invitation_envelope()` - Verify all mandatory fields present
+- `test_envelope_has_protocol()` - Verify all mandatory fields present
 - `test_timestamp_format()` - Verify ISO 8601 UTC with 'Z' suffix
 - `test_sender_format()` - Verify "{agent_type}:{agent_id}" format
-- `test_protocol_version()` - Verify "league.v2" in all messages
 - `test_auth_token_presence()` - Verify auth_token in post-registration messages
+- `test_game_invitation_type()` - Validate message_type coverage
 
 **Verification:** `pytest tests/protocol_compliance/ -v`
 
 ---
 
-#### 11.2.5 Load & Performance Tests (Target: 5 tests)
+#### 11.2.5 Edge Case Tests (Current: 1 file)
+
+**Scope:** Validate boundary conditions and error scenarios.
+
+**Examples:**
+- `test_edge_cases()` - Boundary conditions, invalid inputs, and error paths
+
+**Verification:** `pytest tests/edge_cases/ -v`
+
+---
+
+#### 11.2.6 Load & Performance Tests (Target: 5 tests)
 
 **Scope:** Validate system performance under load.
 
@@ -1912,11 +1921,11 @@ SHARED/league_sdk/
 - `test_memory_usage_stability()` - Verify no memory leaks over 1000 matches
 - `test_log_file_growth()` - Verify log rotation works correctly
 
-**Verification:** `pytest tests/load/ -v --duration=3600`
+**Verification (planned):** `pytest tests/load/ -v --duration=3600` (load suite not yet in repo)
 
 ---
 
-#### 11.2.6 Security Tests (Target: 10 tests)
+#### 11.2.7 Security Tests (Target: 10 tests)
 
 **Scope:** Validate authentication and authorization mechanisms.
 
@@ -1927,13 +1936,13 @@ SHARED/league_sdk/
 - `test_replay_attack_prevention()` - Verify conversation_id mismatch detected
 - `test_no_hardcoded_credentials()` - Scan codebase for secrets
 
-**Verification:** `pytest tests/security/ -v && python tests/security/scan_secrets.py`
+**Verification (planned):** `pytest tests/security/ -v && python tests/security/scan_secrets.py` (security suite not yet in repo)
 
 ---
 
 ### 11.3 Test Data Management
 
-**Strategy:** Use fixture files in `tests/fixtures/` directory.
+**Strategy (planned):** Use fixture files in `tests/fixtures/` directory.
 
 ```
 tests/fixtures/
@@ -1950,7 +1959,7 @@ tests/fixtures/
     └── sample_match_result.json
 ```
 
-**Verification:** `ls -R tests/fixtures/`
+**Verification (planned):** `ls -R tests/fixtures/`
 
 ---
 
@@ -2007,7 +2016,7 @@ pip install -r requirements.txt
 pip install -e SHARED/league_sdk/
 
 # 5. Verify installation
-python -m pytest tests/test_installation.py -v
+python -m pytest tests/test_installation.py -v  # planned (installation tests not yet in repo)
 ```
 
 **Verification:** `python --version && pip list | grep -E "fastapi|uvicorn|pydantic"`
@@ -2021,7 +2030,7 @@ python -m pytest tests/test_installation.py -v
 ```bash
 # Terminal 1: League Manager (must start first)
 cd agents/league_manager
-python main.py --config=../../SHARED/config/system.json
+python main.py
 
 # Wait for "League Manager ready on port 8000"
 
@@ -2056,35 +2065,9 @@ curl -X POST http://localhost:8000/mcp -H "Content-Type: application/json" \
 
 ### 12.3 Monitoring & Health Checks
 
-**Health Check Script:**
+**Health Check Script:** `scripts/check_health.sh` (uses `SHARED/config/agents/agents_config.json`)
 
-```bash
-#!/bin/bash
-# check_agent_health.sh
-
-agents=(
-    "League Manager:8000"
-    "Referee REF01:8001"
-    "Referee REF02:8002"
-    "Player P01:8101"
-    "Player P02:8102"
-    "Player P03:8103"
-    "Player P04:8104"
-)
-
-for agent in "${agents[@]}"; do
-    name="${agent%%:*}"
-    port="${agent##*:}"
-    status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$port/health)
-    if [ "$status" -eq 200 ]; then
-        echo "✓ $name (port $port) is healthy"
-    else
-        echo "✗ $name (port $port) is DOWN"
-    fi
-done
-```
-
-**Verification:** `chmod +x check_agent_health.sh && ./check_agent_health.sh`
+**Verification:** `./scripts/check_health.sh`
 
 ---
 
@@ -2112,77 +2095,19 @@ tail -f SHARED/logs/agents/P01.log.jsonl | jq .
 
 ### 12.5 Graceful Shutdown Procedure
 
-**Shutdown Script:**
+**Shutdown Script:** `scripts/stop_league.sh` (supports `--force`, `--plain`, `--json`)
 
-```bash
-#!/bin/bash
-# shutdown_league.sh
-
-# Send SIGTERM to all agents (allows graceful shutdown)
-pkill -TERM -f "python.*main.py"
-
-# Wait up to 10 seconds for graceful shutdown
-sleep 10
-
-# Force kill any remaining processes
-pkill -KILL -f "python.*main.py"
-
-echo "All agents stopped"
-```
-
-**Verification:** `ps aux | grep "python.*main.py"` (should return nothing)
+**Verification:** `./scripts/stop_league.sh && ps aux | grep "agents.*\\.main.py"` (should return nothing)
 
 ---
 
 ### 12.6 Backup & Restore
 
-**Backup Script:**
+**Backup Script:** `scripts/backup_data.sh`
 
-```bash
-#!/bin/bash
-# backup_league_data.sh
+**Restore Script:** `scripts/restore_data.sh`
 
-timestamp=$(date +%Y%m%d_%H%M%S)
-backup_dir="backups/league_backup_$timestamp"
-
-mkdir -p "$backup_dir"
-
-# Backup data and logs
-cp -r SHARED/data "$backup_dir/"
-cp -r SHARED/logs "$backup_dir/"
-cp -r SHARED/config "$backup_dir/"
-
-tar -czf "$backup_dir.tar.gz" "$backup_dir"
-rm -rf "$backup_dir"
-
-echo "Backup created: $backup_dir.tar.gz"
-```
-
-**Restore Script:**
-
-```bash
-#!/bin/bash
-# restore_league_data.sh
-
-if [ -z "$1" ]; then
-    echo "Usage: ./restore_league_data.sh <backup_file.tar.gz>"
-    exit 1
-fi
-
-tar -xzf "$1"
-backup_dir="${1%.tar.gz}"
-
-# Restore data (overwrite existing)
-cp -r "$backup_dir/data" SHARED/
-cp -r "$backup_dir/logs" SHARED/
-cp -r "$backup_dir/config" SHARED/
-
-rm -rf "$backup_dir"
-
-echo "Data restored from: $1"
-```
-
-**Verification:** `./backup_league_data.sh && ls -lh backups/`
+**Verification:** `./scripts/backup_data.sh && ls -lh backups/`
 
 ---
 
@@ -2202,6 +2127,10 @@ echo "Data restored from: $1"
 | **Authentication token exposure** | Low | Critical | Generate cryptographically strong tokens; never log tokens; secure storage | Revoke exposed token; regenerate and redistribute; audit log access |
 | **Test coverage gaps** | Medium | Medium | Mandatory 85% coverage gate; code review checklist | Add tests before merging; block deployment if coverage drops |
 | **Scalability bottleneck** | Medium | Medium | Load testing; horizontal scaling design; async I/O | Add more referees; implement queueing; optimize hot paths |
+
+**Overall Risk Level:** **LOW** - All high/medium risks have documented mitigations or planned experiments.
+
+**📋 Living Risk Tracker:** Active risk tracking and mitigation status maintained in [doc/risk_register.md](doc/risk_register.md).
 
 ---
 
@@ -2318,8 +2247,7 @@ LLM_Agent_Orchestration_HW7/
 │   │   │       ├── standings.json
 │   │   │       └── rounds.json
 │   │   ├── matches/
-│   │   │   └── <league_id>/
-│   │   │       └── <match_id>.json
+│   │   │   └── <match_id>.json
 │   │   └── players/
 │   │       └── <player_id>/
 │   │           └── history.json
@@ -2331,15 +2259,12 @@ LLM_Agent_Orchestration_HW7/
 │   │       └── <agent_id>.log.jsonl
 │   ├── archive/                     # Archived data (compressed storage)
 │   │   ├── logs/
-│   │   │   └── <agent_id>.log.jsonl.gz
+│   │   │   └── <year>/<month>/<log_file>.gz
 │   │   ├── matches/
-│   │   │   └── <match_id>.json.gz
-│   │   ├── players/
-│   │   │   └── <player_id>/
-│   │   │       └── history_shutdown.json.gz
-│   │   └── leagues/
-│   │       └── <league_id>/
-│   │           └── rounds_archive.json.gz
+│   │   │   └── <league_id>/<year>.tar.gz
+│   │   └── players/
+│   │       └── <player_id>/
+│   │           └── history_shutdown.json.gz
 │   ├── scripts/                     # Utility scripts
 │   │   └── cleanup_data.py          # Manual data retention cleanup
 │   └── league_sdk/                  # Shared Python SDK
@@ -2354,52 +2279,65 @@ LLM_Agent_Orchestration_HW7/
 │       ├── cleanup.py               # Data retention and cleanup utilities
 │       └── utils.py                 # Helper functions
 ├── agents/                          # Agent implementations
+│   ├── __init__.py
+│   ├── base/
+│   │   ├── __init__.py
+│   │   └── agent_base.py            # Base MCP agent
 │   ├── league_manager/
 │   │   ├── main.py                  # Entry point
-│   │   ├── server.py                # FastAPI MCP server
-│   │   ├── scheduler.py             # Round-robin scheduling
-│   │   ├── standings.py             # Standings calculator
-│   │   ├── registration.py          # Agent registration handler
-│   │   └── requirements.txt
+│   │   └── server.py                # League orchestration + MCP server
 │   ├── referee_REF01/
 │   │   ├── main.py
 │   │   ├── server.py
 │   │   ├── match_conductor.py       # Match flow orchestration
 │   │   ├── game_logic.py            # Even/Odd rules
-│   │   ├── timeout_handler.py       # Timeout enforcement
-│   │   └── requirements.txt
-│   └── player_P01/
-│       ├── main.py
-│       ├── server.py
-│       ├── strategy.py              # Parity choice strategies
-│       ├── history.py               # Match history manager
-│       └── requirements.txt
-├── tests/                           # Test suite
-│   ├── unit/                        # Unit tests (100+ tests)
-│   ├── integration/                 # Integration tests (30+ tests)
-│   ├── e2e/                         # End-to-end tests (5+ tests)
-│   ├── protocol_compliance/         # Protocol validation (18 tests)
-│   ├── load/                        # Performance tests (5 tests)
-│   ├── security/                    # Security tests (10 tests)
-│   ├── fixtures/                    # Test data
-│   │   ├── messages/
-│   │   ├── config/
-│   │   └── data/
+│   │   └── timeout_enforcement.py   # Timeout enforcement
+│   ├── referee_REF02/
+│   │   ├── main.py
+│   │   └── server.py
+│   ├── player_P01/
+│   │   ├── main.py
+│   │   ├── server.py
+│   │   └── handlers.py              # Invitation, parity, game over handlers
+│   ├── player_P02/
+│   │   ├── __init__.py
+│   │   └── main.py
+│   ├── player_P03/
+│   │   ├── __init__.py
+│   │   └── main.py
+│   └── player_P04/
+│       ├── __init__.py
+│       └── main.py
+├── tests/                           # Test suite (588 tests, 50 files)
+│   ├── __init__.py
+│   ├── conftest.py                  # Pytest fixtures and config
 │   ├── unit/
 │   │   ├── test_sdk/
-│   │   │   ├── test_cleanup.py      # Data retention tests (17 tests)
-│   │   │   ├── test_protocol.py
+│   │   │   ├── test_protocol_models.py
 │   │   │   ├── test_repositories.py
-│   │   │   └── test_logger.py
-│   │   └── test_agents/
-│   └── conftest.py                  # Pytest configuration
+│   │   │   ├── test_logger.py
+│   │   │   └── test_cleanup.py
+│   │   ├── test_agents/
+│   │   ├── test_league_manager/
+│   │   └── test_referee_agent/
+│   ├── integration/
+│   ├── e2e/
+│   ├── protocol_compliance/
+│   ├── edge_cases/
+│   ├── load/                        # Planned (currently empty)
+│   └── security/                    # Planned (currently empty)
 ├── doc/                             # Documentation
 │   ├── README.md                    # Documentation index
+│   ├── configuration.md
+│   ├── developer_guide.md
+│   ├── testing_guide.md
+│   ├── usability_analysis.md
+│   ├── usability_extensibility.md
 │   ├── reference/                   # Specs, APIs, error codes
 │   │   ├── api_reference.md
 │   │   ├── error_codes_reference.md
 │   │   ├── error_handling_strategy.md
-│   │   └── data_retention_policy.md # Data lifecycle and cleanup specification
+│   │   └── data_retention_policy.md
 │   ├── architecture/                # Architecture docs
 │   │   ├── thread_safety.md
 │   │   └── adr/
@@ -2410,50 +2348,55 @@ LLM_Agent_Orchestration_HW7/
 │   ├── game_rules/
 │   ├── algorithms/
 │   ├── guides/
-│   ├── usability_analysis.md
 │   ├── prompt_log/
 │   └── architecture.md
 ├── scripts/                         # Operational scripts
 │   ├── start_league.sh
 │   ├── stop_league.sh
 │   ├── check_health.sh
+│   ├── trigger_league_start.sh
+│   ├── check_registration_status.sh
+│   ├── query_standings.sh
+│   ├── view_match_state.sh
+│   ├── verify_configs.sh
 │   ├── backup_data.sh
 │   └── restore_data.sh
-├── PRD_EvenOddLeague.md            # This document
-├── Missions_EvenOddLeague.md       # Mission breakdown
-├── PROJECT_GUIDE.md                # Implementation guide
-├── requirements.txt                # Root dependencies
+├── PRD_EvenOddLeague.md             # This document
+├── Missions_EvenOddLeague.md        # Mission breakdown
+├── PROJECT_GUIDE.md                 # Implementation guide
+├── requirements.txt                 # Root dependencies
+├── pyproject.toml                   # Tooling config
+├── uv.lock                          # Lockfile
 ├── .gitignore
-├── .flake8                         # Linting configuration
-├── mypy.ini                        # Type checking configuration
-└── README.md                       # Quick start guide
+├── .flake8                          # Linting configuration
+├── mypy.ini                         # Type checking configuration
+└── README.md                        # Quick start guide
 ```
 
 ### 16.2 Module Responsibilities
 
 | Module | Responsibility | Key Classes/Functions | Imports From |
 |--------|---------------|----------------------|--------------|
-| **league_sdk/config_loader.py** | Load and validate config files | `load_system_config()`, `load_league_config()` | config_models, json |
-| **league_sdk/protocol.py** | Message envelope validation | `validate_envelope()`, `MessageEnvelope` (Pydantic model) | pydantic, datetime |
-| **league_sdk/repositories.py** | File-based data access | `StandingsRepository`, `MatchRepository`, `PlayerHistoryRepository` | json, pathlib |
-| **league_sdk/logger.py** | Structured JSON logging | `setup_logger()`, `log_message()` | logging, json |
-| **league_sdk/retry.py** | Retry policy & circuit breaker | `retry_with_backoff()`, `CircuitBreaker`, `call_with_retry()` | asyncio, time |
-| **league_sdk/queue_processor.py** | Thread-safe queue processing | `SequentialQueueProcessor` | asyncio, queue |
-| **league_sdk/cleanup.py** | Data retention & cleanup | `cleanup_old_logs()`, `archive_old_matches()`, `run_full_cleanup()`, `CleanupStats` | asyncio, gzip, pathlib |
-| **league_manager/scheduler.py** | Round-robin scheduling | `create_round_robin_schedule()`, `assign_referees()` | itertools, math |
-| **league_manager/standings.py** | Standings calculation | `update_standings()`, `calculate_points()`, `sort_standings()` | repositories |
-| **referee/match_conductor.py** | Match orchestration | `conduct_match()`, `invite_players()`, `collect_choices()` | requests, protocol |
-| **referee/game_logic.py** | Even/Odd rules | `determine_winner()`, `check_parity()` | random |
-| **referee/timeout_handler.py** | Timeout enforcement | `wait_with_timeout()`, `award_technical_loss()` | time, threading |
-| **player/strategy.py** | Parity choice logic | `RandomStrategy`, `HistoryBasedStrategy`, `LLMStrategy` | random, history |
-| **player/history.py** | Match history management | `update_history()`, `get_opponent_stats()` | repositories |
+| **SHARED/league_sdk/config_loader.py** | Load and validate config files | `load_system_config()`, `load_league_config()` | config_models, json |
+| **SHARED/league_sdk/protocol.py** | Message envelope validation | `validate_message_envelope()`, `MessageEnvelope` (Pydantic model) | pydantic, datetime |
+| **SHARED/league_sdk/repositories.py** | File-based data access | `StandingsRepository`, `MatchRepository`, `PlayerHistoryRepository` | json, pathlib |
+| **SHARED/league_sdk/logger.py** | Structured JSON logging | `setup_logger()`, `log_message()` | logging, json |
+| **SHARED/league_sdk/retry.py** | Retry policy & circuit breaker | `retry_with_backoff()`, `CircuitBreaker`, `call_with_retry()` | asyncio, httpx |
+| **SHARED/league_sdk/queue_processor.py** | Thread-safe queue processing | `SequentialQueueProcessor` | asyncio, queue |
+| **SHARED/league_sdk/cleanup.py** | Data retention & cleanup | `cleanup_old_logs()`, `archive_old_matches()`, `run_full_cleanup()`, `CleanupStats` | asyncio, gzip, pathlib |
+| **agents/league_manager/server.py** | Round-robin scheduling + standings | `create_schedule()`, `_generate_round_robin_rounds()`, `update_standings()` | itertools, datetime |
+| **agents/referee_REF01/match_conductor.py** | Match orchestration | `conduct_match()`, `_invite_players()`, `_collect_parity_choices()` | asyncio, league_sdk.retry |
+| **agents/referee_REF01/game_logic.py** | Even/Odd rules | `draw_random_number()`, `determine_winner()` | secrets |
+| **agents/referee_REF01/timeout_enforcement.py** | Timeout enforcement | `wait_for_join_ack()`, `wait_for_parity_choice()` | asyncio, datetime |
+| **agents/player_P01/handlers.py** | Parity choice + results | `handle_choose_parity()`, `handle_game_over()` | random, league_sdk.repositories |
+| **SHARED/league_sdk/repositories.py** | Player history management | `PlayerHistoryRepository` | json, pathlib |
 
 ### 16.3 Dependency Graph
 
 ```
 ┌─────────────────────────────────────────────────┐
 │            External Libraries                   │
-│  FastAPI, Uvicorn, Pydantic, Requests          │
+│  FastAPI, Uvicorn, Pydantic, httpx             │
 └────────────────┬────────────────────────────────┘
                  │
                  ↓
@@ -2471,15 +2414,15 @@ LLM_Agent_Orchestration_HW7/
 │   League    │ │   Referee   │ │    Player    │
 │   Manager   │ │    Agent    │ │    Agent     │
 │             │ │             │ │              │
-│ scheduler   │ │ match_cond. │ │  strategy    │
-│ standings   │ │ game_logic  │ │  history     │
-│registration │ │ timeout_h.  │ │              │
+│ server.py   │ │ match_cond. │ │  handlers    │
+│ schedule    │ │ game_logic  │ │  repositories│
+│ standings   │ │ timeout_enf │ │              │
 └─────────────┘ └─────────────┘ └──────────────┘
 ```
 
 ### 16.4 Interface Contracts
 
-#### 16.4.1 league_sdk/protocol.py
+#### 16.4.1 SHARED/league_sdk/protocol.py
 
 ```python
 from pydantic import BaseModel, Field
@@ -2494,54 +2437,58 @@ class MessageEnvelope(BaseModel):
     conversation_id: str = Field(..., min_length=1)
     auth_token: str = Field(..., min_length=32)
 
-def validate_envelope(message: dict) -> MessageEnvelope:
+def validate_message_envelope(message: dict) -> MessageEnvelope:
     """Validate message envelope. Raises ValidationError if invalid."""
     return MessageEnvelope(**message)
 ```
 
-#### 16.4.2 league_sdk/repositories.py
+#### 16.4.2 SHARED/league_sdk/repositories.py
 
 ```python
 class StandingsRepository:
     """Handles standings data persistence."""
 
     def __init__(self, league_id: str):
-        self.file_path = f"SHARED/data/leagues/{league_id}/standings.json"
+        self.path = f"SHARED/data/leagues/{league_id}/standings.json"
 
-    def get_standings(self) -> list[dict]:
+    def load(self) -> dict:
         """Load current standings from file."""
-        pass
+        ...
 
-    def update_standings(self, standings: list[dict]) -> None:
+    def save(self, standings: dict) -> None:
         """Atomically write standings to file."""
-        pass
+        ...
+
+    def update_player(self, player_id: str, result: str, points: int) -> None:
+        """Update a single player's standings entry."""
+        ...
 
 class MatchRepository:
     """Handles match data persistence."""
 
-    def __init__(self, league_id: str):
-        self.league_id = league_id
+    def __init__(self):
+        self.base_path = "SHARED/data/matches/"
 
-    def save_match(self, match_id: str, match_data: dict) -> None:
+    def save(self, match_id: str, match_data: dict) -> None:
         """Save match data to file."""
-        pass
+        ...
 
-    def get_match(self, match_id: str) -> dict:
+    def load(self, match_id: str) -> dict | None:
         """Load match data from file."""
-        pass
+        ...
 ```
 
 ### 16.5 Extension Points
 
-| Extension Point | Interface | Example Use Case |
-|-----------------|-----------|------------------|
-| **Player Strategy** | `Strategy` abstract class with `choose_parity(context)` method | Add LLM-guided strategy, pattern recognition strategy |
-| **Game Type** | `GameRules` abstract class with `determine_winner()` method | Add Tic-Tac-Toe, Rock-Paper-Scissors games |
-| **Logging Backend** | `LogHandler` interface with `emit(record)` method | Add Elasticsearch, CloudWatch integration |
-| **Data Repository** | `Repository` interface with `get()`, `save()` methods | Replace file-based with SQLite, PostgreSQL |
-| **Retry Policy** | `RetryPolicy` class with `should_retry()`, `get_delay()` methods | Add circuit breaker, custom backoff strategies |
+| Extension Point | Current Mechanism | Example Use Case |
+|-----------------|-------------------|------------------|
+| **Player Strategy** | Implement in `agents/player_P01/handlers.py` and override in new player agents | Add LLM-guided or pattern-based parity selection |
+| **Game Type** | Add rules in referee game logic + register in `SHARED/config/games/games_registry.json` | Add Tic-Tac-Toe or Rock-Paper-Scissors |
+| **Logging Backend** | Extend `SHARED/league_sdk/logger.py` handlers | Ship logs to Elasticsearch or CloudWatch |
+| **Data Repository** | Replace `SHARED/league_sdk/repositories.py` classes | Swap file-based storage for SQLite/Postgres |
+| **Retry Policy** | Configure `SHARED/config/system.json` retry policy | Adjust backoff and retryable errors |
 
-**Verification:** `python tests/test_extensibility.py --check-interfaces`
+**Verification (planned):** `python tests/test_extensibility.py --check-interfaces` (extensibility tests not yet in repo)
 
 ---
 
@@ -2871,7 +2818,7 @@ grep -E "LaTeX.*formula|plt\.show|matplotlib" doc/research_notes/experiments.ipy
 
 **Risk:** If a player's token leaks (e.g., in logs), it remains valid indefinitely.
 
-**Mitigation:** Redact tokens from logs (already implemented); restrict file permissions on `data/players/` directories.
+**Mitigation:** Redact tokens from logs (already implemented); restrict file permissions on `SHARED/data/players/` directories.
 
 **Validation:** Grep logs for auth tokens; ensure none appear in plain text (see Q3).
 
@@ -2935,7 +2882,7 @@ grep -E "LaTeX.*formula|plt\.show|matplotlib" doc/research_notes/experiments.ipy
 
 | Constraint | Source | Implication | Workaround |
 |------------|--------|-------------|------------|
-| **Python 3.10+ Required** | PRD Tech Stack | Cannot use older Python features; must install 3.10+ | Document in README; add version check in `setup.py` |
+| **Python 3.10+ Required** | PRD Tech Stack | Cannot use older Python features; must install 3.10+ | Document in README; enforce via `pyproject.toml` `requires-python` |
 | **JSON-RPC 2.0 (No Batching)** | M5.1 Compliance | Cannot batch multiple requests in one HTTP call | Accept limitation; simplifies timeout handling |
 | **Single-Process File Writes** | Data Architecture | No concurrent writes to same file from multiple processes | Use file locking or ensure exclusive ownership per agent |
 | **No Database Transactions** | File-Based Storage | Cannot rollback multi-file changes atomically | Design idempotent operations; use write-ahead logging if needed |
@@ -2944,7 +2891,7 @@ grep -E "LaTeX.*formula|plt\.show|matplotlib" doc/research_notes/experiments.ipy
 | **No Real-Time Updates** | Polling-Based | Clients must poll for standings; no WebSocket/SSE push | Accept limitation or add future enhancement (out of scope) |
 | **Max 64KB Message Size** | HTTP Handler | Large match transcripts may exceed limit | Compress transcripts or paginate large responses |
 
-**Validation:** `python tests/test_constraints.py` verifies all constraints are enforced at runtime.
+**Validation (planned):** `python tests/test_constraints.py` verifies all constraints are enforced at runtime.
 
 ---
 
@@ -2970,30 +2917,30 @@ grep -E "LaTeX.*formula|plt\.show|matplotlib" doc/research_notes/experiments.ipy
 |---|---------------|----------|---------------------|--------|
 | 1 | **Player agent implements 3 mandatory tools** | [agents/player_P01/server.py](agents/player_P01/server.py) | `grep -E "handle_game_invitation\|choose_parity\|notify_match_result" agents/player_P01/server.py` | 15 |
 | 2 | **All 18 message types defined** | [SHARED/league_sdk/protocol.py](SHARED/league_sdk/protocol.py) | `grep -E "GAME_INVITATION\|CHOOSE_PARITY_CALL\|..." SHARED/league_sdk/protocol.py \| wc -l` | 5 |
-| 3 | **All 18 error codes handled** | [SHARED/league_sdk/errors.py](SHARED/league_sdk/errors.py) | `grep -E "E001\|E002\|...\|E018" SHARED/league_sdk/errors.py \| wc -l` | 5 |
+| 3 | **All 18 error codes handled** | [SHARED/league_sdk/protocol.py](SHARED/league_sdk/protocol.py) | `grep -E "E001\|E002\|...\|E018" SHARED/league_sdk/protocol.py \| wc -l` | 5 |
 | 4 | **Protocol compliance tests pass** | [tests/protocol_compliance/](tests/protocol_compliance/) | `pytest tests/protocol_compliance/ -v` | 10 |
-| 5 | **Round-robin scheduling implemented** | [agents/league_manager/scheduler.py](agents/league_manager/scheduler.py) | `python tests/test_scheduling_algorithm.py --players=4` | 8 |
-| 6 | **Standings calculation correct** | [agents/league_manager/standings.py](agents/league_manager/standings.py) | `python tests/test_standings_calculation.py` | 10 |
-| 7 | **Timeout enforcement working** | [agents/referee_REF01/timeout_handler.py](agents/referee_REF01/timeout_handler.py) | `python tests/test_referee_timeout_enforcement.py` | 8 |
-| 8 | **Retry policy implemented** | [SHARED/league_sdk/retry.py](SHARED/league_sdk/retry.py) | `python tests/test_retry_policy.py && grep "RETRY_ATTEMPT" logs/agents/*.log.jsonl` | 5 |
+| 5 | **Round-robin scheduling implemented** | [agents/league_manager/server.py](agents/league_manager/server.py) | `pytest tests/unit/test_league_manager/test_scheduler.py -v` | 8 |
+| 6 | **Standings calculation correct** | [agents/league_manager/server.py](agents/league_manager/server.py) | `pytest tests/unit/test_league_manager/test_standings.py -v` | 10 |
+| 7 | **Timeout enforcement working** | [agents/referee_REF01/timeout_enforcement.py](agents/referee_REF01/timeout_enforcement.py) | `pytest tests/integration/test_timeout_enforcement.py -v` | 8 |
+| 8 | **Retry policy implemented** | [SHARED/league_sdk/retry.py](SHARED/league_sdk/retry.py) | `pytest tests/unit/test_sdk/test_retry.py -v && grep "RETRY_ATTEMPT" SHARED/logs/agents/*.log.jsonl` | 5 |
 | 9 | **4-player league completes** | End-to-end test | `pytest tests/e2e/test_4_player_league.py -v` | 15 |
-| 10 | **Authentication working** | [agents/league_manager/registration.py](agents/league_manager/registration.py) | `python tests/test_authentication.py` | 5 |
+| 10 | **Authentication working** | [agents/league_manager/server.py](agents/league_manager/server.py) | `pytest tests/protocol_compliance/test_auth_token_presence.py -v` | 5 |
 | 11 | **3-layer data architecture** | [SHARED/config/](SHARED/config/), [SHARED/data/](SHARED/data/), [SHARED/logs/](SHARED/logs/) | `ls -R SHARED/config SHARED/data SHARED/logs` | 3 |
-| 12 | **JSON Lines logging** | [SHARED/logs/agents/*.log.jsonl](SHARED/logs/agents/) | `cat logs/agents/P01.log.jsonl \| jq .` | 3 |
+| 12 | **JSON Lines logging** | [SHARED/logs/agents/*.log.jsonl](SHARED/logs/agents/) | `cat SHARED/logs/agents/P01.log.jsonl \| jq .` | 3 |
 | 13 | **Test coverage ≥85%** | Coverage report | `pytest --cov=agents --cov-report=term \| grep "TOTAL"` | 10 |
 | 14 | **Code quality: flake8 passes** | Linting | `flake8 agents/ SHARED/league_sdk/` | 3 |
 | 15 | **Type checking: mypy passes** | Type checking | `mypy agents/ SHARED/league_sdk/ --strict` | 3 |
-| 16 | **Concurrent matches supported** | Load test | `python tests/test_concurrent_matches.py --concurrent=10` | 5 |
-| 17 | **Even/Odd game logic correct** | Unit tests | `python tests/test_even_odd_game_logic.py --iterations=100` | 5 |
-| 18 | **Match transcript logged** | Data files | `cat data/matches/league_2025_even_odd/R1M1.json \| jq '.transcript \| length'` | 3 |
-| 19 | **Player history updated** | Data files | `cat data/players/P01/history.json \| jq '.stats'` | 3 |
-| 20 | **ISO 8601 timestamps used** | Protocol tests | `python tests/test_timestamp_format.py` | 2 |
-| 21 | **auth_token in all messages** | Protocol tests | `python tests/test_auth_token_presence.py` | 2 |
-| 22 | **sender format correct** | Protocol tests | `python tests/test_sender_format.py` | 2 |
-| 23 | **Graceful shutdown works** | Shutdown test | `python tests/test_graceful_shutdown.py` | 3 |
+| 16 | **Concurrent matches supported** | Load test | `pytest tests/integration/test_concurrent_matches.py -v` | 5 |
+| 17 | **Even/Odd game logic correct** | Unit tests | `pytest tests/unit/test_referee_agent/test_game_logic.py -v` | 5 |
+| 18 | **Match transcript logged** | Data files | `cat SHARED/data/matches/R1M1.json \| jq '.transcript \| length'` | 3 |
+| 19 | **Player history updated** | Data files | `cat SHARED/data/players/P01/history.json \| jq '.stats'` | 3 |
+| 20 | **ISO 8601 timestamps used** | Protocol tests | `pytest tests/protocol_compliance/test_timestamp_format.py -v` | 2 |
+| 21 | **auth_token in all messages** | Protocol tests | `pytest tests/protocol_compliance/test_auth_token_presence.py -v` | 2 |
+| 22 | **sender format correct** | Protocol tests | `pytest tests/protocol_compliance/test_sender_format.py -v` | 2 |
+| 23 | **Graceful shutdown works** | Shutdown test | `pytest tests/e2e/test_graceful_shutdown.py -v` | 3 |
 | 24 | **Health checks respond** | HTTP GET | `curl -X GET http://localhost:8000/health` | 2 |
-| 25 | **Configuration validation** | Config tests | `python tests/test_config_validation.py` | 3 |
-| 26 | **Error messages actionable** | Error tests | `python tests/test_error_messages.py` | 2 |
+| 25 | **Configuration validation** | Config tests | `pytest tests/unit/test_sdk/test_config_models.py -v` | 3 |
+| 26 | **Error messages actionable** | Error tests | `python tests/test_error_messages.py` (planned; not yet in repo) | 2 |
 | 27 | **Documentation complete** | `/doc/` directory | `ls -lh doc/*.md \| wc -l` (≥4 files) | 5 |
 | 28 | **README with quick start** | `/README.md` | `cat README.md \| grep -i "quick start"` | 3 |
 | 29 | **PRD includes all 17 sections** | `/PRD_EvenOddLeague.md` | `grep -E "^## [0-9]+\." PRD_EvenOddLeague.md \| wc -l` | 5 |
@@ -3001,19 +2948,21 @@ grep -E "LaTeX.*formula|plt\.show|matplotlib" doc/research_notes/experiments.ipy
 | 31 | **Installation steps documented** | Section 12.1 | `grep -E "^# [0-9]+\." PRD_EvenOddLeague.md \| wc -l` (≥10 steps) | 3 |
 | 32 | **KPIs with verification commands** | Section 3 | `grep -E "\`.*\`" PRD_EvenOddLeague.md \| wc -l` (≥12 commands) | 3 |
 | 33 | **Architecture Decision Records** | Section 7 | `grep -E "^### ADR-" PRD_EvenOddLeague.md \| wc -l` (≥7) | 5 |
-| 34 | **Data consistency validated** | Consistency tests | `python tests/test_data_consistency.py` | 5 |
-| 35 | **No hardcoded credentials** | Security scan | `python tests/security/scan_secrets.py` | 3 |
+| 34 | **Data consistency validated** | Consistency tests | `pytest tests/integration/test_standings_update.py -v` | 5 |
+| 35 | **No hardcoded credentials** | Security scan | `python tests/security/scan_secrets.py` (planned; not yet in repo) | 3 |
 | **TOTAL EVIDENCE SCORE** | | | | **190/190** |
 
 **Grade Calculation:**
 - 190/190 = 100% evidence coverage
 - With quality execution (all tests pass, code quality high): **95-100 score**
 
-**Verification Summary Command:**
+**Verification Summary Command (planned):**
 ```bash
-# Run all verification commands in sequence
+# Planned helper script (not yet in repo)
 python scripts/verify_all_evidence.py --output=evidence_report.html
 ```
+
+**📋 Living Evidence Tracker:** This evidence baseline is tracked operationally in [doc/evidence_matrix.md](doc/evidence_matrix.md) with current verification status and executable validation commands.
 
 ---
 
@@ -3030,14 +2979,14 @@ python scripts/verify_all_evidence.py --output=evidence_report.html
 | 7 | **Install shared SDK** | `pip install -e SHARED/league_sdk/` | SDK installed in editable mode | ☐ |
 | 8 | **Verify installation** | `python -c "import league_sdk; print('OK')"` | Output shows "OK" | ☐ |
 | 9 | **Create data directories** | `mkdir -p SHARED/data/{leagues,matches,players} SHARED/logs/{league,agents}` | Directories exist | ☐ |
-| 10 | **Validate configuration files** | `python SHARED/league_sdk/config_loader.py --validate` | All configs valid | ☐ |
+| 10 | **Validate configuration files** | `./scripts/verify_configs.sh --verbose` | All configs valid | ☐ |
 | 11 | **Check port availability** | `netstat -an \| grep -E "800[0-2]\|810[1-4]"` | No output (ports free) | ☐ |
-| 12 | **Run installation tests** | `pytest tests/test_installation.py -v` | All tests pass | ☐ |
-| 13 | **Start League Manager** | `cd agents/league_manager && python main.py &` | "Ready on port 8000" | ☐ |
+| 12 | **Run installation tests** | `pytest tests/test_installation.py -v` (planned; not yet in repo) | All tests pass | ☐ |
+| 13 | **Start League Manager** | `python -m agents.league_manager.main &` | "Ready on port 8000" | ☐ |
 | 14 | **Health check** | `curl -X GET http://localhost:8000/health` | Returns 200 OK | ☐ |
-| 15 | **Run quick smoke test** | `pytest tests/smoke/ -v` | All smoke tests pass | ☐ |
+| 15 | **Run quick smoke test** | `pytest tests/smoke/ -v` (planned; not yet in repo) | All smoke tests pass | ☐ |
 
-**Verification Command:** `python scripts/run_installation_checklist.py --interactive`
+**Verification Command (planned):** `python scripts/run_installation_checklist.py --interactive`
 
 ---
 

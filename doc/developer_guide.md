@@ -84,12 +84,33 @@ echo "=== Check Complete ==="
 
 ## 2. Installation Methods
 
-There are **two installation methods** depending on your use case:
+### 🎯 Installation Decision Guide
 
-| Method | Use Case | Pros | Cons |
-|--------|----------|------|------|
-| **Method 1: Development** | Active development, testing, debugging | Full source access, hot-reload, easy debugging | Requires manual setup |
-| **Method 2: Distribution** | Production deployment, quick start, evaluation | One-command install, no git needed | Less flexible for development |
+**Choose Method 1 (Development Setup) if:**
+- ✅ You're a professor evaluating the project
+- ✅ You want to run the complete Even/Odd League system
+- ✅ You want to run all 588 tests
+- ✅ You want to modify code or contribute
+- ✅ You want full source access with git history
+
+**Choose Method 2A (SDK Wheel Only) if:**
+- ✅ You only want the SDK library to build your own custom agents
+- ❌ You DON'T need the Even/Odd League system, agents, tests, or scripts
+
+**Choose Method 2B (Full System Archive) if:**
+- ✅ You want to deploy the complete system quickly without git
+- ✅ Same capabilities as Method 1, just pre-packaged
+- ✅ Production deployment
+
+---
+
+### Summary Table
+
+| Method | Use Case | Time | Git Needed | Tests Included | Scripts Included |
+|--------|----------|------|------------|----------------|------------------|
+| **Method 1: Development** | Active development, testing, evaluation | 5 min | Yes | Yes (588 tests) | Yes (12 scripts) |
+| **Method 2A: SDK Wheel** | Building custom agents with SDK | 1 min | No | No | No |
+| **Method 2B: Full Archive** | Quick deployment, production | 3 min | No | Yes (588 tests) | Yes (12 scripts) |
 
 ---
 
@@ -261,7 +282,7 @@ print('\\n🎉 Installation verified successfully!')
 # Run full test suite to verify everything works
 PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ -v --cov=SHARED/league_sdk --cov=agents
 
-# Expected: 209 tests passed, 85%+ coverage
+# Expected: 588 tests passed, 85%+ coverage
 ```
 
 ### Step 10: Start Your First Agent
@@ -373,7 +394,7 @@ tar -tzf even-odd-league-v1.0.0.tar.gz | head -20
 even-odd-league-v1.0.0/
 ├── SHARED/           # SDK, config, data directories
 ├── agents/           # League Manager, Referees, Players
-├── tests/            # Test suite (209 tests)
+├── tests/            # Test suite (588 tests)
 ├── doc/              # Documentation
 ├── scripts/          # Operational scripts (12 scripts)
 ├── README.md         # Main documentation
@@ -439,7 +460,7 @@ mkdir -p SHARED/archive/{logs,matches,players,leagues}
 
 # Run tests
 PYTHONPATH=SHARED:$PYTHONPATH pytest tests/ -v
-# Expected: 209 tests passed
+# Expected: 588 tests passed
 ```
 
 **Step 5: Start the System**
@@ -554,10 +575,10 @@ LLM_Agent_Orchestration_HW7/
 │       ├── handlers.py              # Tool handlers (132 lines)
 │       └── main.py                  # Entry point
 │
-├── tests/                           # Test Suite (209 tests, 85% coverage)
+├── tests/                           # Test Suite (588 tests, 85% coverage)
 │   ├── conftest.py                  # Pytest fixtures
 │   ├── unit/                        # Unit tests
-│   │   ├── test_sdk/                # SDK tests (195 tests)
+│   │   ├── test_sdk/                # SDK tests
 │   │   ├── test_agents/             # Agent tests
 │   │   ├── test_league_manager/     # League Manager tests
 │   │   └── test_referee_agent/      # Referee tests
@@ -606,7 +627,7 @@ LLM_Agent_Orchestration_HW7/
 | `SHARED/logs/` | Structured logs | ❌ No (.gitignore) | JSONL format |
 | `SHARED/archive/` | Archived data | ❌ No (.gitignore) | Gzipped old data |
 | `agents/` | Agent implementations | ✅ Yes | League Manager, Referees, Players |
-| `tests/` | Test suite | ✅ Yes | 209 tests, 85% coverage |
+| `tests/` | Test suite | ✅ Yes | 588 tests, 85% coverage |
 | `doc/` | Documentation | ✅ Yes | Architecture, guides, research |
 | `scripts/` | Operational scripts | ✅ Yes | Bash scripts for league management |
 

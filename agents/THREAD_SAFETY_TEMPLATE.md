@@ -318,6 +318,6 @@ class LeagueManager(BaseAgent):
 ## References
 
 - **Thread Safety Documentation**: `doc/architecture/thread_safety.md`
-- **Queue Processor Guide**: `SHARED/league_sdk/QUEUE_PROCESSOR_GUIDE.md`
+- **Queue Processor Guide**: `doc/guides/queue_processor_guide.md`
 - **Player Agent Example**: `agents/player_P01/server.py` (already async)
 - **BaseAgent Pattern**: `agents/base/agent_base.py` (async register)
