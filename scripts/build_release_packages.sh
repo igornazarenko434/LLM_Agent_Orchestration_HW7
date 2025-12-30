@@ -215,6 +215,11 @@ if [[ $SKIP_ARCHIVE -eq 0 ]]; then
           --exclude='venv' \
           --exclude='.venv' \
           --exclude='.git' \
+          --exclude='PROJECT_GUIDE.md' \
+          --exclude='grader_agent.md' \
+          --exclude='HW7_Instructions_*.pdf' \
+          --exclude='Assignment_7_Cover_Page.html' \
+          --exclude='kickoff_*' \
           --exclude='__pycache__' \
           --exclude='*.pyc' \
           --exclude='.pytest_cache' \
@@ -233,7 +238,7 @@ if [[ $SKIP_ARCHIVE -eq 0 ]]; then
           --exclude='.quality_check_venv' \
           --exclude='backups' \
           SHARED/ agents/ tests/ doc/ scripts/ \
-          README.md requirements.txt pyproject.toml \
+          README.md LICENSE requirements.txt pyproject.toml \
           PRD_EvenOddLeague.md Missions_EvenOddLeague.md \
           CONTRIBUTING.md .env.example \
           .gitignore .flake8 .pre-commit-config.yaml \
